@@ -268,7 +268,6 @@ body {
 
 .modal-box button.cancel:active { background: var(--bg-3); }
 
-/* Parol input center */
 #verify-input {
     text-align: center;
     letter-spacing: 8px;
@@ -590,7 +589,7 @@ body.dark .message.out .msg-time .check:not(.read) svg {
     color: rgba(255,255,255,0.6);
 }
 
-/* Voice message */
+/* Voice */
 .voice-player {
     display: flex;
     align-items: center;
@@ -703,7 +702,7 @@ body.dark .reaction-item { background: var(--bg-2); }
 
 .msg-link:active { opacity: 0.7; }
 
-/* Message actions popup */
+/* Message actions */
 .msg-actions {
     position: fixed;
     background: var(--bg);
@@ -772,7 +771,7 @@ body.dark .reaction-item { background: var(--bg-2); }
 
 .msg-actions .action-btn.danger { color: var(--danger); }
 
-/* Reply preview in input */
+/* Reply preview */
 .reply-preview {
     display: none;
     align-items: center;
@@ -1189,7 +1188,7 @@ body.dark .reaction-item { background: var(--bg-2); }
     font-size: 14px;
 }
 
-/* ==================== SEARCH MODAL ==================== */
+/* ==================== SEARCH ==================== */
 .search-box {
     background: var(--bg);
     padding: 20px;
@@ -1253,7 +1252,7 @@ body.dark .reaction-item { background: var(--bg-2); }
     transform: translateX(-50%) translateY(0);
 }
 
-/* ==================== EMPTY STATE ==================== */
+/* ==================== EMPTY ==================== */
 .empty-state {
     text-align: center;
     padding: 80px 20px;
@@ -1286,7 +1285,7 @@ body.dark .reaction-item { background: var(--bg-2); }
 
 .empty-state .desc { font-size: 14px; opacity: 0.8; }
 
-/* ==================== SAVED MESSAGES ==================== */
+/* ==================== SAVED ==================== */
 .saved-item {
     display: flex;
     align-items: center;
@@ -1362,10 +1361,6 @@ body.dark .reaction-item { background: var(--bg-2); }
 
 <!-- ==================== SVG IKONKALAR ==================== -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-        <polyline points="9 22 9 12 15 12 15 22"/>
-    </symbol>
     <symbol id="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </symbol>
@@ -1437,10 +1432,6 @@ body.dark .reaction-item { background: var(--bg-2); }
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
         <circle cx="12" cy="13" r="4"/>
     </symbol>
-    <symbol id="icon-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-    </symbol>
     <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"/>
         <line x1="6" y1="6" x2="18" y2="18"/>
@@ -1493,17 +1484,6 @@ body.dark .reaction-item { background: var(--bg-2); }
     </symbol>
     <symbol id="icon-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-    </symbol>
-    <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-        <line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
-    </symbol>
-    <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="16" x2="12" y2="12"/>
-        <line x1="12" y1="8" x2="12.01" y2="8"/>
     </symbol>
 </svg>
 
@@ -1812,8 +1792,8 @@ let CURRENT_CHAT = null;
 let WS = null;
 let USER = null;
 let CHATS = [];
-let CURRENT_MESSAGE = null;  // Action uchun
-let REPLY_TO = null;  // Reply qilinayotgan xabar
+let CURRENT_MESSAGE = null;
+let REPLY_TO = null;
 let MEDIA_RECORDER = null;
 let AUDIO_CHUNKS = [];
 let RECORDING_START = 0;
@@ -1830,10 +1810,9 @@ const EMOJI_DATA = {
     activity: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','⛹️','🤺','🤾','🏌️','🏇','🧘','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🎪','🤹','🎭','🩰','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🎰','🧩'],
     travel: ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🛴','🚲','🛵','🏍️','🛺','🚨','🚔','🚍','🚘','🚖','🚡','🚠','🚟','🚃','🚋','🚞','🚝','🚄','🚅','🚈','🚂','🚆','🚇','🚊','🚉','✈️','🛫','🛬','🛩️','💺','🛰️','🚀','🛸','🚁','🛶','⛵','🚤','🛥️','🛳️','⛴️','🚢','⚓','⛽','🚧','🚦','🚥','🚏','🗺️','🗿','🗽','🗼','🏰','🏯','🏟️','🎡','🎢','🎠','⛲','⛱️','🏖️','🏝️','🏜️','🌋','⛰️','🏔️','🗻','🏕️','⛺','🏠','🏡','🏘️','🏚️','🏗️','🏭','🏢','🏬','🏣','🏤','🏥','🏦','🏨','🏪','🏫','🏩','💒','🏛️','⛪','🕌','🕍','🛕','🕋','⛩️','🛤️','🛣️','🗾','🎑','🏞️','🌅','🌄','🌠','🎇','🎆','🌇','🌆','🏙️','🌃','🌌','🌉','🌁'],
     objects: ['⌚','📱','📲','💻','⌨️','🖥️','🖨️','🖱️','🖲️','🕹️','💽','💾','💿','📀','📼','📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🎙️','🎚️','🎛️','🧭','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🔌','💡','🔦','🕯️','🪔','🧯','🛢️','💸','💵','💴','💶','💷','🪙','💰','💳','💎','⚖️','🪜','🧰','🪛','🔧','🔨','⚒️','🛠️','⛏️','🪚','🔩','⚙️','🧱','⛓️','🧲','🔫','💣','🧨','🪓','🔪','🗡️','⚔️','🛡️','🚬','⚰️','🪦','⚱️','🏺','🔮','📿','🧿','💈','⚗️','🔭','🔬','🕳️','🩹','🩺','💊','💉','🩸','🧬','🦠','🧫','🧪','🌡️','🧹','🪠','🧺','🧻','🚽','🚰','🚿','🛁','🛀','🧼','🪥','🪒','🧽','🪣','🧴','🛎️','🔑','🗝️','🚪','🪑','🛋️','🛏️','🛌','🧸','🪆','🖼️','🪞','🪟','🛍️','🛒','🎁','🎈','🎏','🎀','🪄','🪅','🎊','🎉','🎎','🏮','🎐','🧧','✉️','📩','📨','📧','💌','📥','📤','📦','🏷️','🪧','📪','📫','📬','📭','📮','📯','📜','📃','📄','📑','🧾','📊','📈','📉','🗒️','🗓️','📆','📅','🗑️','📇','🗃️','🗳️','🗄️','📋','📁','📂','🗂️','🗞️','📰','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🧷','🔗','📎','🖇️','📐','📏','🧮','📌','📍','✂️','🖊️','🖋️','✒️','🖌️','🖍️','📝','✏️','🔍','🔎','🔏','🔐','🔒','🔓'],
-    symbols: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🈳','🈂️','🛂','🛃','🛄','🛅','🚹','🚺','🚼','🚻','🚮','🎦','📶','🈁','🔣','ℹ️','🔤','🔡','🔠','🆖','🆗','🆙','🆒','🆕','🆓','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🔢','#️⃣','*️⃣','⏏️','▶️','⏸️','⏯️','⏹️','⏺️','⏭️','⏮️','⏩','⏪','⏫','⏬','◀️','🔼','🔽','➡️','⬅️','⬆️','⬇️','↗️','↘️','↙️','↖️','↕️','↔️','↪️','↩️','⤴️','⤵️','🔀','🔁','🔂','🔄','🔃','🎵','🎶','➕','➖','➗','✖️','♾️','💲','💱','™️','©️','®️','〰️','➰','➿','🔚','🔙','🔛','🔝','🔜','✔️','☑️','🔘','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔺','🔻','🔸','🔹','🔶','🔷','🔳','🔲','▪️','▫️','◾','◽','◼️','◻️','🟥','🟧','🟨','🟩','🟦','🟪','⬛','⬜','🟫','🔈','🔇','🔉','🔊','🔔','🔕','📣','📢','💬','💭','🗯️','♠️','♣️','♥️','♦️','🃏','🎴','🀄','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚','🕛']
+    symbols: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🈳','🈂️','🛂','🛃','🛄','🛅','🚹','🚺','🚼','🚻','🚮','🎦','📶','🈁','🔣','ℹ️','🔤','🔡','🔠','🆖','🆗','🆙','🆒','🆕','🆓','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🔢','#️⃣','*️⃣','▶️','⏸️','⏯️','⏹️','⏺️','⏭️','⏮️','⏩','⏪','⏫','⏬','◀️','🔼','🔽','➡️','⬅️','⬆️','⬇️','↗️','↘️','↙️','↖️','↕️','↔️','↪️','↩️','⤴️','⤵️','🔀','🔁','🔂','🔄','🔃','🎵','🎶','➕','➖','➗','✖️','♾️','💲','💱','™️','©️','®️','〰️','➰','➿','🔚','🔙','🔛','🔝','🔜','✔️','☑️','🔘','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔺','🔻','🔸','🔹','🔶','🔷','🔳','🔲','▪️','▫️','◾','◽','◼️','◻️','🟥','🟧','🟨','🟩','🟦','🟪','⬛','⬜','🟫','🔈','🔇','🔉','🔊','🔔','🔕','📣','📢','💬','💭','🗯️','♠️','♣️','♥️','♦️','🃏','🎴','🀄','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚','🕛']
 };
 
-// Quick reactions (message uchun)
 const QUICK_REACTIONS = ['❤️','😂','😮','😢','👍','🔥'];
 
 // ==================== KALKULYATOR ====================
@@ -2088,14 +2067,14 @@ function renderSavedMessages() {
 }
 
 function openSavedMessages() {
-    // Saved messages — o'ziga o'zi yozgan chat
     openChat({
         chat_id: USER.chat_id,
         ism: 'Saqlangan',
         familya: 'xabarlar',
         username: 'me',
         profil_rasm: USER.profil_rasm,
-        is_saved: true
+        is_saved: true,
+        online: true
     });
 }
 
@@ -2124,9 +2103,10 @@ async function setOnline() {
     await apiFetch('/api/profile/online', { method: 'POST' });
 }
 
+// ⚡ beforeunload — query string orqali token
 window.addEventListener('beforeunload', () => {
     if (TOKEN) {
-        navigator.sendBeacon(API_URL + '/api/profile/offline', JSON.stringify({token: TOKEN}));
+        navigator.sendBeacon(API_URL + '/api/profile/offline?token=' + encodeURIComponent(TOKEN));
     }
 });
 
@@ -2177,7 +2157,6 @@ async function loadChats() {
     const list = document.getElementById('chat-list');
     list.innerHTML = '';
 
-    // Umumiy badge
     let totalUnread = 0;
     CHATS.forEach(c => totalUnread += (c.unread_count || 0));
     updateNavBadge(totalUnread);
@@ -2289,7 +2268,7 @@ async function loadMessages() {
     box.scrollTop = box.scrollHeight;
 }
 
-// ==================== LINK ANIQLASH ====================
+// ==================== LINK ====================
 function linkifyText(text) {
     if (!text) return '';
     const escaped = escapeHtml(text);
@@ -2317,7 +2296,6 @@ function addMessageToDOM(m, scroll = true) {
 
     let content = '';
 
-    // Reply quote
     if (m.reply_to && m.reply_to.id) {
         content += `
             <div class="reply-quote">
@@ -2327,17 +2305,14 @@ function addMessageToDOM(m, scroll = true) {
         `;
     }
 
-    // Rasm
     if (m.xabar_turi === 'photo' && m.rasm_url) {
         content += `<img class="msg-img" src="${API_URL}${m.rasm_url}" onclick="event.stopPropagation(); openImageViewer('${API_URL}${m.rasm_url}')">`;
     }
 
-    // Ovoz
     if (m.xabar_turi === 'voice' && m.ovoz_url) {
         content += renderVoicePlayer(m);
     }
 
-    // Matn
     if (m.matn) {
         if (isEmojiOnly(m.matn)) {
             msg.classList.add('emoji-only');
@@ -2347,7 +2322,6 @@ function addMessageToDOM(m, scroll = true) {
         }
     }
 
-    // Vaqt + check
     const vaqt = new Date(m.vaqt).toLocaleTimeString('uz', {hour:'2-digit', minute:'2-digit'});
     let checkHtml = '';
     if (m.ozimniki && !msg.classList.contains('emoji-only')) {
@@ -2361,13 +2335,10 @@ function addMessageToDOM(m, scroll = true) {
 
     msg.innerHTML = content;
 
-    // Long press / right click
     let pressTimer = null;
     const startPress = (e) => {
         e.preventDefault?.();
-        pressTimer = setTimeout(() => {
-            showMessageActions(m, wrap);
-        }, 500);
+        pressTimer = setTimeout(() => showMessageActions(m, wrap), 500);
     };
     const cancelPress = () => {
         if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
@@ -2386,7 +2357,6 @@ function addMessageToDOM(m, scroll = true) {
 
     wrap.appendChild(msg);
 
-    // Reactions
     if (m.reactions && m.reactions.length > 0) {
         const reactionsDiv = document.createElement('div');
         reactionsDiv.className = 'reactions';
@@ -2429,7 +2399,6 @@ function formatDuration(sec) {
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// ==================== VOICE PLAY ====================
 let currentAudio = null;
 function playVoice(btn, url) {
     if (currentAudio) {
@@ -2462,7 +2431,6 @@ function showMessageActions(m, wrap) {
     CURRENT_MESSAGE = m;
     const actions = document.getElementById('msg-actions');
     
-    // Emojilar
     const emojiRow = document.getElementById('msg-actions-emojis');
     emojiRow.innerHTML = '';
     QUICK_REACTIONS.forEach(emoji => {
@@ -2477,11 +2445,9 @@ function showMessageActions(m, wrap) {
         emojiRow.appendChild(btn);
     });
 
-    // Edit/Delete faqat o'ziniki uchun
     document.getElementById('action-edit-btn').style.display = m.ozimniki && m.matn ? 'flex' : 'none';
     document.getElementById('action-delete-btn').style.display = m.ozimniki ? 'flex' : 'none';
 
-    // Joylashuv
     const rect = wrap.getBoundingClientRect();
     const actionsWidth = 220;
     let left = rect.left;
@@ -2560,7 +2526,6 @@ async function actionDelete() {
     }
 }
 
-// Tashqariga bosilsa — yopish
 document.addEventListener('click', (e) => {
     const actions = document.getElementById('msg-actions');
     if (actions.classList.contains('active') && !actions.contains(e.target)) {
@@ -2570,7 +2535,6 @@ document.addEventListener('click', (e) => {
 
 // ==================== REACTIONS ====================
 async function toggleReaction(msgId, emoji) {
-    // Mening reactionim bormi?
     const el = document.querySelector(`.msg-wrap[data-id="${msgId}"] .reaction-item.mine`);
     const mineEmoji = el ? el.textContent.trim().charAt(0) : null;
 
@@ -2735,7 +2699,6 @@ async function startRecording() {
 
         MEDIA_RECORDER.start();
 
-        // UI
         document.getElementById('recording-indicator').classList.add('active');
         document.getElementById('chat-input-row').style.display = 'none';
         
@@ -2744,7 +2707,6 @@ async function startRecording() {
             document.getElementById('recording-time').textContent = formatDuration(sec);
         }, 100);
 
-        // 60 sekunddan keyin avtomatik to'xtatish
         setTimeout(() => {
             if (MEDIA_RECORDER && MEDIA_RECORDER.state === 'recording') {
                 MEDIA_RECORDER.stop();
@@ -2754,13 +2716,6 @@ async function startRecording() {
 
     } catch (e) {
         toast('Mikrofonga ruxsat kerak');
-    }
-}
-
-function stopRecording() {
-    if (MEDIA_RECORDER && MEDIA_RECORDER.state === 'recording') {
-        MEDIA_RECORDER.stop();
-        resetRecordingUI();
     }
 }
 
@@ -2875,7 +2830,6 @@ function closeImageViewer() {
     document.getElementById('image-viewer').classList.remove('active');
 }
 
-// ==================== PROFIL RASM ====================
 function changeProfilePhoto() {
     document.getElementById('profile-photo-input').click();
 }
@@ -3016,7 +2970,6 @@ function connectWS() {
             }
 
             if (data.type === 'read') {
-                // ✓✓ ga o'tish
                 document.querySelectorAll('.msg-wrap.out .check').forEach(el => {
                     el.classList.add('read');
                     el.querySelector('use').setAttribute('href', '#icon-check-double');
@@ -3041,7 +2994,6 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Rasm yuborish
     const fd = new FormData();
     fd.append('file', file);
     fd.append('turi', 'image');
@@ -3055,7 +3007,6 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
         const data = await res.json();
         if (!data.success) { toast('Yuklashda xato'); return; }
 
-        // Chatda bo'lsa — chatga yuborish
         if (CURRENT_CHAT) {
             const msgRes = await apiFetch('/api/messages/send', {
                 method: 'POST',
@@ -3079,7 +3030,6 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
                 });
             }
         } else {
-            // Rasmlar bo'limida saqlash
             const fd2 = new FormData();
             fd2.append('file', file);
             fd2.append('nom', file.name);
@@ -3234,6 +3184,14 @@ document.addEventListener('keydown', (e) => {
     else if (e.key === '%') calcOp('%');
     else if (e.key === '.') calcNum('.');
 });
+
+// ==================== UTILS ====================
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 </script>
 </body>
 </html>
