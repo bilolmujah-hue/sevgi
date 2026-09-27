@@ -62,6 +62,28 @@ body {
     transition: background 0.3s, color 0.3s;
 }
 
+/* SVG ikonkalar */
+.svg-icon {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: block;
+}
+
+.svg-icon-lg {
+    width: 28px;
+    height: 28px;
+}
+
+.svg-icon-sm {
+    width: 18px;
+    height: 18px;
+}
+
 /* ==================== KALKULYATOR ==================== */
 #calc-view {
     display: flex;
@@ -121,6 +143,9 @@ body {
     cursor: pointer;
     transition: all 0.12s ease;
     font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .calc-btn:active {
@@ -193,9 +218,15 @@ body {
 }
 
 .modal-box .icon {
-    font-size: 42px;
-    text-align: center;
-    margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: var(--primary);
+}
+
+.modal-box .icon svg {
+    width: 56px;
+    height: 56px;
 }
 
 .modal-box h3 {
@@ -306,7 +337,6 @@ body {
     background: transparent;
     color: var(--text);
     cursor: pointer;
-    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -466,6 +496,14 @@ body {
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
+.message.emoji-only {
+    font-size: 42px;
+    line-height: 1;
+    background: transparent !important;
+    box-shadow: none;
+    padding: 4px;
+}
+
 @keyframes msgIn {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
@@ -542,7 +580,6 @@ body.dark .message.out .vaqt {
     border-radius: 50%;
     background: var(--primary);
     color: white;
-    font-size: 20px;
     cursor: pointer;
     flex-shrink: 0;
     display: flex;
@@ -553,6 +590,120 @@ body.dark .message.out .vaqt {
 
 .send-btn:active {
     transform: scale(0.92);
+}
+
+.send-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* ==================== EMOJI PICKER ==================== */
+#emoji-picker {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+    z-index: 200;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    max-height: 55vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#emoji-picker.active {
+    transform: translateY(0);
+}
+
+.emoji-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.emoji-header h4 {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.emoji-header button {
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.emoji-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+}
+
+.emoji-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.emoji-tab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--bg-2);
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.emoji-tab.active {
+    background: var(--primary);
+    color: white;
+}
+
+.emoji-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
+
+.emoji-item {
+    aspect-ratio: 1;
+    border: none;
+    background: transparent;
+    font-size: 26px;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: transform 0.12s, background 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.emoji-item:active {
+    transform: scale(1.3);
+    background: var(--bg-2);
 }
 
 /* ==================== BOTTOM NAV ==================== */
@@ -586,12 +737,18 @@ body.dark .message.out .vaqt {
     transition: color 0.15s;
 }
 
-.nav-btn .icon {
-    font-size: 24px;
-}
-
 .nav-btn.active {
     color: var(--primary);
+}
+
+.nav-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 /* ==================== PHOTOS GRID ==================== */
@@ -670,19 +827,21 @@ body.dark .message.out .vaqt {
 }
 
 .profile-avatar::after {
-    content: '📷';
+    content: '';
     position: absolute;
     bottom: 4px;
     right: 4px;
     background: var(--bg);
     border-radius: 50%;
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
     box-shadow: var(--shadow);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .profile-name {
@@ -714,13 +873,29 @@ body.dark .message.out .vaqt {
 }
 
 .profile-row .label {
-    color: var(--text-2);
+    color: var(--text);
     font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+}
+
+.profile-row .label svg {
+    width: 22px;
+    height: 22px;
+    color: var(--primary);
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .profile-row .value {
+    color: var(--text-2);
     font-weight: 500;
-    font-size: 15px;
+    font-size: 14px;
 }
 
 /* ==================== SEARCH MODAL ==================== */
@@ -799,15 +974,28 @@ body.dark .message.out .vaqt {
 }
 
 .empty-state .icon {
-    font-size: 56px;
+    display: flex;
+    justify-content: center;
     margin-bottom: 16px;
-    opacity: 0.6;
+    opacity: 0.4;
+    color: var(--text-2);
+}
+
+.empty-state .icon svg {
+    width: 64px;
+    height: 64px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .empty-state .title {
     font-size: 17px;
     font-weight: 600;
     margin-bottom: 6px;
+    color: var(--text);
 }
 
 .empty-state .desc {
@@ -817,6 +1005,114 @@ body.dark .message.out .vaqt {
 </style>
 </head>
 <body>
+
+<!-- ==================== SVG IKONKALAR (YASHIRIN) ==================== -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Uy / Chatlar -->
+    <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+    </symbol>
+    <!-- Chat bubble -->
+    <symbol id="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </symbol>
+    <!-- Rasm -->
+    <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+    </symbol>
+    <!-- Foydalanuvchi / Profil -->
+    <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+    </symbol>
+    <!-- Qidiruv -->
+    <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </symbol>
+    <!-- Oy (tungi rejim) -->
+    <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </symbol>
+    <!-- Quyosh (kunduzgi rejim) -->
+    <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </symbol>
+    <!-- Qulf (parol) -->
+    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </symbol>
+    <!-- Yuborish -->
+    <symbol id="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+    </symbol>
+    <!-- Skrepka (fayl) -->
+    <symbol id="icon-paperclip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+    </symbol>
+    <!-- Smile (emoji) -->
+    <symbol id="icon-smile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+        <line x1="9" y1="9" x2="9.01" y2="9"/>
+        <line x1="15" y1="9" x2="15.01" y2="9"/>
+    </symbol>
+    <!-- Orqaga -->
+    <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+    </symbol>
+    <!-- Uch nuqta -->
+    <symbol id="icon-more-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="1"/>
+        <circle cx="12" cy="5" r="1"/>
+        <circle cx="12" cy="19" r="1"/>
+    </symbol>
+    <!-- Chiqish -->
+    <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </symbol>
+    <!-- Kamera -->
+    <symbol id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+    </symbol>
+    <!-- Bloklash -->
+    <symbol id="icon-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+    </symbol>
+    <!-- X (yopish) -->
+    <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+    </symbol>
+    <!-- Chatlar yo'q (katta) -->
+    <symbol id="icon-chat-empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+    </symbol>
+    <!-- Rasm yo'q (katta) -->
+    <symbol id="icon-image-empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+    </symbol>
+</svg>
 
 <!-- ==================== KALKULYATOR ==================== -->
 <div id="calc-view">
@@ -854,7 +1150,9 @@ body.dark .message.out .vaqt {
 <!-- ==================== PAROL MODAL ==================== -->
 <div id="verify-modal" class="modal">
     <div class="modal-box">
-        <div class="icon">🔐</div>
+        <div class="icon">
+            <svg><use href="#icon-lock"/></svg>
+        </div>
         <h3>Maxfiy kirish</h3>
         <div class="subtitle">5 xonalik parolingizni kiriting</div>
         <input type="tel" id="verify-input" placeholder="00000" maxlength="5" inputmode="numeric" autocomplete="off">
@@ -868,24 +1166,28 @@ body.dark .message.out .vaqt {
     <header class="app-header">
         <div class="avatar" id="header-avatar" onclick="switchTab('profile')">U</div>
         <div class="name" id="header-name">Foydalanuvchi</div>
-        <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
-        <button class="icon-btn" onclick="openSearch()">🔍</button>
+        <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Tungi rejim">
+            <svg class="svg-icon"><use href="#icon-moon" id="theme-icon"/></svg>
+        </button>
+        <button class="icon-btn" onclick="openSearch()" title="Qidiruv">
+            <svg class="svg-icon"><use href="#icon-search"/></svg>
+        </button>
     </header>
 
     <div class="app-content">
         <div class="tab-content active" id="tab-chats">
             <div id="chat-list"></div>
             <div id="empty-chats" class="empty-state" style="display:none;">
-                <div class="icon">💬</div>
+                <div class="icon"><svg><use href="#icon-chat-empty"/></svg></div>
                 <div class="title">Chatlar yo'q</div>
-                <div class="desc">🔍 tugmasi orqali odam qidiring</div>
+                <div class="desc">Qidiruv tugmasi orqali odam toping</div>
             </div>
         </div>
 
         <div class="tab-content" id="tab-photos">
             <div class="photos-grid" id="photos-grid"></div>
             <div id="empty-photos" class="empty-state" style="display:none;">
-                <div class="icon">🖼️</div>
+                <div class="icon"><svg><use href="#icon-image-empty"/></svg></div>
                 <div class="title">Rasmlar yo'q</div>
                 <div class="desc">+ tugmasi orqali qo'shing</div>
             </div>
@@ -898,19 +1200,31 @@ body.dark .message.out .vaqt {
                 <div class="profile-username" id="profile-username">@username</div>
 
                 <div class="profile-row" onclick="changeProfilePhoto()">
-                    <span class="label">📷 Profil rasmi</span>
+                    <span class="label">
+                        <svg><use href="#icon-camera"/></svg>
+                        Profil rasmi
+                    </span>
                     <span class="value">O'zgartirish</span>
                 </div>
                 <div class="profile-row" onclick="openSearch()">
-                    <span class="label">🔍 Qidiruv</span>
+                    <span class="label">
+                        <svg><use href="#icon-search"/></svg>
+                        Qidiruv
+                    </span>
                     <span class="value">Username</span>
                 </div>
                 <div class="profile-row" onclick="toggleTheme()">
-                    <span class="label">🌓 Tungi rejim</span>
+                    <span class="label">
+                        <svg><use href="#icon-moon"/></svg>
+                        Tungi rejim
+                    </span>
                     <span class="value" id="theme-value">Yo'q</span>
                 </div>
                 <div class="profile-row" onclick="logout()">
-                    <span class="label">🚪 Chiqish</span>
+                    <span class="label">
+                        <svg><use href="#icon-logout"/></svg>
+                        Chiqish
+                    </span>
                     <span class="value">→</span>
                 </div>
             </div>
@@ -919,15 +1233,15 @@ body.dark .message.out .vaqt {
 
     <nav class="bottom-nav">
         <button class="nav-btn active" data-tab="chats" onclick="switchTab('chats')">
-            <span class="icon">💬</span>
+            <svg><use href="#icon-chat"/></svg>
             <span>Chatlar</span>
         </button>
         <button class="nav-btn" data-tab="photos" onclick="switchTab('photos')">
-            <span class="icon">🖼️</span>
+            <svg><use href="#icon-image"/></svg>
             <span>Rasmlar</span>
         </button>
         <button class="nav-btn" data-tab="profile" onclick="switchTab('profile')">
-            <span class="icon">👤</span>
+            <svg><use href="#icon-user"/></svg>
             <span>Profil</span>
         </button>
     </nav>
@@ -936,22 +1250,57 @@ body.dark .message.out .vaqt {
 <!-- ==================== CHAT OYNASI ==================== -->
 <div id="chat-window">
     <header class="chat-header">
-        <button class="icon-btn" onclick="closeChat()">←</button>
+        <button class="icon-btn" onclick="closeChat()">
+            <svg class="svg-icon"><use href="#icon-arrow-left"/></svg>
+        </button>
         <div class="avatar" id="chat-avatar" style="width:42px;height:42px;font-size:18px;">U</div>
         <div class="chat-header-info">
             <div class="name" id="chat-name"></div>
             <div class="status" id="chat-status">oxirgi faollik yaqinda</div>
         </div>
-        <button class="icon-btn" onclick="showChatMenu()">⋮</button>
+        <button class="icon-btn" onclick="showChatMenu()">
+            <svg class="svg-icon"><use href="#icon-more-vertical"/></svg>
+        </button>
     </header>
     <div id="messages"></div>
     <div class="typing" id="typing-indicator" style="display:none;">yozayapti...</div>
     <div class="chat-input">
-        <button class="icon-btn" onclick="attachFile()">📎</button>
+        <button class="icon-btn" onclick="openEmojiPicker()" title="Emoji">
+            <svg class="svg-icon"><use href="#icon-smile"/></svg>
+        </button>
+        <button class="icon-btn" onclick="attachFile()" title="Fayl">
+            <svg class="svg-icon"><use href="#icon-paperclip"/></svg>
+        </button>
         <input type="text" id="message-input" placeholder="Xabar yozing..."
                onkeypress="if(event.key==='Enter') sendMessage()"
                oninput="onTyping()">
-        <button class="send-btn" onclick="sendMessage()">➤</button>
+        <button class="send-btn" onclick="sendMessage()" title="Yuborish">
+            <svg><use href="#icon-send"/></svg>
+        </button>
+    </div>
+</div>
+
+<!-- ==================== EMOJI PICKER ==================== -->
+<div id="emoji-picker">
+    <div class="emoji-header">
+        <h4>Emoji tanlang</h4>
+        <button onclick="closeEmojiPicker()">
+            <svg class="svg-icon-sm"><use href="#icon-x"/></svg>
+        </button>
+    </div>
+    <div class="emoji-tabs" id="emoji-tabs">
+        <button class="emoji-tab active" onclick="switchEmojiTab('smileys', this)">😀 Smileys</button>
+        <button class="emoji-tab" onclick="switchEmojiTab('gestures', this)">👋 Gestures</button>
+        <button class="emoji-tab" onclick="switchEmojiTab('hearts', this)">❤️ Hearts</button>
+        <button class="emoji-tab" onclick="switchEmojiTab('animals', this)">🐶 Animals</button>
+        <button class="emoji-tab" onclick="switchEmojiTab('food', this)">🍕 Food</button>
+        <button class="emoji-tab" onclick="switchEmojiTab('activity', this)">⚽ Activity</button>
+        <button class="emoji-tab" onclick="switchEmojiTab('travel', this)">✈️ Travel</button>
+        <button class="emoji-tab" onclick="switchEmojiTab('objects', this)">💡 Objects</button>
+        <button class="emoji-tab" onclick="switchEmojiTab('symbols', this)">💯 Symbols</button>
+    </div>
+    <div class="emoji-content">
+        <div class="emoji-grid" id="emoji-grid"></div>
     </div>
 </div>
 
@@ -972,7 +1321,6 @@ body.dark .message.out .vaqt {
 
 <script>
 // ==================== KONFIGURATSIYA ====================
-// 🔴 RAILWAY DOMENINGIZ:
 const API_URL = "https://sevgi-production.up.railway.app";
 
 let TOKEN = localStorage.getItem('token');
@@ -980,6 +1328,19 @@ let CURRENT_CHAT = null;
 let WS = null;
 let USER = null;
 let CHATS = [];
+
+// ==================== EMOJI MA'LUMOTLARI ====================
+const EMOJI_DATA = {
+    smileys: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
+    gestures: ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','🫀','🫁','🦷','🦴','👀','👁️','👅','👄','💋','🩸'],
+    hearts: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','♥️','💌','💋','😍','🥰','😘','😻','💑','💏','👨‍❤️‍👨','👩‍❤️‍👩','💐','🌹','🌷','🌺','🌸','🌼','🌻'],
+    animals: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐒','🐔','🐧','🐦','🐤','🐣','🐥','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🦧','🐘','🦛','🦏','🐪','🐫','🦒','🦘','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🦮','🐕‍🦺','🐈','🐈‍⬛','🪶','🐓','🦃','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦦','🦥','🐁','🐀','🐿️','🦔'],
+    food: ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🌽','🥕','🫒','🧄','🧅','🥔','🍠','🥐','🥯','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🦴','🌭','🍔','🍟','🍕','🫓','🥪','🥙','🧆','🌮','🌯','🫔','🥗','🥘','🫕','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯','🥛','🍼','🫖','☕','🍵','🧃','🥤','🧋','🍶','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾'],
+    activity: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','⛹️','🤺','🤾','🏌️','🏇','🧘','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🎪','🤹','🎭','🩰','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🎰','🧩'],
+    travel: ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🦯','🦽','🦼','🛴','🚲','🛵','🏍️','🛺','🚨','🚔','🚍','🚘','🚖','🚡','🚠','🚟','🚃','🚋','🚞','🚝','🚄','🚅','🚈','🚂','🚆','🚇','🚊','🚉','✈️','🛫','🛬','🛩️','💺','🛰️','🚀','🛸','🚁','🛶','⛵','🚤','🛥️','🛳️','⛴️','🚢','⚓','🪝','⛽','🚧','🚦','🚥','🚏','🗺️','🗿','🗽','🗼','🏰','🏯','🏟️','🎡','🎢','🎠','⛲','⛱️','🏖️','🏝️','🏜️','🌋','⛰️','🏔️','🗻','🏕️','⛺','🏠','🏡','🏘️','🏚️','🏗️','🏭','🏢','🏬','🏣','🏤','🏥','🏦','🏨','🏪','🏫','🏩','💒','🏛️','⛪','🕌','🕍','🛕','🕋','⛩️','🛤️','🛣️','🗾','🎑','🏞️','🌅','🌄','🌠','🎇','🎆','🌇','🌆','🏙️','🌃','🌌','🌉','🌁'],
+    objects: ['⌚','📱','📲','💻','⌨️','🖥️','🖨️','🖱️','🖲️','🕹️','🗜️','💽','💾','💿','📀','📼','📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🎙️','🎚️','🎛️','🧭','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🔌','💡','🔦','🕯️','🪔','🧯','🛢️','💸','💵','💴','💶','💷','🪙','💰','💳','💎','⚖️','🪜','🧰','🪛','🔧','🔨','⚒️','🛠️','⛏️','🪚','🔩','⚙️','🪤','🧱','⛓️','🧲','🔫','💣','🧨','🪓','🔪','🗡️','⚔️','🛡️','🚬','⚰️','🪦','⚱️','🏺','🔮','📿','🧿','💈','⚗️','🔭','🔬','🕳️','🩹','🩺','💊','💉','🩸','🧬','🦠','🧫','🧪','🌡️','🧹','🪠','🧺','🧻','🚽','🚰','🚿','🛁','🛀','🧼','🪥','🪒','🧽','🪣','🧴','🛎️','🔑','🗝️','🚪','🪑','🛋️','🛏️','🛌','🧸','🪆','🖼️','🪞','🪟','🛍️','🛒','🎁','🎈','🎏','🎀','🪄','🪅','🎊','🎉','🎎','🏮','🎐','🧧','✉️','📩','📨','📧','💌','📥','📤','📦','🏷️','🪧','📪','📫','📬','📭','📮','📯','📜','📃','📄','📑','🧾','📊','📈','📉','🗒️','🗓️','📆','📅','🗑️','📇','🗃️','🗳️','🗄️','📋','📁','📂','🗂️','🗞️','📰','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🧷','🔗','📎','🖇️','📐','📏','🧮','📌','📍','✂️','🖊️','🖋️','✒️','🖌️','🖍️','📝','✏️','🔍','🔎','🔏','🔐','🔒','🔓'],
+    symbols: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🈳','🈂️','🛂','🛃','🛄','🛅','🚹','🚺','🚼','🚻','🚮','🎦','📶','🈁','🔣','ℹ️','🔤','🔡','🔠','🆖','🆗','🆙','🆒','🆕','🆓','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🔢','#️⃣','*️⃣','⏏️','▶️','⏸️','⏯️','⏹️','⏺️','⏭️','⏮️','⏩','⏪','⏫','⏬','◀️','🔼','🔽','➡️','⬅️','⬆️','⬇️','↗️','↘️','↙️','↖️','↕️','↔️','↪️','↩️','⤴️','⤵️','🔀','🔁','🔂','🔄','🔃','🎵','🎶','➕','➖','➗','✖️','♾️','💲','💱','™️','©️','®️','〰️','➰','➿','🔚','🔙','🔛','🔝','🔜','✔️','☑️','🔘','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔺','🔻','🔸','🔹','🔶','🔷','🔳','🔲','▪️','▫️','◾','◽','◼️','◻️','🟥','🟧','🟨','🟩','🟦','🟪','⬛','⬜','🟫','🔈','🔇','🔉','🔊','🔔','🔕','📣','📢','💬','💭','🗯️','♠️','♣️','♥️','♦️','🃏','🎴','🀄','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚','🕛']
+};
 
 // ==================== KALKULYATOR ====================
 let calcIfoda = '';
@@ -1036,7 +1397,6 @@ function calcBack() {
     updateCalcDisplay();
 }
 
-// 🎯 MAXFIY SIGNAL: "00000" (5 ta nol)
 function isMaxfiySignal(ifoda) {
     const cleaned = ifoda.replace(/\s/g, '');
     return cleaned === '00000';
@@ -1045,15 +1405,11 @@ function isMaxfiySignal(ifoda) {
 function calcEqual() {
     if (!calcIfoda) return;
 
-    // 🎯 MAXFIY SIGNAL: 00000 + =
     if (isMaxfiySignal(calcIfoda)) {
-        // Kalkulyatorni tozalash
         calcIfoda = '';
         calcNatija = '0';
         oxirgiTeng = false;
         updateCalcDisplay();
-
-        // Parol modalini ochish
         setTimeout(() => showVerifyModal(), 200);
         return;
     }
@@ -1088,6 +1444,44 @@ function calcEqual() {
     }
 }
 
+// ==================== EMOJI PICKER ====================
+let currentEmojiTab = 'smileys';
+
+function openEmojiPicker() {
+    renderEmojis(currentEmojiTab);
+    document.getElementById('emoji-picker').classList.add('active');
+}
+
+function closeEmojiPicker() {
+    document.getElementById('emoji-picker').classList.remove('active');
+}
+
+function switchEmojiTab(tab, btn) {
+    currentEmojiTab = tab;
+    document.querySelectorAll('.emoji-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderEmojis(tab);
+}
+
+function renderEmojis(tab) {
+    const grid = document.getElementById('emoji-grid');
+    grid.innerHTML = '';
+    const emojis = EMOJI_DATA[tab] || [];
+    emojis.forEach(emoji => {
+        const btn = document.createElement('button');
+        btn.className = 'emoji-item';
+        btn.textContent = emoji;
+        btn.onclick = () => insertEmoji(emoji);
+        grid.appendChild(btn);
+    });
+}
+
+function insertEmoji(emoji) {
+    const input = document.getElementById('message-input');
+    input.value += emoji;
+    input.focus();
+}
+
 // ==================== PAROL MODAL ====================
 function showVerifyModal() {
     document.getElementById('verify-input').value = '';
@@ -1115,10 +1509,7 @@ async function verifySubmit() {
         const res = await fetch(API_URL + '/api/auth/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                misol: '',
-                javob: '0.' + parol
-            })
+            body: JSON.stringify({ misol: '', javob: '0.' + parol })
         });
 
         const data = await res.json();
@@ -1159,7 +1550,7 @@ async function openApp() {
     const isDark = localStorage.getItem('dark') === '1' || res.tungi_rejim;
     if (isDark) {
         document.body.classList.add('dark');
-        document.getElementById('theme-btn').textContent = '☀️';
+        document.getElementById('theme-icon').setAttribute('href', '#icon-sun');
         document.getElementById('theme-value').textContent = 'Ha';
     } else {
         document.getElementById('theme-value').textContent = "Yo'q";
@@ -1256,6 +1647,7 @@ async function openChat(chat) {
     updateAvatar('chat-avatar', chat.profil_rasm, chat.ism);
 
     document.getElementById('chat-window').classList.add('active');
+    closeEmojiPicker();
 
     await loadMessages();
     setTimeout(() => document.getElementById('message-input').focus(), 200);
@@ -1275,7 +1667,19 @@ async function loadMessages() {
     box.scrollTop = box.scrollHeight;
 }
 
+// 🎯 EMOJI ONLY TEKSHIRISH
+function isEmojiOnly(text) {
+    // Emoji Unicode diapazoni
+    const emojiRegex = /^[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{FE0F}\u{200D}\u{20E3}]+$/u;
+    return emojiRegex.test(text);
+}
+
 function addMessageToDOM(m, scroll = true) {
+    // ⚡ Dublikat tekshirish
+    if (document.querySelector(`.message[data-id="${m.id}"]`)) {
+        return;
+    }
+
     const box = document.getElementById('messages');
     const div = document.createElement('div');
     div.className = 'message ' + (m.ozimniki ? 'out' : 'in');
@@ -1288,12 +1692,21 @@ function addMessageToDOM(m, scroll = true) {
     }
 
     if (m.matn) {
-        content += escapeHtml(m.matn);
+        // Emoji-only tekshirish
+        if (isEmojiOnly(m.matn.trim())) {
+            div.classList.add('emoji-only');
+            content += m.matn;
+        } else {
+            content += escapeHtml(m.matn);
+        }
     }
 
     const vaqt = new Date(m.vaqt).toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' });
 
-    content += `<span class="vaqt">${vaqt}${m.tahrirlangan ? ' ✏️' : ''}</span>`;
+    // Emoji-only bo'lsa vaqt ko'rsatmaymiz
+    if (!div.classList.contains('emoji-only')) {
+        content += `<span class="vaqt">${vaqt}${m.tahrirlangan ? ' ✏️' : ''}</span>`;
+    }
 
     div.innerHTML = content;
 
@@ -1324,6 +1737,7 @@ function escapeHtml(text) {
 
 function closeChat() {
     document.getElementById('chat-window').classList.remove('active');
+    closeEmojiPicker();
     CURRENT_CHAT = null;
     loadChats();
 }
@@ -1335,6 +1749,7 @@ async function sendMessage() {
     if (!matn || !CURRENT_CHAT) return;
 
     input.value = '';
+    closeEmojiPicker();
 
     const res = await apiFetch('/api/messages/send', {
         method: 'POST',
@@ -1346,6 +1761,11 @@ async function sendMessage() {
     });
 
     if (res && res.success) {
+        // ⚡ Dublikat tekshiruvi
+        if (document.querySelector(`.message[data-id="${res.id}"]`)) {
+            return;
+        }
+        
         addMessageToDOM({
             id: res.id,
             from_chat: USER.chat_id,
@@ -1440,7 +1860,7 @@ function changeProfilePhoto() {
 async function toggleTheme() {
     document.body.classList.toggle('dark');
     const isDark = document.body.classList.contains('dark');
-    document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+    document.getElementById('theme-icon').setAttribute('href', isDark ? '#icon-sun' : '#icon-moon');
     document.getElementById('theme-value').textContent = isDark ? 'Ha' : "Yo'q";
     localStorage.setItem('dark', isDark ? '1' : '0');
 
@@ -1529,6 +1949,17 @@ function startChat(u) {
 function connectWS() {
     if (!TOKEN) return;
 
+    // ⚡ Eski WebSocket ni yopish
+    if (WS) {
+        try {
+            WS.onclose = null;
+            WS.onmessage = null;
+            WS.onerror = null;
+            WS.close();
+        } catch (e) {}
+        WS = null;
+    }
+
     const wsUrl = API_URL.replace('https://', 'wss://').replace('http://', 'ws://');
     try {
         WS = new WebSocket(`${wsUrl}/ws/${TOKEN}`);
@@ -1571,7 +2002,8 @@ function connectWS() {
     };
 
     WS.onclose = () => {
-        setTimeout(connectWS, 3000);
+        WS = null;
+        if (TOKEN) setTimeout(connectWS, 3000);
     };
 
     WS.onerror = () => {};
@@ -1680,6 +2112,14 @@ function toast(msg) {
 let tapTimes = [];
 
 document.addEventListener('touchend', (e) => {
+    // Emoji picker ochiq bo'lsa — yopish
+    if (document.getElementById('emoji-picker').classList.contains('active')) {
+        if (!e.target.closest('#emoji-picker')) {
+            closeEmojiPicker();
+            return;
+        }
+    }
+
     const now = Date.now();
     tapTimes.push(now);
     tapTimes = tapTimes.filter(t => now - t < 300);
@@ -1703,6 +2143,7 @@ function hideToCalculator() {
     document.getElementById('verify-modal').classList.remove('active');
     document.getElementById('search-modal').classList.remove('active');
     document.getElementById('app-view').classList.remove('active');
+    closeEmojiPicker();
 
     document.getElementById('messages').innerHTML = '';
     document.getElementById('chat-list').innerHTML = '';
@@ -1729,7 +2170,7 @@ function hideToCalculator() {
 window.addEventListener('load', () => {
     if (localStorage.getItem('dark') === '1') {
         document.body.classList.add('dark');
-        document.getElementById('theme-btn').textContent = '☀️';
+        document.getElementById('theme-icon').setAttribute('href', '#icon-sun');
         document.getElementById('theme-value').textContent = 'Ha';
     }
 
@@ -1743,7 +2184,7 @@ window.addEventListener('load', () => {
     updateCalcDisplay();
 });
 
-// Klaviatura (kompyuter uchun)
+// Klaviatura
 document.addEventListener('keydown', (e) => {
     if (document.getElementById('calc-view').style.display === 'none') return;
 
