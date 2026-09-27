@@ -202,11 +202,12 @@ async def verify_parol(data: VerifyRequest, request: Request):
         if not topilgan:
             return {"success": False, "xato": "Parol noto'g'ri"}
 
-        # ⚡ Eski sessionlarni tozalash
+        # Eski sessionlarni tozalash
         await db.clear_user_sessions(topilgan)
 
         token = create_token(topilgan)
-        await db.save_session(token, topilgan, request.client.host if request.client else None)
+        ip = request.client.host if request.client else None
+        await db.save_session(token, topilgan, ip)
 
         return {"success": True, "token": token, "chat_id": topilgan}
 
@@ -247,7 +248,7 @@ async def get_profile(user=Depends(get_current_user)):
 
 @app.put("/api/profile")
 async def update_profile(data: ProfileUpdateRequest, user=Depends(get_current_user)):
-    """Profilni yangilash"""
+    """Profilni yangilash (ism, familya, tug'ilgan kun, bio)"""
     try:
         tugilgan_kun = None
         if data.tugilgan_kun:
@@ -279,7 +280,6 @@ async def upload_profile_photo(
         if ext not in config.ALLOWED_EXTENSIONS:
             return {"success": False, "xato": f"Faqat rasm: {', '.join(config.ALLOWED_EXTENSIONS)}"}
 
-        # ⚡ Fayl hajmi tekshirish
         contents = await file.read()
         if len(contents) > config.MAX_PHOTO_SIZE:
             mb = config.MAX_PHOTO_SIZE // 1024 // 1024
@@ -311,14 +311,45 @@ async def toggle_tungi_rejim(user=Depends(get_current_user)):
 
 @app.post("/api/profile/online")
 async def set_online(user=Depends(get_current_user)):
+    """Online statusni o'rnatish"""
     await db.set_online(user['chat_id'], True)
+    try:
+        await manager.broadcast_online(user['chat_id'], True)
+    except Exception:
+        pass
     return {"success": True}
 
 
 @app.post("/api/profile/offline")
-async def set_offline(user=Depends(get_current_user)):
-    await db.set_online(user['chat_id'], False)
-    return {"success": True}
+async def set_offline(request: Request, authorization: str = Header(None)):
+    """
+    Offline statusni o'rnatish
+    Token header yoki query string orqali (sendBeacon uchun)
+    """
+    try:
+        chat_id = None
+
+        # 1) Authorization header orqali
+        if authorization and authorization.startswith("Bearer "):
+            chat_id = verify_token(authorization.replace("Bearer ", ""))
+
+        # 2) Query string orqali (sendBeacon uchun)
+        if not chat_id:
+            token = request.query_params.get("token")
+            if token:
+                chat_id = verify_token(token)
+
+        if chat_id:
+            await db.set_online(chat_id, False)
+            try:
+                await manager.broadcast_online(chat_id, False)
+            except Exception:
+                pass
+
+        return {"success": True}
+    except Exception as e:
+        print(f"⚠️ set_offline xatosi: {e}")
+        return {"success": True}
 
 
 # ==================== QIDIRUV ====================
@@ -359,6 +390,7 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
 
 @app.get("/api/chats")
 async def get_chats(user=Depends(get_current_user)):
+    """Chat ro'yxati (o'qilmagan soni bilan)"""
     async with db.pool.acquire() as conn:
         chats = await conn.fetch("""
             SELECT DISTINCT
@@ -413,13 +445,14 @@ async def get_messages(
     offset: int = 0,
     user=Depends(get_current_user)
 ):
+    """Chatdagi xabarlar (reactions, reply bilan)"""
     await db.mark_as_read(chat_id, user['chat_id'])
     xabarlar = await db.get_messages(user['chat_id'], chat_id, limit, offset)
 
     msg_ids = [m['id'] for m in xabarlar]
     reactions_map = await db.get_reactions_for_messages(msg_ids)
 
-    # Reply ma'lumotlarini olish
+    # Reply ma'lumotlari
     reply_ids = [m['reply_to_id'] for m in xabarlar if m['reply_to_id']]
     reply_map = {}
     if reply_ids:
@@ -449,7 +482,7 @@ async def get_messages(
             "reactions": reactions_map.get(m['id'], []),
             "reply_to": ({
                 "id": m['reply_to_id'],
-                "text": reply_map.get(m['reply_to_id'], {}).get('matn', ''),
+                "text": reply_map.get(m['reply_to_id'], {}).get('matn', '') or '',
                 "xabar_turi": reply_map.get(m['reply_to_id'], {}).get('xabar_turi', 'text'),
                 "ozimniki": reply_map.get(m['reply_to_id'], {}).get('from_chat') == user['chat_id']
             } if m['reply_to_id'] and m['reply_to_id'] in reply_map else None)
@@ -462,12 +495,15 @@ async def send_message(
     data: SendMessageRequest,
     user=Depends(get_current_user)
 ):
-    if await db.is_blocked(data.to_chat, user['chat_id']):
-        raise HTTPException(403, "Siz bloklangansiz")
+    """Xabar yuborish"""
+    # O'ziga o'zi (Saved Messages) ruxsat
+    if data.to_chat != user['chat_id']:
+        if await db.is_blocked(data.to_chat, user['chat_id']):
+            raise HTTPException(403, "Siz bloklangansiz")
 
-    qabul = await db.get_user(data.to_chat)
-    if not qabul or qabul['maxfiylik']:
-        raise HTTPException(404, "Foydalanuvchi mavjud emas")
+        qabul = await db.get_user(data.to_chat)
+        if not qabul or qabul['maxfiylik']:
+            raise HTTPException(404, "Foydalanuvchi mavjud emas")
 
     result = await db.add_message(
         user['chat_id'],
@@ -493,25 +529,27 @@ async def send_message(
                 "ozimniki": reply_msg['from_chat'] == data.to_chat
             }
 
-    await manager.send_to(data.to_chat, {
-        "type": "new_message",
-        "message": {
-            "id": result['id'],
-            "from_chat": user['chat_id'],
-            "to_chat": data.to_chat,
-            "matn": data.matn,
-            "rasm_url": data.rasm_url,
-            "ovoz_url": data.ovoz_url,
-            "ovoz_davomiyligi": data.ovoz_davomiyligi,
-            "stiker_id": data.stiker_id,
-            "xabar_turi": data.xabar_turi,
-            "vaqt": datetime.now().isoformat(),
-            "ozimniki": False,
-            "kurilgan": False,
-            "reactions": [],
-            "reply_to": reply_data
-        }
-    })
+    # Faqat o'ziga yubormasa — WebSocket
+    if data.to_chat != user['chat_id']:
+        await manager.send_to(data.to_chat, {
+            "type": "new_message",
+            "message": {
+                "id": result['id'],
+                "from_chat": user['chat_id'],
+                "to_chat": data.to_chat,
+                "matn": data.matn,
+                "rasm_url": data.rasm_url,
+                "ovoz_url": data.ovoz_url,
+                "ovoz_davomiyligi": data.ovoz_davomiyligi,
+                "stiker_id": data.stiker_id,
+                "xabar_turi": data.xabar_turi,
+                "vaqt": datetime.now().isoformat(),
+                "ozimniki": False,
+                "kurilgan": False,
+                "reactions": [],
+                "reply_to": reply_data
+            }
+        })
 
     return {"success": True, "id": result['id']}
 
@@ -525,7 +563,7 @@ async def upload_message_file(
     """Rasm yoki ovoz yuklash"""
     try:
         ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".bin"
-        
+
         if turi == "image":
             if ext not in config.ALLOWED_EXTENSIONS:
                 return {"success": False, "xato": "Faqat rasm fayllari"}
@@ -536,7 +574,7 @@ async def upload_message_file(
                 ext = ".webm"
         else:
             prefix = "file"
-        
+
         contents = await file.read()
         if len(contents) > config.MAX_PHOTO_SIZE * 2:
             return {"success": False, "xato": "Fayl juda katta"}
@@ -558,6 +596,7 @@ async def upload_message_file(
 
 @app.delete("/api/messages/{msg_id}")
 async def delete_message(msg_id: int, user=Depends(get_current_user)):
+    """Xabarni o'chirish"""
     result = await db.delete_message(msg_id, user['chat_id'])
     if not result:
         raise HTTPException(404, "Xabar topilmadi")
@@ -581,6 +620,7 @@ async def edit_message(
     data: EditMessageRequest,
     user=Depends(get_current_user)
 ):
+    """Xabarni tahrirlash"""
     result = await db.edit_message(msg_id, user['chat_id'], data.yangi_matn)
     if not result:
         raise HTTPException(404, "Xabar topilmadi")
@@ -598,21 +638,23 @@ async def edit_message(
 
 @app.post("/api/messages/react")
 async def add_reaction(data: ReactionRequest, user=Depends(get_current_user)):
+    """Xabarga reaction qo'shish"""
     await db.add_reaction(data.msg_id, user['chat_id'], data.emoji)
     reactions = await db.get_reactions(data.msg_id)
-    
+
     msg = await db.get_message_by_id(data.msg_id)
-    
+
     if msg:
         target = msg['from_chat'] if msg['from_chat'] != user['chat_id'] else msg['to_chat']
-        await manager.send_to(target, {
-            "type": "reaction_added",
-            "msg_id": data.msg_id,
-            "emoji": data.emoji,
-            "chat_id": user['chat_id'],
-            "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
-        })
-    
+        if target != user['chat_id']:
+            await manager.send_to(target, {
+                "type": "reaction_added",
+                "msg_id": data.msg_id,
+                "emoji": data.emoji,
+                "chat_id": user['chat_id'],
+                "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
+            })
+
     return {
         "success": True,
         "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
@@ -621,20 +663,22 @@ async def add_reaction(data: ReactionRequest, user=Depends(get_current_user)):
 
 @app.delete("/api/messages/react")
 async def remove_reaction(msg_id: int, emoji: str, user=Depends(get_current_user)):
+    """Reaction olib tashlash"""
     await db.remove_reaction(msg_id, user['chat_id'], emoji)
     reactions = await db.get_reactions(msg_id)
-    
+
     msg = await db.get_message_by_id(msg_id)
-    
+
     if msg:
         target = msg['from_chat'] if msg['from_chat'] != user['chat_id'] else msg['to_chat']
-        await manager.send_to(target, {
-            "type": "reaction_removed",
-            "msg_id": msg_id,
-            "emoji": emoji,
-            "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
-        })
-    
+        if target != user['chat_id']:
+            await manager.send_to(target, {
+                "type": "reaction_removed",
+                "msg_id": msg_id,
+                "emoji": emoji,
+                "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
+            })
+
     return {
         "success": True,
         "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
@@ -753,7 +797,7 @@ class ConnectionManager:
 
     async def connect(self, chat_id: int, websocket: WebSocket):
         await websocket.accept()
-        
+
         # Eski WS larni yopish
         if chat_id in self.connections:
             old_list = self.connections[chat_id][:]
@@ -763,12 +807,12 @@ class ConnectionManager:
                     await old_ws.close(code=1000)
                 except Exception:
                     pass
-        
+
         if chat_id not in self.connections:
             self.connections[chat_id] = []
         self.connections[chat_id].append(websocket)
         print(f"🔌 WebSocket ulandi: {chat_id}")
-        
+
         try:
             await db.set_online(chat_id, True)
             await self.broadcast_online(chat_id, True)
@@ -802,8 +846,10 @@ class ConnectionManager:
                     FROM messages
                     WHERE (from_chat = $1 OR to_chat = $1) AND ochirilgan = FALSE
                 """, chat_id)
-            
+
             for c in chats:
+                if c['cid'] == chat_id:
+                    continue
                 await self.send_to(c['cid'], {
                     "type": "user_status",
                     "chat_id": chat_id,
