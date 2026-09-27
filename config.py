@@ -25,7 +25,8 @@ class Config:
     )
 
     # ==================== WEB APP ====================
-    WEBAPP_URL = os.environ.get("WEBAPP_URL", "http://localhost:8000")
+    # ==================== WEB APP ====================
+    WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://sevgi-production.up.railway.app")
 
     # ==================== XAVFSIZLIK ====================
     JWT_SECRET = os.environ.get("JWT_SECRET", "bilolbek_super_secret_key_2024")
