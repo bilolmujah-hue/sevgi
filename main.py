@@ -35,13 +35,12 @@ from scheduler import start_scheduler
 from bot import bot as tg_bot, dp as tg_dp
 
 
-# ==================== LIFESPAN (startup/shutdown) ====================
+# ==================== LIFESPAN ====================
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Server ishga tushganda va to'xtaganda"""
 
-    # ========== STARTUP ==========
     print("🚀 Server ishga tushmoqda...")
 
     # 1. Database
@@ -56,7 +55,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️ Userbot ishga tushmadi: {e}")
 
-    # 4. 🤖 Telegram Bot (alohida task sifatida)
+    # 4. Telegram Bot (alohida task)
     async def run_bot():
         try:
             print("🤖 Bot ishga tushdi...")
@@ -68,13 +67,11 @@ async def lifespan(app: FastAPI):
 
     print("🚀 Server tayyor!")
 
-    # ========== YIELD (server ishlayapti) ==========
     yield
 
     # ========== SHUTDOWN ==========
     print("🛑 Server to'xtamoqda...")
 
-    # Botni to'xtatish
     bot_task.cancel()
     try:
         await bot_task
@@ -86,13 +83,11 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
-    # Userbotni to'xtatish
     try:
         await userbot.stop()
     except Exception:
         pass
 
-    # Database
     await db.close()
 
     print("👋 Server to'xtadi")
@@ -119,7 +114,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # ==================== PYDANTIC MODELLAR ====================
 
 class VerifyRequest(BaseModel):
-    misol: str
+    misol: str = ""
     javob: str
 
 
@@ -165,7 +160,12 @@ async def get_current_user(authorization: str = Header(None)):
 @app.get("/")
 async def root():
     """Web App HTML"""
-    return FileResponse("static/index.html")
+    if os.path.exists("static/index.html"):
+        return FileResponse("static/index.html")
+    return JSONResponse(
+        status_code=404,
+        content={"xato": "index.html topilmadi"}
+    )
 
 
 @app.get("/health")
@@ -179,44 +179,51 @@ async def health():
 @app.post("/api/auth/verify")
 async def verify_parol(data: VerifyRequest, request: Request):
     """
-    Kalkulyator natijasi + parol tekshirish
-    Format: "26.11100" -> javob=26, parol=11100
+    Faqat parol tekshirish (misol yo'q)
+    Format: "0.11122" yoki "11122"
     """
-    qismlar = data.javob.split(".")
-    if len(qismlar) != 2:
-        return {"success": False, "xato": "Format: javob.parol"}
+    try:
+        javob = data.javob.strip()
 
-    misol_javob = qismlar[0].strip()
-    parol = qismlar[1].strip()
+        # Format: "0.PAROL" yoki "PAROL"
+        if "." in javob:
+            qismlar = javob.split(".")
+            if len(qismlar) != 2:
+                return {"success": False, "xato": "Format xato"}
+            parol = qismlar[1].strip()
+        else:
+            parol = javob
 
-    # Misolni hisoblash
-    togr_javob, xato = hisobla(data.misol)
-    if xato:
-        return {"success": False, "xato": "Misol xato"}
+        # 5 xonalik son tekshirish
+        if not parol.isdigit() or len(parol) != 5:
+            return {"success": False, "xato": "5 xonalik parol kiriting"}
 
-    if str(togr_javob) != misol_javob:
-        return {"success": False, "xato": "Javob noto'g'ri"}
+        # Parolni bazadan qidirish
+        async with db.pool.acquire() as conn:
+            users = await conn.fetch(
+                "SELECT chat_id, parol_hash FROM users WHERE parol_hash IS NOT NULL"
+            )
 
-    # Parolni barcha foydalanuvchilardan qidirish
-    async with db.pool.acquire() as conn:
-        users = await conn.fetch(
-            "SELECT chat_id, parol_hash FROM users WHERE parol_hash IS NOT NULL"
-        )
+        topilgan = None
+        for u in users:
+            if tekshir_parol(parol, u['parol_hash']):
+                topilgan = u['chat_id']
+                break
 
-    topilgan = None
-    for u in users:
-        if tekshir_parol(parol, u['parol_hash']):
-            topilgan = u['chat_id']
-            break
+        if not topilgan:
+            return {"success": False, "xato": "Parol noto'g'ri"}
 
-    if not topilgan:
-        return {"success": False, "xato": "Parol noto'g'ri"}
+        # JWT token yaratish
+        token = create_token(topilgan)
+        await db.save_session(token, topilgan, request.client.host)
 
-    # JWT token yaratish
-    token = create_token(topilgan)
-    await db.save_session(token, topilgan, request.client.host)
+        return {"success": True, "token": token, "chat_id": topilgan}
 
-    return {"success": True, "token": token, "chat_id": topilgan}
+    except Exception as e:
+        print(f"❌ verify_parol xatosi: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "xato": f"Server xatosi: {str(e)}"}
 
 
 @app.post("/api/auth/logout")
@@ -323,7 +330,6 @@ async def get_chats(user=Depends(get_current_user)):
                 END AS chat_id
             FROM messages
             WHERE (from_chat = $1 OR to_chat = $1) AND ochirilgan = FALSE
-            ORDER BY chat_id
         """, user['chat_id'])
 
     natija = []
