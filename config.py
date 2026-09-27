@@ -18,15 +18,17 @@ class Config:
     USERBOT_SESSION = os.environ.get("USERBOT_SESSION", "userbot_session")
 
     # ==================== DATABASE ====================
-    # Railway avtomatik DATABASE_URL beradi
     DATABASE_URL = os.environ.get(
         "DATABASE_URL",
         "postgresql://postgres:root@localhost:5432/sevgi_db"
     )
 
     # ==================== WEB APP ====================
-    # ==================== WEB APP ====================
-    WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://sevgi-production.up.railway.app")
+    # 🔴 MUHIM: GitHub Pages URL (Telegram WebApp shu yerni ochadi)
+    WEBAPP_URL = os.environ.get(
+        "WEBAPP_URL",
+        "https://bilolmujah-hue.github.io/sevgi/"
+    )
 
     # ==================== XAVFSIZLIK ====================
     JWT_SECRET = os.environ.get("JWT_SECRET", "bilolbek_super_secret_key_2024")
@@ -46,7 +48,6 @@ class Config:
     MAXFIYLIK_KUN = 3
 
     # ==================== SERVER ====================
-    # ⚠️ Railway PORT ni avtomatik beradi!
     HOST = "0.0.0.0"
     PORT = int(os.environ.get("PORT", 8000))
 
