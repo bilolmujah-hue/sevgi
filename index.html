@@ -223,7 +223,7 @@ body {
     margin-bottom: 14px;
     outline: none;
     text-align: center;
-    letter-spacing: 4px;
+    letter-spacing: 8px;
     font-weight: 600;
     font-family: inherit;
     transition: border-color 0.2s;
@@ -231,6 +231,11 @@ body {
 
 .modal-box input:focus {
     border-color: var(--primary);
+}
+
+.modal-box input::placeholder {
+    letter-spacing: 8px;
+    color: var(--text-2);
 }
 
 .modal-box button {
@@ -852,7 +857,7 @@ body.dark .message.out .vaqt {
         <div class="icon">🔐</div>
         <h3>Maxfiy kirish</h3>
         <div class="subtitle">5 xonalik parolingizni kiriting</div>
-        <input type="tel" id="verify-input" placeholder="•••••" maxlength="5" inputmode="numeric" autocomplete="off">
+        <input type="tel" id="verify-input" placeholder="00000" maxlength="5" inputmode="numeric" autocomplete="off">
         <button onclick="verifySubmit()">Kirish</button>
         <button class="cancel" onclick="verifyCancel()">Bekor qilish</button>
     </div>
@@ -1031,17 +1036,24 @@ function calcBack() {
     updateCalcDisplay();
 }
 
-// 🎯 MAXFIY SIGNAL: 5 ta nuqta "....."
+// 🎯 MAXFIY SIGNAL: "00000" (5 ta nol)
 function isMaxfiySignal(ifoda) {
     const cleaned = ifoda.replace(/\s/g, '');
-    return cleaned === '.....';
+    return cleaned === '00000';
 }
 
 function calcEqual() {
     if (!calcIfoda) return;
 
-    // 🎯 MAXFIY SIGNAL
+    // 🎯 MAXFIY SIGNAL: 00000 + =
     if (isMaxfiySignal(calcIfoda)) {
+        // Kalkulyatorni tozalash
+        calcIfoda = '';
+        calcNatija = '0';
+        oxirgiTeng = false;
+        updateCalcDisplay();
+
+        // Parol modalini ochish
         setTimeout(() => showVerifyModal(), 200);
         return;
     }
@@ -1080,7 +1092,7 @@ function calcEqual() {
 function showVerifyModal() {
     document.getElementById('verify-input').value = '';
     document.getElementById('verify-modal').classList.add('active');
-    setTimeout(() => document.getElementById('verify-input').focus(), 200);
+    setTimeout(() => document.getElementById('verify-input').focus(), 300);
 }
 
 function verifyCancel() {
@@ -1119,7 +1131,7 @@ async function verifySubmit() {
             document.getElementById('verify-modal').classList.remove('active');
             await openApp();
         } else {
-            toast(data.xato || 'Parol noto\'g\'ri');
+            toast(data.xato || "Parol noto'g'ri");
             document.getElementById('verify-input').value = '';
         }
     } catch (e) {
@@ -1144,14 +1156,13 @@ async function openApp() {
     updateAvatar('header-avatar', res.profil_rasm, res.ism);
     updateAvatar('profile-avatar', res.profil_rasm, res.ism);
 
-    // Tungi rejim (localStorage + server)
     const isDark = localStorage.getItem('dark') === '1' || res.tungi_rejim;
     if (isDark) {
         document.body.classList.add('dark');
         document.getElementById('theme-btn').textContent = '☀️';
         document.getElementById('theme-value').textContent = 'Ha';
     } else {
-        document.getElementById('theme-value').textContent = 'Yo\'q';
+        document.getElementById('theme-value').textContent = "Yo'q";
     }
 
     await loadChats();
@@ -1482,7 +1493,6 @@ async function doSearch() {
         ? `<img src="${API_URL}${u.profil_rasm}">`
         : (u.ism || 'U')[0].toUpperCase();
 
-    // Xavfsiz JSON
     const userJson = JSON.stringify(u).replace(/'/g, "&apos;").replace(/"/g, '&quot;');
     box.innerHTML = `
         <div class="search-result" onclick='startChatFromJson(this)' data-user='${userJson}'>
@@ -1717,7 +1727,6 @@ function hideToCalculator() {
 
 // ==================== BOSHLANG'ICH ====================
 window.addEventListener('load', () => {
-    // Tungi rejim
     if (localStorage.getItem('dark') === '1') {
         document.body.classList.add('dark');
         document.getElementById('theme-btn').textContent = '☀️';
