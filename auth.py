@@ -1,25 +1,33 @@
 """
 Autentifikatsiya: JWT, parol hash
+passlib o'rniga to'g'ridan-to'g'ri bcrypt
 """
 
-from passlib.context import CryptContext
+import bcrypt
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from config import config
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_parol(parol: str) -> str:
     """Parolni hash qilish"""
-    return pwd_context.hash(parol)
+    # Parolni bytes ga aylantirish, 72 baytdan qisqartirish
+    parol_bytes = parol.encode('utf-8')[:72]
+    # Salt generatsiya qilish
+    salt = bcrypt.gensalt()
+    # Hash qilish
+    hashed = bcrypt.hashpw(parol_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def tekshir_parol(parol: str, hash_: str) -> bool:
     """Parolni tekshirish"""
     try:
-        return pwd_context.verify(parol, hash_)
-    except Exception:
+        parol_bytes = parol.encode('utf-8')[:72]
+        hash_bytes = hash_.encode('utf-8')
+        return bcrypt.checkpw(parol_bytes, hash_bytes)
+    except Exception as e:
+        print(f"❌ Parol tekshirishda xato: {e}")
         return False
 
 
