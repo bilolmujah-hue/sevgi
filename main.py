@@ -7,7 +7,7 @@ import os
 import uuid
 import shutil
 import asyncio
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from contextlib import asynccontextmanager
 
@@ -31,7 +31,6 @@ from calculator import hisobla
 from userbot import userbot
 from scheduler import start_scheduler
 
-# 🤖 Telegram Bot import
 from bot import bot as tg_bot, dp as tg_dp
 
 
@@ -39,23 +38,16 @@ from bot import bot as tg_bot, dp as tg_dp
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Server ishga tushganda va to'xtaganda"""
-
     print("🚀 Server ishga tushmoqda...")
 
-    # 1. Database
     await db.connect()
-
-    # 2. Scheduler
     start_scheduler()
 
-    # 3. Userbot
     try:
         await userbot.start()
     except Exception as e:
         print(f"⚠️ Userbot ishga tushmadi: {e}")
 
-    # 4. Telegram Bot (alohida task)
     async def run_bot():
         try:
             print("🤖 Bot ishga tushdi...")
@@ -66,12 +58,9 @@ async def lifespan(app: FastAPI):
     bot_task = asyncio.create_task(run_bot())
 
     print("🚀 Server tayyor!")
-
     yield
 
-    # ========== SHUTDOWN ==========
     print("🛑 Server to'xtamoqda...")
-
     bot_task.cancel()
     try:
         await bot_task
@@ -89,7 +78,6 @@ async def lifespan(app: FastAPI):
         pass
 
     await db.close()
-
     print("👋 Server to'xtadi")
 
 
@@ -97,7 +85,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Sevgi Bot API", lifespan=lifespan)
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -106,12 +93,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files
 os.makedirs(config.UPLOAD_DIR, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-# ==================== PYDANTIC MODELLAR ====================
+# ==================== MODELLAR ====================
 
 class VerifyRequest(BaseModel):
     misol: str = ""
@@ -122,6 +108,8 @@ class SendMessageRequest(BaseModel):
     to_chat: int
     matn: Optional[str] = None
     rasm_url: Optional[str] = None
+    ovoz_url: Optional[str] = None
+    ovoz_davomiyligi: Optional[int] = None
     stiker_id: Optional[str] = None
     xabar_turi: str = "text"
 
@@ -135,10 +123,21 @@ class SearchRequest(BaseModel):
     username: str
 
 
+class ReactionRequest(BaseModel):
+    msg_id: int
+    emoji: str
+
+
+class ProfileUpdateRequest(BaseModel):
+    ism: Optional[str] = None
+    familya: Optional[str] = None
+    tugilgan_kun: Optional[str] = None
+    bio: Optional[str] = None
+
+
 # ==================== AUTH DEPENDENCY ====================
 
 async def get_current_user(authorization: str = Header(None)):
-    """JWT token orqali foydalanuvchini olish"""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Token yo'q")
 
@@ -155,22 +154,17 @@ async def get_current_user(authorization: str = Header(None)):
     return user
 
 
-# ==================== ASOSIY SAHIFA ====================
+# ==================== ASOSIY ====================
 
 @app.get("/")
 async def root():
-    """Web App HTML"""
     if os.path.exists("static/index.html"):
         return FileResponse("static/index.html")
-    return JSONResponse(
-        status_code=404,
-        content={"xato": "index.html topilmadi"}
-    )
+    return JSONResponse(404, {"xato": "index.html topilmadi"})
 
 
 @app.get("/health")
 async def health():
-    """Server holati"""
     return {"status": "ok", "vaqt": datetime.now().isoformat()}
 
 
@@ -178,14 +172,9 @@ async def health():
 
 @app.post("/api/auth/verify")
 async def verify_parol(data: VerifyRequest, request: Request):
-    """
-    Faqat parol tekshirish (misol yo'q)
-    Format: "0.11122" yoki "11122"
-    """
     try:
         javob = data.javob.strip()
 
-        # Format: "0.PAROL" yoki "PAROL"
         if "." in javob:
             qismlar = javob.split(".")
             if len(qismlar) != 2:
@@ -194,11 +183,9 @@ async def verify_parol(data: VerifyRequest, request: Request):
         else:
             parol = javob
 
-        # 5 xonalik son tekshirish
         if not parol.isdigit() or len(parol) != 5:
             return {"success": False, "xato": "5 xonalik parol kiriting"}
 
-        # Parolni bazadan qidirish
         async with db.pool.acquire() as conn:
             users = await conn.fetch(
                 "SELECT chat_id, parol_hash FROM users WHERE parol_hash IS NOT NULL"
@@ -213,7 +200,6 @@ async def verify_parol(data: VerifyRequest, request: Request):
         if not topilgan:
             return {"success": False, "xato": "Parol noto'g'ri"}
 
-        # JWT token yaratish
         token = create_token(topilgan)
         await db.save_session(token, topilgan, request.client.host)
 
@@ -221,14 +207,11 @@ async def verify_parol(data: VerifyRequest, request: Request):
 
     except Exception as e:
         print(f"❌ verify_parol xatosi: {e}")
-        import traceback
-        traceback.print_exc()
         return {"success": False, "xato": f"Server xatosi: {str(e)}"}
 
 
 @app.post("/api/auth/logout")
 async def logout(authorization: str = Header(None)):
-    """Chiqish"""
     if authorization and authorization.startswith("Bearer "):
         token = authorization.replace("Bearer ", "")
         await db.delete_session(token)
@@ -239,7 +222,6 @@ async def logout(authorization: str = Header(None)):
 
 @app.get("/api/profile")
 async def get_profile(user=Depends(get_current_user)):
-    """Profil ma'lumotlari"""
     return {
         "chat_id": user['chat_id'],
         "ism": user['ism'],
@@ -248,8 +230,36 @@ async def get_profile(user=Depends(get_current_user)):
         "telefon": user['telefon'],
         "profil_rasm": user['profil_rasm'],
         "tungi_rejim": user['tungi_rejim'],
+        "tugilgan_kun": user['tugilgan_kun'].isoformat() if user['tugilgan_kun'] else None,
+        "bio": user['bio'],
+        "online": user['online'],
+        "oxirgi_faollik": user['oxirgi_faollik'].isoformat() if user['oxirgi_faollik'] else None,
         "sana": user['sana'].isoformat() if user['sana'] else None
     }
+
+
+@app.put("/api/profile")
+async def update_profile(data: ProfileUpdateRequest, user=Depends(get_current_user)):
+    """Profilni yangilash (ism, familya, tug'ilgan kun)"""
+    try:
+        tugilgan_kun = None
+        if data.tugilgan_kun:
+            try:
+                tugilgan_kun = datetime.strptime(data.tugilgan_kun, "%Y-%m-%d").date()
+            except ValueError:
+                return {"success": False, "xato": "Sana formati noto'g'ri (YYYY-MM-DD)"}
+
+        await db.update_profile(
+            user['chat_id'],
+            ism=data.ism,
+            familya=data.familya,
+            tugilgan_kun=tugilgan_kun,
+            bio=data.bio
+        )
+
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "xato": str(e)}
 
 
 @app.post("/api/profile/photo")
@@ -257,7 +267,6 @@ async def upload_profile_photo(
     file: UploadFile = File(...),
     user=Depends(get_current_user)
 ):
-    """Profil rasm yuklash"""
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in config.ALLOWED_EXTENSIONS:
         raise HTTPException(400, "Faqat rasm fayllari")
@@ -276,17 +285,29 @@ async def upload_profile_photo(
 
 @app.post("/api/profile/tungi-rejim")
 async def toggle_tungi_rejim(user=Depends(get_current_user)):
-    """Tungi rejimni almashtirish"""
     yangi = not user['tungi_rejim']
     await db.update_tungi_rejim(user['chat_id'], yangi)
     return {"success": True, "tungi_rejim": yangi}
+
+
+@app.post("/api/profile/online")
+async def set_online(user=Depends(get_current_user)):
+    """Online statusni o'rnatish"""
+    await db.set_online(user['chat_id'], True)
+    return {"success": True}
+
+
+@app.post("/api/profile/offline")
+async def set_offline(user=Depends(get_current_user)):
+    """Offline statusni o'rnatish"""
+    await db.set_online(user['chat_id'], False)
+    return {"success": True}
 
 
 # ==================== QIDIRUV ====================
 
 @app.post("/api/search")
 async def search_user(data: SearchRequest, user=Depends(get_current_user)):
-    """Username orqali qidirish"""
     topilgan = await db.get_user_by_username(data.username)
 
     if not topilgan:
@@ -310,6 +331,7 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
             "familya": topilgan['familya'],
             "username": topilgan['username'],
             "profil_rasm": topilgan['profil_rasm'],
+            "online": topilgan['online'],
             "oxirgi_faollik": topilgan['oxirgi_faollik'].isoformat()
                 if topilgan['oxirgi_faollik'] else None
         }
@@ -320,7 +342,7 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
 
 @app.get("/api/chats")
 async def get_chats(user=Depends(get_current_user)):
-    """Chat ro'yxati"""
+    """Chat ro'yxati (o'qilmagan soni bilan)"""
     async with db.pool.acquire() as conn:
         chats = await conn.fetch("""
             SELECT DISTINCT
@@ -347,17 +369,25 @@ async def get_chats(user=Depends(get_current_user)):
                 ORDER BY vaqt DESC LIMIT 1
             """, user['chat_id'], c['chat_id'])
 
+        # ⚡ O'qilmagan xabarlar soni
+        unread = await db.get_unread_count(c['chat_id'], user['chat_id'])
+
         natija.append({
             "chat_id": u['chat_id'],
             "ism": u['ism'],
             "familya": u['familya'],
             "username": u['username'],
             "profil_rasm": u['profil_rasm'],
+            "online": u['online'],
+            "oxirgi_faollik": u['oxirgi_faollik'].isoformat() if u['oxirgi_faollik'] else None,
             "oxirgi_xabar": last['matn'] if last else "",
             "oxirgi_vaqt": last['vaqt'].isoformat() if last else None,
-            "kurilgan": last['kurilgan'] if last else True
+            "kurilgan": last['kurilgan'] if last else True,
+            "unread_count": unread,
+            "oxirgi_xabar_turi": last['xabar_turi'] if last else 'text'
         })
 
+    # Eng oxirgi xabar bo'yicha tartiblash (yozgan chatlar tepaga)
     natija.sort(key=lambda x: x['oxirgi_vaqt'] or "", reverse=True)
     return {"chats": natija}
 
@@ -369,9 +399,15 @@ async def get_messages(
     offset: int = 0,
     user=Depends(get_current_user)
 ):
-    """Chatdagi xabarlar"""
+    """Chatdagi xabarlar (reactions bilan)"""
+    # O'qilgan deb belgilash
     await db.mark_as_read(chat_id, user['chat_id'])
+
     xabarlar = await db.get_messages(user['chat_id'], chat_id, limit, offset)
+
+    # Reactions olish
+    msg_ids = [m['id'] for m in xabarlar]
+    reactions_map = await db.get_reactions_for_messages(msg_ids)
 
     return {
         "messages": [{
@@ -380,12 +416,15 @@ async def get_messages(
             "to_chat": m['to_chat'],
             "matn": m['matn'],
             "rasm_url": m['rasm_url'],
+            "ovoz_url": m['ovoz_url'],
+            "ovoz_davomiyligi": m['ovoz_davomiyligi'],
             "stiker_id": m['stiker_id'],
             "xabar_turi": m['xabar_turi'],
             "tahrirlangan": m['tahrirlangan'],
             "kurilgan": m['kurilgan'],
             "vaqt": m['vaqt'].isoformat(),
-            "ozimniki": m['from_chat'] == user['chat_id']
+            "ozimniki": m['from_chat'] == user['chat_id'],
+            "reactions": reactions_map.get(m['id'], [])
         } for m in xabarlar]
     }
 
@@ -395,7 +434,6 @@ async def send_message(
     data: SendMessageRequest,
     user=Depends(get_current_user)
 ):
-    """Xabar yuborish"""
     if await db.is_blocked(data.to_chat, user['chat_id']):
         raise HTTPException(403, "Siz bloklangansiz")
 
@@ -409,7 +447,9 @@ async def send_message(
         data.matn,
         data.rasm_url,
         data.stiker_id,
-        data.xabar_turi
+        data.xabar_turi,
+        data.ovoz_url,
+        data.ovoz_davomiyligi
     )
 
     await manager.send_to(data.to_chat, {
@@ -420,19 +460,50 @@ async def send_message(
             "to_chat": data.to_chat,
             "matn": data.matn,
             "rasm_url": data.rasm_url,
+            "ovoz_url": data.ovoz_url,
+            "ovoz_davomiyligi": data.ovoz_davomiyligi,
             "stiker_id": data.stiker_id,
             "xabar_turi": data.xabar_turi,
             "vaqt": datetime.now().isoformat(),
-            "ozimniki": False
+            "ozimniki": False,
+            "kurilgan": False,
+            "reactions": []
         }
     })
 
     return {"success": True, "id": result['id']}
 
 
+@app.post("/api/messages/upload")
+async def upload_message_file(
+    file: UploadFile = File(...),
+    turi: str = Form("image"),
+    user=Depends(get_current_user)
+):
+    """Rasm yoki ovoz yuklash"""
+    ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".bin"
+
+    if turi == "image":
+        if ext not in config.ALLOWED_EXTENSIONS:
+            raise HTTPException(400, "Faqat rasm fayllari")
+        prefix = "img"
+    elif turi == "voice":
+        prefix = "voice"
+    else:
+        prefix = "file"
+
+    filename = f"{prefix}_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
+    filepath = os.path.join(config.UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    url = f"/static/uploads/{filename}"
+    return {"success": True, "url": url}
+
+
 @app.delete("/api/messages/{msg_id}")
 async def delete_message(msg_id: int, user=Depends(get_current_user)):
-    """Xabarni o'chirish"""
     result = await db.delete_message(msg_id, user['chat_id'])
     if not result:
         raise HTTPException(404, "Xabar topilmadi")
@@ -456,7 +527,6 @@ async def edit_message(
     data: EditMessageRequest,
     user=Depends(get_current_user)
 ):
-    """Xabarni tahrirlash"""
     result = await db.edit_message(msg_id, user['chat_id'], data.yangi_matn)
     if not result:
         raise HTTPException(404, "Xabar topilmadi")
@@ -470,11 +540,65 @@ async def edit_message(
     return {"success": True}
 
 
+# ==================== REACTIONS ====================
+
+@app.post("/api/messages/react")
+async def add_reaction(data: ReactionRequest, user=Depends(get_current_user)):
+    """Xabarga reaction qo'shish"""
+    await db.add_reaction(data.msg_id, user['chat_id'], data.emoji)
+
+    # Reactions ni qayta olish
+    reactions = await db.get_reactions(data.msg_id)
+
+    # Xabar egasiga yuborish
+    async with db.pool.acquire() as conn:
+        msg = await conn.fetchrow("SELECT * FROM messages WHERE id = $1", data.msg_id)
+
+    if msg:
+        target = msg['from_chat'] if msg['from_chat'] != user['chat_id'] else msg['to_chat']
+        await manager.send_to(target, {
+            "type": "reaction_added",
+            "msg_id": data.msg_id,
+            "emoji": data.emoji,
+            "chat_id": user['chat_id'],
+            "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
+        })
+
+    return {
+        "success": True,
+        "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
+    }
+
+
+@app.delete("/api/messages/react")
+async def remove_reaction(msg_id: int, emoji: str, user=Depends(get_current_user)):
+    """Reaction olib tashlash"""
+    await db.remove_reaction(msg_id, user['chat_id'], emoji)
+
+    reactions = await db.get_reactions(msg_id)
+
+    async with db.pool.acquire() as conn:
+        msg = await conn.fetchrow("SELECT * FROM messages WHERE id = $1", msg_id)
+
+    if msg:
+        target = msg['from_chat'] if msg['from_chat'] != user['chat_id'] else msg['to_chat']
+        await manager.send_to(target, {
+            "type": "reaction_removed",
+            "msg_id": msg_id,
+            "emoji": emoji,
+            "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
+        })
+
+    return {
+        "success": True,
+        "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
+    }
+
+
 # ==================== RASMLAR ====================
 
 @app.get("/api/photos")
 async def get_photos(user=Depends(get_current_user)):
-    """Rasmlar ro'yxati"""
     rasmlar = await db.get_photos(user['chat_id'])
     return {
         "photos": [{
@@ -493,7 +617,6 @@ async def upload_photo(
     nom: str = Form(""),
     user=Depends(get_current_user)
 ):
-    """Rasm yuklash (20 ta limit)"""
     mavjud = await db.get_photos(user['chat_id'])
     if len(mavjud) >= config.MAX_PHOTOS_PER_USER:
         raise HTTPException(400, f"Limit: {config.MAX_PHOTOS_PER_USER} ta rasm")
@@ -516,7 +639,6 @@ async def upload_photo(
 
 @app.delete("/api/photos/{photo_id}")
 async def delete_photo(photo_id: int, user=Depends(get_current_user)):
-    """Rasmni o'chirish"""
     result = await db.delete_photo(photo_id, user['chat_id'])
     if not result:
         raise HTTPException(404, "Rasm topilmadi")
@@ -535,21 +657,18 @@ async def delete_photo(photo_id: int, user=Depends(get_current_user)):
 
 @app.post("/api/block/{chat_id}")
 async def block_user(chat_id: int, user=Depends(get_current_user)):
-    """Foydalanuvchini bloklash"""
     await db.block_user(user['chat_id'], chat_id)
     return {"success": True}
 
 
 @app.delete("/api/block/{chat_id}")
 async def unblock_user(chat_id: int, user=Depends(get_current_user)):
-    """Blokdan chiqarish"""
     await db.unblock_user(user['chat_id'], chat_id)
     return {"success": True}
 
 
 @app.get("/api/blocked")
 async def get_blocked(user=Depends(get_current_user)):
-    """Bloklanganlar ro'yxati"""
     bloklar = await db.get_blocked_list(user['chat_id'])
     return {
         "blocked": [{
@@ -565,29 +684,44 @@ async def get_blocked(user=Depends(get_current_user)):
 
 @app.post("/api/calculate")
 async def calculate(data: dict):
-    """Kalkulyator API"""
     ifoda = data.get("ifoda", "")
     natija, xato = hisobla(ifoda)
-
     if xato:
         return {"success": False, "xato": xato}
-
     return {"success": True, "natija": natija}
 
 
 # ==================== WEBSOCKET ====================
 
 class ConnectionManager:
-    """WebSocket ulanishlar boshqaruvi"""
     def __init__(self):
         self.connections: dict[int, list[WebSocket]] = {}
 
     async def connect(self, chat_id: int, websocket: WebSocket):
         await websocket.accept()
+
+        # Eski WS larni yopish
+        if chat_id in self.connections:
+            old_list = self.connections[chat_id][:]
+            self.connections[chat_id] = []
+            for old_ws in old_list:
+                try:
+                    await old_ws.close(code=1000)
+                except Exception:
+                    pass
+
         if chat_id not in self.connections:
             self.connections[chat_id] = []
         self.connections[chat_id].append(websocket)
         print(f"🔌 WebSocket ulandi: {chat_id}")
+
+        # Online status
+        try:
+            await db.set_online(chat_id, True)
+            # Boshqa foydalanuvchilarga xabar berish
+            await self.broadcast_online(chat_id, True)
+        except Exception as e:
+            print(f"⚠️ Online xato: {e}")
 
     def disconnect(self, chat_id: int, websocket: WebSocket):
         if chat_id in self.connections:
@@ -607,13 +741,33 @@ class ConnectionManager:
                 if ws in self.connections.get(chat_id, []):
                     self.connections[chat_id].remove(ws)
 
+    async def broadcast_online(self, chat_id: int, online: bool):
+        """Online statusni barcha chatlarga yuborish"""
+        try:
+            async with db.pool.acquire() as conn:
+                chats = await conn.fetch("""
+                    SELECT DISTINCT
+                        CASE WHEN from_chat = $1 THEN to_chat ELSE from_chat END AS cid
+                    FROM messages
+                    WHERE (from_chat = $1 OR to_chat = $1) AND ochirilgan = FALSE
+                """, chat_id)
+
+            for c in chats:
+                await self.send_to(c['cid'], {
+                    "type": "user_status",
+                    "chat_id": chat_id,
+                    "online": online,
+                    "oxirgi_faollik": datetime.now().isoformat() if not online else None
+                })
+        except Exception:
+            pass
+
 
 manager = ConnectionManager()
 
 
 @app.websocket("/ws/{token}")
 async def websocket_endpoint(websocket: WebSocket, token: str):
-    """WebSocket ulanish"""
     chat_id = verify_token(token)
     if not chat_id:
         await websocket.close(code=4001)
@@ -631,6 +785,11 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                     "type": "typing",
                     "from_chat": chat_id
                 })
+            elif turi == "stop_typing":
+                await manager.send_to(data["to_chat"], {
+                    "type": "stop_typing",
+                    "from_chat": chat_id
+                })
             elif turi == "read":
                 await db.mark_as_read(data["from_chat"], chat_id)
                 await manager.send_to(data["from_chat"], {
@@ -642,6 +801,11 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
     except WebSocketDisconnect:
         manager.disconnect(chat_id, websocket)
+        try:
+            await db.set_online(chat_id, False)
+            await manager.broadcast_online(chat_id, False)
+        except Exception:
+            pass
     except Exception as e:
         print(f"❌ WebSocket xato: {e}")
         manager.disconnect(chat_id, websocket)
@@ -651,10 +815,4 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run(
-        "main:app",
-        host=config.HOST,
-        port=config.PORT,
-        reload=False
-    )
+    uvicorn.run("main:app", host=config.HOST, port=config.PORT, reload=False)
