@@ -112,6 +112,7 @@ class SendMessageRequest(BaseModel):
     ovoz_davomiyligi: Optional[int] = None
     stiker_id: Optional[str] = None
     xabar_turi: str = "text"
+    reply_to_id: Optional[int] = None
 
 
 class EditMessageRequest(BaseModel):
@@ -160,7 +161,7 @@ async def get_current_user(authorization: str = Header(None)):
 async def root():
     if os.path.exists("static/index.html"):
         return FileResponse("static/index.html")
-    return JSONResponse(404, {"xato": "index.html topilmadi"})
+    return JSONResponse(status_code=404, content={"xato": "index.html topilmadi"})
 
 
 @app.get("/health")
@@ -172,6 +173,7 @@ async def health():
 
 @app.post("/api/auth/verify")
 async def verify_parol(data: VerifyRequest, request: Request):
+    """Faqat parol tekshirish"""
     try:
         javob = data.javob.strip()
 
@@ -200,13 +202,18 @@ async def verify_parol(data: VerifyRequest, request: Request):
         if not topilgan:
             return {"success": False, "xato": "Parol noto'g'ri"}
 
+        # ⚡ Eski sessionlarni tozalash
+        await db.clear_user_sessions(topilgan)
+
         token = create_token(topilgan)
-        await db.save_session(token, topilgan, request.client.host)
+        await db.save_session(token, topilgan, request.client.host if request.client else None)
 
         return {"success": True, "token": token, "chat_id": topilgan}
 
     except Exception as e:
         print(f"❌ verify_parol xatosi: {e}")
+        import traceback
+        traceback.print_exc()
         return {"success": False, "xato": f"Server xatosi: {str(e)}"}
 
 
@@ -240,14 +247,14 @@ async def get_profile(user=Depends(get_current_user)):
 
 @app.put("/api/profile")
 async def update_profile(data: ProfileUpdateRequest, user=Depends(get_current_user)):
-    """Profilni yangilash (ism, familya, tug'ilgan kun)"""
+    """Profilni yangilash"""
     try:
         tugilgan_kun = None
         if data.tugilgan_kun:
             try:
                 tugilgan_kun = datetime.strptime(data.tugilgan_kun, "%Y-%m-%d").date()
             except ValueError:
-                return {"success": False, "xato": "Sana formati noto'g'ri (YYYY-MM-DD)"}
+                return {"success": False, "xato": "Sana formati YYYY-MM-DD bo'lishi kerak"}
 
         await db.update_profile(
             user['chat_id'],
@@ -256,7 +263,6 @@ async def update_profile(data: ProfileUpdateRequest, user=Depends(get_current_us
             tugilgan_kun=tugilgan_kun,
             bio=data.bio
         )
-
         return {"success": True}
     except Exception as e:
         return {"success": False, "xato": str(e)}
@@ -267,20 +273,33 @@ async def upload_profile_photo(
     file: UploadFile = File(...),
     user=Depends(get_current_user)
 ):
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in config.ALLOWED_EXTENSIONS:
-        raise HTTPException(400, "Faqat rasm fayllari")
+    """Profil rasm yuklash"""
+    try:
+        ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".jpg"
+        if ext not in config.ALLOWED_EXTENSIONS:
+            return {"success": False, "xato": f"Faqat rasm: {', '.join(config.ALLOWED_EXTENSIONS)}"}
 
-    filename = f"profile_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
-    filepath = os.path.join(config.UPLOAD_DIR, filename)
+        # ⚡ Fayl hajmi tekshirish
+        contents = await file.read()
+        if len(contents) > config.MAX_PHOTO_SIZE:
+            mb = config.MAX_PHOTO_SIZE // 1024 // 1024
+            return {"success": False, "xato": f"Rasm juda katta (maks {mb} MB)"}
 
-    with open(filepath, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        filename = f"profile_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
+        filepath = os.path.join(config.UPLOAD_DIR, filename)
 
-    url = f"/static/uploads/{filename}"
-    await db.update_profil_rasm(user['chat_id'], url)
+        os.makedirs(config.UPLOAD_DIR, exist_ok=True)
+        with open(filepath, "wb") as f:
+            f.write(contents)
 
-    return {"success": True, "url": url}
+        url = f"/static/uploads/{filename}"
+        await db.update_profil_rasm(user['chat_id'], url)
+
+        return {"success": True, "url": url}
+
+    except Exception as e:
+        print(f"❌ upload_profile_photo xatosi: {e}")
+        return {"success": False, "xato": str(e)}
 
 
 @app.post("/api/profile/tungi-rejim")
@@ -292,14 +311,12 @@ async def toggle_tungi_rejim(user=Depends(get_current_user)):
 
 @app.post("/api/profile/online")
 async def set_online(user=Depends(get_current_user)):
-    """Online statusni o'rnatish"""
     await db.set_online(user['chat_id'], True)
     return {"success": True}
 
 
 @app.post("/api/profile/offline")
 async def set_offline(user=Depends(get_current_user)):
-    """Offline statusni o'rnatish"""
     await db.set_online(user['chat_id'], False)
     return {"success": True}
 
@@ -342,7 +359,6 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
 
 @app.get("/api/chats")
 async def get_chats(user=Depends(get_current_user)):
-    """Chat ro'yxati (o'qilmagan soni bilan)"""
     async with db.pool.acquire() as conn:
         chats = await conn.fetch("""
             SELECT DISTINCT
@@ -369,7 +385,6 @@ async def get_chats(user=Depends(get_current_user)):
                 ORDER BY vaqt DESC LIMIT 1
             """, user['chat_id'], c['chat_id'])
 
-        # ⚡ O'qilmagan xabarlar soni
         unread = await db.get_unread_count(c['chat_id'], user['chat_id'])
 
         natija.append({
@@ -382,12 +397,11 @@ async def get_chats(user=Depends(get_current_user)):
             "oxirgi_faollik": u['oxirgi_faollik'].isoformat() if u['oxirgi_faollik'] else None,
             "oxirgi_xabar": last['matn'] if last else "",
             "oxirgi_vaqt": last['vaqt'].isoformat() if last else None,
+            "oxirgi_xabar_turi": last['xabar_turi'] if last else 'text',
             "kurilgan": last['kurilgan'] if last else True,
-            "unread_count": unread,
-            "oxirgi_xabar_turi": last['xabar_turi'] if last else 'text'
+            "unread_count": unread
         })
 
-    # Eng oxirgi xabar bo'yicha tartiblash (yozgan chatlar tepaga)
     natija.sort(key=lambda x: x['oxirgi_vaqt'] or "", reverse=True)
     return {"chats": natija}
 
@@ -399,15 +413,23 @@ async def get_messages(
     offset: int = 0,
     user=Depends(get_current_user)
 ):
-    """Chatdagi xabarlar (reactions bilan)"""
-    # O'qilgan deb belgilash
     await db.mark_as_read(chat_id, user['chat_id'])
-
     xabarlar = await db.get_messages(user['chat_id'], chat_id, limit, offset)
 
-    # Reactions olish
     msg_ids = [m['id'] for m in xabarlar]
     reactions_map = await db.get_reactions_for_messages(msg_ids)
+
+    # Reply ma'lumotlarini olish
+    reply_ids = [m['reply_to_id'] for m in xabarlar if m['reply_to_id']]
+    reply_map = {}
+    if reply_ids:
+        async with db.pool.acquire() as conn:
+            replies = await conn.fetch(
+                "SELECT id, matn, from_chat, xabar_turi FROM messages WHERE id = ANY($1)",
+                reply_ids
+            )
+            for r in replies:
+                reply_map[r['id']] = r
 
     return {
         "messages": [{
@@ -424,7 +446,13 @@ async def get_messages(
             "kurilgan": m['kurilgan'],
             "vaqt": m['vaqt'].isoformat(),
             "ozimniki": m['from_chat'] == user['chat_id'],
-            "reactions": reactions_map.get(m['id'], [])
+            "reactions": reactions_map.get(m['id'], []),
+            "reply_to": ({
+                "id": m['reply_to_id'],
+                "text": reply_map.get(m['reply_to_id'], {}).get('matn', ''),
+                "xabar_turi": reply_map.get(m['reply_to_id'], {}).get('xabar_turi', 'text'),
+                "ozimniki": reply_map.get(m['reply_to_id'], {}).get('from_chat') == user['chat_id']
+            } if m['reply_to_id'] and m['reply_to_id'] in reply_map else None)
         } for m in xabarlar]
     }
 
@@ -449,8 +477,21 @@ async def send_message(
         data.stiker_id,
         data.xabar_turi,
         data.ovoz_url,
-        data.ovoz_davomiyligi
+        data.ovoz_davomiyligi,
+        data.reply_to_id
     )
+
+    # Reply ma'lumoti
+    reply_data = None
+    if data.reply_to_id:
+        reply_msg = await db.get_message_by_id(data.reply_to_id)
+        if reply_msg:
+            reply_data = {
+                "id": reply_msg['id'],
+                "text": reply_msg['matn'] or '',
+                "xabar_turi": reply_msg['xabar_turi'],
+                "ozimniki": reply_msg['from_chat'] == data.to_chat
+            }
 
     await manager.send_to(data.to_chat, {
         "type": "new_message",
@@ -467,7 +508,8 @@ async def send_message(
             "vaqt": datetime.now().isoformat(),
             "ozimniki": False,
             "kurilgan": False,
-            "reactions": []
+            "reactions": [],
+            "reply_to": reply_data
         }
     })
 
@@ -481,25 +523,37 @@ async def upload_message_file(
     user=Depends(get_current_user)
 ):
     """Rasm yoki ovoz yuklash"""
-    ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".bin"
+    try:
+        ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".bin"
+        
+        if turi == "image":
+            if ext not in config.ALLOWED_EXTENSIONS:
+                return {"success": False, "xato": "Faqat rasm fayllari"}
+            prefix = "img"
+        elif turi == "voice":
+            prefix = "voice"
+            if not ext or ext == ".bin":
+                ext = ".webm"
+        else:
+            prefix = "file"
+        
+        contents = await file.read()
+        if len(contents) > config.MAX_PHOTO_SIZE * 2:
+            return {"success": False, "xato": "Fayl juda katta"}
 
-    if turi == "image":
-        if ext not in config.ALLOWED_EXTENSIONS:
-            raise HTTPException(400, "Faqat rasm fayllari")
-        prefix = "img"
-    elif turi == "voice":
-        prefix = "voice"
-    else:
-        prefix = "file"
+        filename = f"{prefix}_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
+        filepath = os.path.join(config.UPLOAD_DIR, filename)
 
-    filename = f"{prefix}_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
-    filepath = os.path.join(config.UPLOAD_DIR, filename)
+        os.makedirs(config.UPLOAD_DIR, exist_ok=True)
+        with open(filepath, "wb") as f:
+            f.write(contents)
 
-    with open(filepath, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        url = f"/static/uploads/{filename}"
+        return {"success": True, "url": url}
 
-    url = f"/static/uploads/{filename}"
-    return {"success": True, "url": url}
+    except Exception as e:
+        print(f"❌ upload xatosi: {e}")
+        return {"success": False, "xato": str(e)}
 
 
 @app.delete("/api/messages/{msg_id}")
@@ -544,16 +598,11 @@ async def edit_message(
 
 @app.post("/api/messages/react")
 async def add_reaction(data: ReactionRequest, user=Depends(get_current_user)):
-    """Xabarga reaction qo'shish"""
     await db.add_reaction(data.msg_id, user['chat_id'], data.emoji)
-
-    # Reactions ni qayta olish
     reactions = await db.get_reactions(data.msg_id)
-
-    # Xabar egasiga yuborish
-    async with db.pool.acquire() as conn:
-        msg = await conn.fetchrow("SELECT * FROM messages WHERE id = $1", data.msg_id)
-
+    
+    msg = await db.get_message_by_id(data.msg_id)
+    
     if msg:
         target = msg['from_chat'] if msg['from_chat'] != user['chat_id'] else msg['to_chat']
         await manager.send_to(target, {
@@ -563,7 +612,7 @@ async def add_reaction(data: ReactionRequest, user=Depends(get_current_user)):
             "chat_id": user['chat_id'],
             "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
         })
-
+    
     return {
         "success": True,
         "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
@@ -572,14 +621,11 @@ async def add_reaction(data: ReactionRequest, user=Depends(get_current_user)):
 
 @app.delete("/api/messages/react")
 async def remove_reaction(msg_id: int, emoji: str, user=Depends(get_current_user)):
-    """Reaction olib tashlash"""
     await db.remove_reaction(msg_id, user['chat_id'], emoji)
-
     reactions = await db.get_reactions(msg_id)
-
-    async with db.pool.acquire() as conn:
-        msg = await conn.fetchrow("SELECT * FROM messages WHERE id = $1", msg_id)
-
+    
+    msg = await db.get_message_by_id(msg_id)
+    
     if msg:
         target = msg['from_chat'] if msg['from_chat'] != user['chat_id'] else msg['to_chat']
         await manager.send_to(target, {
@@ -588,7 +634,7 @@ async def remove_reaction(msg_id: int, emoji: str, user=Depends(get_current_user
             "emoji": emoji,
             "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
         })
-
+    
     return {
         "success": True,
         "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]
@@ -617,24 +663,32 @@ async def upload_photo(
     nom: str = Form(""),
     user=Depends(get_current_user)
 ):
-    mavjud = await db.get_photos(user['chat_id'])
-    if len(mavjud) >= config.MAX_PHOTOS_PER_USER:
-        raise HTTPException(400, f"Limit: {config.MAX_PHOTOS_PER_USER} ta rasm")
+    try:
+        mavjud = await db.get_photos(user['chat_id'])
+        if len(mavjud) >= config.MAX_PHOTOS_PER_USER:
+            return {"success": False, "xato": f"Limit: {config.MAX_PHOTOS_PER_USER} ta rasm"}
 
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in config.ALLOWED_EXTENSIONS:
-        raise HTTPException(400, "Faqat rasm fayllari")
+        ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".jpg"
+        if ext not in config.ALLOWED_EXTENSIONS:
+            return {"success": False, "xato": "Faqat rasm fayllari"}
 
-    filename = f"photo_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
-    filepath = os.path.join(config.UPLOAD_DIR, filename)
+        contents = await file.read()
+        if len(contents) > config.MAX_PHOTO_SIZE:
+            return {"success": False, "xato": "Rasm juda katta"}
 
-    with open(filepath, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        filename = f"photo_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
+        filepath = os.path.join(config.UPLOAD_DIR, filename)
 
-    url = f"/static/uploads/{filename}"
-    result = await db.add_photo(user['chat_id'], url, nom)
+        os.makedirs(config.UPLOAD_DIR, exist_ok=True)
+        with open(filepath, "wb") as f:
+            f.write(contents)
 
-    return {"success": True, "id": result['id'], "url": url}
+        url = f"/static/uploads/{filename}"
+        result = await db.add_photo(user['chat_id'], url, nom)
+
+        return {"success": True, "id": result['id'], "url": url}
+    except Exception as e:
+        return {"success": False, "xato": str(e)}
 
 
 @app.delete("/api/photos/{photo_id}")
@@ -699,7 +753,7 @@ class ConnectionManager:
 
     async def connect(self, chat_id: int, websocket: WebSocket):
         await websocket.accept()
-
+        
         # Eski WS larni yopish
         if chat_id in self.connections:
             old_list = self.connections[chat_id][:]
@@ -709,16 +763,14 @@ class ConnectionManager:
                     await old_ws.close(code=1000)
                 except Exception:
                     pass
-
+        
         if chat_id not in self.connections:
             self.connections[chat_id] = []
         self.connections[chat_id].append(websocket)
         print(f"🔌 WebSocket ulandi: {chat_id}")
-
-        # Online status
+        
         try:
             await db.set_online(chat_id, True)
-            # Boshqa foydalanuvchilarga xabar berish
             await self.broadcast_online(chat_id, True)
         except Exception as e:
             print(f"⚠️ Online xato: {e}")
@@ -742,7 +794,6 @@ class ConnectionManager:
                     self.connections[chat_id].remove(ws)
 
     async def broadcast_online(self, chat_id: int, online: bool):
-        """Online statusni barcha chatlarga yuborish"""
         try:
             async with db.pool.acquire() as conn:
                 chats = await conn.fetch("""
@@ -751,7 +802,7 @@ class ConnectionManager:
                     FROM messages
                     WHERE (from_chat = $1 OR to_chat = $1) AND ochirilgan = FALSE
                 """, chat_id)
-
+            
             for c in chats:
                 await self.send_to(c['cid'], {
                     "type": "user_status",
