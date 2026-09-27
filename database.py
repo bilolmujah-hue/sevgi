@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS messages (
     ovoz_davomiyligi INTEGER,
     stiker_id TEXT,
     xabar_turi TEXT DEFAULT 'text',
+    reply_to_id INTEGER,
     ochirilgan BOOLEAN DEFAULT FALSE,
     tahrirlangan BOOLEAN DEFAULT FALSE,
     kurilgan BOOLEAN DEFAULT FALSE,
@@ -102,12 +103,6 @@ CREATE TABLE IF NOT EXISTS reactions (
 )
 """
 
-SQL_CREATE_INDEX_1 = "CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(from_chat, to_chat)"
-SQL_CREATE_INDEX_2 = "CREATE INDEX IF NOT EXISTS idx_messages_vaqt ON messages(vaqt DESC)"
-SQL_CREATE_INDEX_3 = "CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)"
-SQL_CREATE_INDEX_4 = "CREATE INDEX IF NOT EXISTS idx_messages_kurilgan ON messages(to_chat, kurilgan)"
-SQL_CREATE_INDEX_5 = "CREATE INDEX IF NOT EXISTS idx_reactions_msg ON reactions(msg_id)"
-
 
 class Database:
     def __init__(self):
@@ -118,10 +113,9 @@ class Database:
         url = config.DATABASE_URL
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
-
-        # Railway uchun SSL
-        ssl_param = "require" if "railway" in url or "render" in url else None
-
+        
+        ssl_param = "require" if ("railway" in url or "render" in url) else None
+        
         self.pool = await asyncpg.create_pool(
             url,
             min_size=2,
@@ -142,21 +136,34 @@ class Database:
             await conn.execute(SQL_CREATE_ADMIN_LOGS)
             await conn.execute(SQL_CREATE_REACTIONS)
 
-            await conn.execute(SQL_CREATE_INDEX_1)
-            await conn.execute(SQL_CREATE_INDEX_2)
-            await conn.execute(SQL_CREATE_INDEX_3)
-            await conn.execute(SQL_CREATE_INDEX_4)
-            await conn.execute(SQL_CREATE_INDEX_5)
-
             # Ustunlarni qo'shish (agar eski baza bo'lsa)
-            try:
-                await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS tugilgan_kun DATE")
-                await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT")
-                await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS online BOOLEAN DEFAULT FALSE")
-                await conn.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS ovoz_url TEXT")
-                await conn.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS ovoz_davomiyligi INTEGER")
-            except Exception:
-                pass
+            alters = [
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS tugilgan_kun DATE",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS online BOOLEAN DEFAULT FALSE",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS ovoz_url TEXT",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS ovoz_davomiyligi INTEGER",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER",
+            ]
+            for sql in alters:
+                try:
+                    await conn.execute(sql)
+                except Exception:
+                    pass
+
+            # Indexlar
+            indexes = [
+                "CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(from_chat, to_chat)",
+                "CREATE INDEX IF NOT EXISTS idx_messages_vaqt ON messages(vaqt DESC)",
+                "CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)",
+                "CREATE INDEX IF NOT EXISTS idx_messages_kurilgan ON messages(to_chat, kurilgan)",
+                "CREATE INDEX IF NOT EXISTS idx_reactions_msg ON reactions(msg_id)",
+            ]
+            for sql in indexes:
+                try:
+                    await conn.execute(sql)
+                except Exception:
+                    pass
 
         print("✅ Jadvallar yaratildi")
 
@@ -229,7 +236,7 @@ class Database:
         updates = []
         params = []
         i = 1
-
+        
         if ism is not None:
             updates.append(f"ism = ${i}")
             params.append(ism)
@@ -246,13 +253,13 @@ class Database:
             updates.append(f"bio = ${i}")
             params.append(bio)
             i += 1
-
+        
         if not updates:
             return
-
+        
         params.append(chat_id)
         sql = f"UPDATE users SET {', '.join(updates)} WHERE chat_id = ${i}"
-
+        
         async with self.pool.acquire() as conn:
             await conn.execute(sql, *params)
 
@@ -260,16 +267,17 @@ class Database:
 
     async def add_message(self, from_chat, to_chat, matn=None,
                           rasm_url=None, stiker_id=None, xabar_turi='text',
-                          ovoz_url=None, ovoz_davomiyligi=None):
+                          ovoz_url=None, ovoz_davomiyligi=None, reply_to_id=None):
         sql = (
             "INSERT INTO messages "
-            "(from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi, ovoz_url, ovoz_davomiyligi) "
-            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"
+            "(from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi, "
+            "ovoz_url, ovoz_davomiyligi, reply_to_id) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id"
         )
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(
                 sql, from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi,
-                ovoz_url, ovoz_davomiyligi
+                ovoz_url, ovoz_davomiyligi, reply_to_id
             )
 
     async def get_messages(self, chat1, chat2, limit=50, offset=0):
@@ -283,6 +291,10 @@ class Database:
         )
         async with self.pool.acquire() as conn:
             return await conn.fetch(sql, chat1, chat2, limit, offset)
+
+    async def get_message_by_id(self, msg_id):
+        async with self.pool.acquire() as conn:
+            return await conn.fetchrow("SELECT * FROM messages WHERE id = $1", msg_id)
 
     async def delete_message(self, msg_id, chat_id):
         sql = (
@@ -301,7 +313,6 @@ class Database:
             return await conn.fetchrow(sql, yangi_matn, msg_id, chat_id)
 
     async def mark_as_read(self, from_chat, to_chat):
-        """Xabarlarni o'qilgan deb belgilash"""
         sql = (
             "UPDATE messages SET kurilgan = TRUE "
             "WHERE from_chat = $1 AND to_chat = $2 AND kurilgan = FALSE"
@@ -310,7 +321,6 @@ class Database:
             await conn.execute(sql, from_chat, to_chat)
 
     async def get_unread_count(self, from_chat, to_chat):
-        """O'qilmagan xabarlar soni (from_chat dan to_chat ga)"""
         sql = (
             "SELECT COUNT(*) FROM messages "
             "WHERE from_chat = $1 AND to_chat = $2 AND kurilgan = FALSE AND ochirilgan = FALSE"
@@ -319,7 +329,6 @@ class Database:
             return await conn.fetchval(sql, from_chat, to_chat)
 
     async def get_total_unread(self, chat_id):
-        """Foydalanuvchi uchun jami o'qilmagan xabarlar"""
         sql = (
             "SELECT COUNT(*) FROM messages "
             "WHERE to_chat = $1 AND kurilgan = FALSE AND ochirilgan = FALSE"
@@ -341,7 +350,9 @@ class Database:
 
     async def get_photos(self, chat_id):
         async with self.pool.acquire() as conn:
-            return await conn.fetch("SELECT * FROM photos WHERE chat_id = $1 ORDER BY vaqt DESC", chat_id)
+            return await conn.fetch(
+                "SELECT * FROM photos WHERE chat_id = $1 ORDER BY vaqt DESC", chat_id
+            )
 
     async def delete_photo(self, photo_id, chat_id):
         sql = "DELETE FROM photos WHERE id = $1 AND chat_id = $2 RETURNING *"
@@ -378,7 +389,13 @@ class Database:
     # ==================== SESSIONS ====================
 
     async def save_session(self, token, chat_id, ip=None):
-        sql = "INSERT INTO sessions (token, chat_id, ip) VALUES ($1, $2, $3)"
+        """Session saqlash (UPSERT — bir xil token bo'lsa yangilanadi)"""
+        sql = (
+            "INSERT INTO sessions (token, chat_id, ip) "
+            "VALUES ($1, $2, $3) "
+            "ON CONFLICT (token) DO UPDATE "
+            "SET chat_id = EXCLUDED.chat_id, vaqt = NOW(), ip = EXCLUDED.ip"
+        )
         async with self.pool.acquire() as conn:
             await conn.execute(sql, token, chat_id, ip)
 
@@ -390,10 +407,20 @@ class Database:
         async with self.pool.acquire() as conn:
             await conn.execute("DELETE FROM sessions WHERE token = $1", token)
 
+    async def clear_user_sessions(self, chat_id):
+        """Foydalanuvchining barcha eski sessionlarini tozalash"""
+        async with self.pool.acquire() as conn:
+            await conn.execute("DELETE FROM sessions WHERE chat_id = $1", chat_id)
+
+    async def cleanup_old_sessions(self):
+        """Eskirgan sessionlarni tozalash"""
+        sql = f"DELETE FROM sessions WHERE vaqt < NOW() - INTERVAL '{config.JWT_EXPIRE_MINUTES} minutes'"
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql)
+
     # ==================== REACTIONS ====================
 
     async def add_reaction(self, msg_id, chat_id, emoji):
-        """Reaction qo'shish"""
         sql = (
             "INSERT INTO reactions (msg_id, chat_id, emoji) "
             "VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
@@ -402,13 +429,11 @@ class Database:
             await conn.execute(sql, msg_id, chat_id, emoji)
 
     async def remove_reaction(self, msg_id, chat_id, emoji):
-        """Reaction olib tashlash"""
         sql = "DELETE FROM reactions WHERE msg_id = $1 AND chat_id = $2 AND emoji = $3"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, msg_id, chat_id, emoji)
 
     async def get_reactions(self, msg_id):
-        """Xabar reaksiyalarini olish"""
         sql = (
             "SELECT emoji, COUNT(*) as count, "
             "       array_agg(chat_id) as chat_ids "
@@ -419,7 +444,6 @@ class Database:
             return await conn.fetch(sql, msg_id)
 
     async def get_reactions_for_messages(self, msg_ids):
-        """Bir nechta xabar uchun reaksiyalar"""
         if not msg_ids:
             return {}
         sql = (
@@ -429,7 +453,7 @@ class Database:
         )
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(sql, msg_ids)
-
+        
         result = {}
         for r in rows:
             if r['msg_id'] not in result:
@@ -437,7 +461,7 @@ class Database:
             result[r['msg_id']].append({
                 'emoji': r['emoji'],
                 'count': r['count'],
-                'chat_ids': r['chat_ids']
+                'chat_ids': list(r['chat_ids'])
             })
         return result
 
