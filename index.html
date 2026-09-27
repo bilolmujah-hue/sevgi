@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Calcubot</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+/* ==================== RESET ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #ffffff;
+    --bg-2: #f5f6f8;
+    --bg-3: #eef0f3;
+    --text: #0f172a;
+    --text-2: #6b7280;
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --border: #e5e7eb;
+    --msg-out: #dbeafe;
+    --msg-in: #f3f4f6;
+    --danger: #ef4444;
+    --success: #10b981;
+    --shadow: 0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg: 0 20px 60px rgba(0,0,0,0.15);
+    --radius: 14px;
+    --radius-sm: 10px;
+}
+
+body.dark {
+    --bg: #0f172a;
+    --bg-2: #1e293b;
+    --bg-3: #334155;
+    --text: #f1f5f9;
+    --text-2: #94a3b8;
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --border: #1e293b;
+    --msg-out: #1e40af;
+    --msg-in: #1e293b;
+    --shadow: 0 4px 16px rgba(0,0,0,0.3);
+    --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==================== KALKULYATOR ==================== */
+#calc-view {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    padding: 16px;
+    background: var(--bg);
+}
+
+#calc-display {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    padding: 20px 16px;
+    overflow-y: auto;
+}
+
+#calc-display .ifoda {
+    font-size: 22px;
+    color: var(--text-2);
+    margin-bottom: 12px;
+    word-break: break-all;
+    text-align: right;
+    font-weight: 400;
+    min-height: 28px;
+    letter-spacing: 0.5px;
+}
+
+#calc-display .natija {
+    font-size: 56px;
+    font-weight: 300;
+    color: var(--text);
+    word-break: break-all;
+    text-align: right;
+    line-height: 1.1;
+    letter-spacing: -1px;
+}
+
+.calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding-bottom: 8px;
+}
+
+.calc-btn {
+    padding: 22px 0;
+    font-size: 24px;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--bg-2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.12s ease;
+    font-family: inherit;
+}
+
+.calc-btn:active {
+    transform: scale(0.94);
+    background: var(--bg-3);
+}
+
+.calc-btn.op {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+.calc-btn.op:active {
+    background: var(--primary-dark);
+}
+
+.calc-btn.eq {
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    grid-column: span 2;
+}
+
+.calc-btn.eq:active {
+    background: var(--primary-dark);
+}
+
+.calc-btn.clr {
+    background: var(--danger);
+    color: white;
+    font-weight: 600;
+}
+
+.calc-btn.clr:active {
+    background: #dc2626;
+}
+
+/* ==================== MODAL (umumiy) ==================== */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-box {
+    background: var(--bg);
+    padding: 28px 24px;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.25s ease;
+}
+
+.modal-box .icon {
+    font-size: 42px;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.modal-box h3 {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.modal-box .subtitle {
+    text-align: center;
+    color: var(--text-2);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.modal-box input {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-2);
+    color: var(--text);
+    margin-bottom: 14px;
+    outline: none;
+    text-align: center;
+    letter-spacing: 4px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.modal-box input:focus {
+    border-color: var(--primary);
+}
+
+.modal-box input::placeholder {
+    letter-spacing: normal;
+    font-weight: 400;
+    color: var(--text-2);
+}
+
+.modal-box button {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.modal-box button:active {
+    transform: scale(0.98);
+    background: var(--primary-dark);
+}
+
+.modal-box button.cancel {
+    background: var(--bg-2);
+    color: var(--text);
+    margin-top: 8px;
+}
+
+.modal-box button.cancel:active {
+    background: var(--bg-3);
+}
+
+/* ==================== APP ==================== */
+#app-view {
+    display: none;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+}
+
+#app-view.active {
+    display: flex;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    padding-top: max(14px, env(safe-area-inset-top));
+}
+
+.app-header .name {
+    flex: 1;
+    font-weight: 700;
+    font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.icon-btn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.icon-btn:active {
+    background: var(--bg-2);
+}
+
+.app-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 80px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab-content {
+    display: none;
+    padding: 8px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ==================== CHAT LIST ==================== */
+.chat-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.chat-item:active {
+    background: var(--bg-2);
+}
+
+.avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.chat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-info .name {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-info .last {
+    color: var(--text-2);
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-info .last.unread {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* ==================== CHAT WINDOW ==================== */
+#chat-window {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: none;
+    flex-direction: column;
+    z-index: 100;
+}
+
+#chat-window.active {
+    display: flex;
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    padding-top: max(10px, env(safe-area-inset-top));
+}
+
+.chat-header-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-header-info .name {
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-header-info .status {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 2px;
+}
+
+.chat-header-info .status.online {
+    color: var(--success);
+}
+
+#messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px;
+    background: var(--bg-2);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.message {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 15px;
+    word-wrap: break-word;
+    line-height: 1.4;
+    position: relative;
+    animation: msgIn 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.out {
+    align-self: flex-end;
+    background: var(--msg-out);
+    border-bottom-right-radius: 6px;
+}
+
+body.dark .message.out {
+    color: white;
+}
+
+.message.in {
+    align-self: flex-start;
+    background: var(--msg-in);
+    border-bottom-left-radius: 6px;
+}
+
+.message .vaqt {
+    font-size: 10px;
+    color: var(--text-2);
+    margin-left: 8px;
+    float: right;
+    margin-top: 4px;
+}
+
+body.dark .message.out .vaqt {
+    color: rgba(255,255,255,0.6);
+}
+
+.message img {
+    max-width: 100%;
+    border-radius: 12px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.typing {
+    font-size: 13px;
+    color: var(--primary);
+    padding: 6px 16px;
+    font-style: italic;
+}
+
+.chat-input {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    gap: 8px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 13px 18px;
+    border: none;
+    border-radius: 24px;
+    background: var(--bg-2);
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    font-family: inherit;
+}
+
+.send-btn {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s;
+}
+
+.send-btn:active {
+    transform: scale(0.92);
+}
+
+/* ==================== BOTTOM NAV ==================== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 50;
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+
+.nav-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-family: inherit;
+    font-weight: 500;
+    transition: color 0.15s;
+}
+
+.nav-btn .icon {
+    font-size: 24px;
+}
+
+.nav-btn.active {
+    color: var(--primary);
+}
+
+.nav-btn .badge {
+    position: absolute;
+    top: 8px;
+    right: 25%;
+    background: var(--danger);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* ==================== PHOTOS GRID ==================== */
+.photos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 6px;
+}
+
+.photo-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-2);
+    cursor: pointer;
+}
+
+.photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s;
+}
+
+.photo-item:active img {
+    transform: scale(1.05);
+}
+
+.photo-item .delete {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==================== PROFIL ==================== */
+.profile-section {
+    padding: 24px 16px;
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    box-shadow: var(--shadow);
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar::after {
+    content: '📷';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: var(--bg);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: var(--shadow);
+}
+
+.profile-name {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.profile-username {
+    color: var(--text-2);
+    margin-bottom: 24px;
+    font-size: 15px;
+}
+
+.profile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: var(--bg-2);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.profile-row:active {
+    background: var(--bg-3);
+}
+
+.profile-row .label {
+    color: var(--text-2);
+    font-size: 15px;
+}
+
+.profile-row .value {
+    font-weight: 500;
+    font-size: 15px;
+}
+
+/* ==================== SEARCH MODAL ==================== */
+.search-box {
+    background: var(--bg);
+    padding: 20px;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-2);
+    color: var(--text);
+    outline: none;
+    margin-bottom: 14px;
+    font-family: inherit;
+}
+
+.search-box input:focus {
+    border-color: var(--primary);
+}
+
+.search-result {
+    padding: 14px;
+    background: var(--bg-2);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.search-result:active {
+    background: var(--bg-3);
+}
+
+/* ==================== TOAST ==================== */
+#toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(15, 23, 42, 0.95);
+    color: white;
+    padding: 14px 22px;
+    border-radius: 26px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 9999;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+#toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ==================== LOADING ==================== */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ==================== EMPTY STATE ==================== */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-2);
+}
+
+.empty-state .icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.empty-state .title {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.empty-state .desc {
+    font-size: 14px;
+    opacity: 0.8;
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== KALKULYATOR ==================== -->
+<div id="calc-view">
+    <div id="calc-display">
+        <div class="ifoda" id="calc-ifoda"></div>
+        <div class="natija" id="calc-natija">0</div>
+    </div>
+    <div class="calc-grid">
+        <button class="calc-btn clr" onclick="calcClear()">C</button>
+        <button class="calc-btn clr" onclick="calcBack()">⌫</button>
+        <button class="calc-btn op" onclick="calcOp('%')">%</button>
+        <button class="calc-btn op" onclick="calcOp('/')">÷</button>
+
+        <button class="calc-btn" onclick="calcNum('7')">7</button>
+        <button class="calc-btn" onclick="calcNum('8')">8</button>
+        <button class="calc-btn" onclick="calcNum('9')">9</button>
+        <button class="calc-btn op" onclick="calcOp('*')">×</button>
+
+        <button class="calc-btn" onclick="calcNum('4')">4</button>
+        <button class="calc-btn" onclick="calcNum('5')">5</button>
+        <button class="calc-btn" onclick="calcNum('6')">6</button>
+        <button class="calc-btn op" onclick="calcOp('-')">−</button>
+
+        <button class="calc-btn" onclick="calcNum('1')">1</button>
+        <button class="calc-btn" onclick="calcNum('2')">2</button>
+        <button class="calc-btn" onclick="calcNum('3')">3</button>
+        <button class="calc-btn op" onclick="calcOp('+')">+</button>
+
+        <button class="calc-btn" onclick="calcNum('0')">0</button>
+        <button class="calc-btn" onclick="calcNum('.')">.</button>
+        <button class="calc-btn eq" onclick="calcEqual()">=</button>
+    </div>
+</div>
+
+<!-- ==================== PAROL MODAL (faqat 5 ta . + = uchun) ==================== -->
+<div id="verify-modal" class="modal">
+    <div class="modal-box">
+        <div class="icon">🔐</div>
+        <h3>Maxfiy kirish</h3>
+        <div class="subtitle">5 xonalik parolingizni kiriting</div>
+        <input type="tel" id="verify-input" placeholder="•••••" maxlength="5" inputmode="numeric" autocomplete="off">
+        <button onclick="verifySubmit()">Kirish</button>
+        <button class="cancel" onclick="verifyCancel()">Bekor qilish</button>
+    </div>
+</div>
+
+<!-- ==================== ASOSIY APP ==================== -->
+<div id="app-view">
+    <header class="app-header">
+        <div class="avatar" id="header-avatar" onclick="switchTab('profile')">U</div>
+        <div class="name" id="header-name">Foydalanuvchi</div>
+        <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+        <button class="icon-btn" onclick="openSearch()">🔍</button>
+    </header>
+
+    <div class="app-content">
+        <!-- CHATLAR -->
+        <div class="tab-content active" id="tab-chats">
+            <div id="chat-list"></div>
+            <div id="empty-chats" class="empty-state" style="display:none;">
+                <div class="icon">💬</div>
+                <div class="title">Chatlar yo'q</div>
+                <div class="desc">🔍 tugmasi orqali odam qidiring</div>
+            </div>
+        </div>
+
+        <!-- RASMLAR -->
+        <div class="tab-content" id="tab-photos">
+            <div class="photos-grid" id="photos-grid"></div>
+            <div id="empty-photos" class="empty-state" style="display:none;">
+                <div class="icon">🖼️</div>
+                <div class="title">Rasmlar yo'q</div>
+                <div class="desc">+ tugmasi orqali qo'shing</div>
+            </div>
+        </div>
+
+        <!-- PROFIL -->
+        <div class="tab-content" id="tab-profile">
+            <div class="profile-section">
+                <div class="profile-avatar" id="profile-avatar" onclick="changeProfilePhoto()">U</div>
+                <div class="profile-name" id="profile-name">Foydalanuvchi</div>
+                <div class="profile-username" id="profile-username">@username</div>
+
+                <div class="profile-row" onclick="changeProfilePhoto()">
+                    <span class="label">📷 Profil rasmi</span>
+                    <span class="value">O'zgartirish</span>
+                </div>
+                <div class="profile-row" onclick="openSearch()">
+                    <span class="label">🔍 Qidiruv</span>
+                    <span class="value">Username</span>
+                </div>
+                <div class="profile-row" onclick="toggleTheme()">
+                    <span class="label">🌓 Tungi rejim</span>
+                    <span class="value" id="theme-value">Yo'q</span>
+                </div>
+                <div class="profile-row" onclick="logout()">
+                    <span class="label">🚪 Chiqish</span>
+                    <span class="value">→</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-tab="chats" onclick="switchTab('chats')">
+            <span class="icon">💬</span>
+            <span>Chatlar</span>
+        </button>
+        <button class="nav-btn" data-tab="photos" onclick="switchTab('photos')">
+            <span class="icon">🖼️</span>
+            <span>Rasmlar</span>
+        </button>
+        <button class="nav-btn" data-tab="profile" onclick="switchTab('profile')">
+            <span class="icon">👤</span>
+            <span>Profil</span>
+        </button>
+    </nav>
+</div>
+
+<!-- ==================== CHAT OYNASI ==================== -->
+<div id="chat-window">
+    <header class="chat-header">
+        <button class="icon-btn" onclick="closeChat()">←</button>
+        <div class="avatar" id="chat-avatar" style="width:42px;height:42px;font-size:18px;">U</div>
+        <div class="chat-header-info">
+            <div class="name" id="chat-name"></div>
+            <div class="status" id="chat-status">oxirgi faollik yaqinda</div>
+        </div>
+        <button class="icon-btn" onclick="showChatMenu()">⋮</button>
+    </header>
+    <div id="messages"></div>
+    <div class="typing" id="typing-indicator" style="display:none;">yozayapti...</div>
+    <div class="chat-input">
+        <button class="icon-btn" onclick="attachFile()">📎</button>
+        <input type="text" id="message-input" placeholder="Xabar yozing..."
+               onkeypress="if(event.key==='Enter') sendMessage()"
+               oninput="onTyping()">
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+</div>
+
+<!-- ==================== QIDIRUV MODAL ==================== -->
+<div id="search-modal" class="modal" onclick="if(event.target===this) closeSearch()">
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="@username yozing..."
+               autocomplete="off" onkeypress="if(event.key==='Enter') doSearch()">
+        <div id="search-result"></div>
+        <button style="width:100%; padding:14px; margin-top:10px; border:none; border-radius:12px; background:var(--bg-2); color:var(--text); cursor:pointer; font-family:inherit; font-weight:600;" onclick="closeSearch()">Yopish</button>
+    </div>
+</div>
+
+<!-- ==================== YASHIRIN INPUT ==================== -->
+<input type="file" id="file-input" accept="image/*" style="display:none">
+<input type="file" id="profile-photo-input" accept="image/*" style="display:none">
+
+<!-- ==================== TOAST ==================== -->
+<div id="toast"></div>
+
+<script>
+// ==================== KONFIGURATSIYA ====================
+const API_URL = window.location.origin;
+let TOKEN = localStorage.getItem('token');
+let CURRENT_CHAT = null;
+let WS = null;
+let USER = null;
+let CHATS = [];
+
+// ==================== KALKULYATOR ====================
+let calcIfoda = '';
+let calcNatija = '0';
+let oxirgiTeng = false;
+
+function updateCalcDisplay() {
+    document.getElementById('calc-ifoda').textContent = calcIfoda;
+    document.getElementById('calc-natija').textContent = calcNatija;
+}
+
+function calcNum(n) {
+    if (oxirgiTeng) {
+        calcIfoda = '';
+        oxirgiTeng = false;
+    }
+    // Faqat 1 ta . bo'lishi mumkin
+    if (n === '.') {
+        // Oxirgi son da . bormi?
+        const parts = calcIfoda.split(/[\+\-\*\/%]/);
+        const lastNum = parts[parts.length - 1];
+        if (lastNum.includes('.')) return;
+        if (lastNum === '' || lastNum === '.') {
+            calcIfoda += '0.';
+            calcNatija = calcIfoda;
+            updateCalcDisplay();
+            return;
+        }
+    }
+    calcIfoda += n;
+    calcNatija = calcIfoda;
+    updateCalcDisplay();
+}
+
+function calcOp(op) {
+    if (oxirgiTeng) oxirgiTeng = false;
+    const ops = ['+', '-', '*', '/', '%'];
+    if (ops.includes(calcIfoda.slice(-1))) {
+        calcIfoda = calcIfoda.slice(0, -1);
+    }
+    calcIfoda += op;
+    calcNatija = calcIfoda;
+    updateCalcDisplay();
+}
+
+function calcClear() {
+    calcIfoda = '';
+    calcNatija = '0';
+    oxirgiTeng = false;
+    updateCalcDisplay();
+}
+
+function calcBack() {
+    calcIfoda = calcIfoda.slice(0, -1);
+    calcNatija = calcIfoda || '0';
+    updateCalcDisplay();
+}
+
+// 🎯 YANGI: "....." (5 ta nuqta) tekshirish
+function isMaxfiySignal(ifoda) {
+    // Faqat nuqtalar (5 ta), bo'sh joy olib tashlangan
+    const cleaned = ifoda.replace(/\s/g, '');
+    return cleaned === '.....';
+}
+
+function calcEqual() {
+    if (!calcIfoda) return;
+
+    // 🎯 MAXFIY SIGNAL: "....." + =
+    if (isMaxfiySignal(calcIfoda)) {
+        // Modal ochish
+        setTimeout(() => {
+            showVerifyModal();
+        }, 200);
+        return;
+    }
+
+    // Oddiy hisoblash
+    let ifoda = calcIfoda.replace(/%/g, '/100');
+
+    try {
+        if (!/^[0-9+\-*/().\s]+$/.test(ifoda)) {
+            throw new Error('Xato');
+        }
+
+        const natija = Function('"use strict"; return (' + ifoda + ')')();
+
+        if (!isFinite(natija)) throw new Error('Xato');
+
+        // Natijani chiqarish
+        let natijaStr = String(natija);
+        // Uzunlik chegarasi
+        if (natijaStr.length > 15) {
+            natijaStr = parseFloat(natija).toExponential(6);
+        }
+        calcNatija = natijaStr;
+        oxirgiTeng = true;
+        updateCalcDisplay();
+
+    } catch (e) {
+        calcNatija = 'Xato';
+        updateCalcDisplay();
+        setTimeout(() => {
+            calcIfoda = '';
+            calcNatija = '0';
+            updateCalcDisplay();
+        }, 900);
+    }
+}
+
+// ==================== PAROL MODAL ====================
+function showVerifyModal() {
+    document.getElementById('verify-input').value = '';
+    document.getElementById('verify-modal').classList.add('active');
+    setTimeout(() => document.getElementById('verify-input').focus(), 200);
+}
+
+function verifyCancel() {
+    document.getElementById('verify-modal').classList.remove('active');
+    // Kalkulyatorni tozalash
+    calcIfoda = '';
+    calcNatija = '0';
+    oxirgiTeng = false;
+    updateCalcDisplay();
+}
+
+async function verifySubmit() {
+    const parol = document.getElementById('verify-input').value.trim();
+
+    if (!parol || parol.length !== 5 || !/^\d+$/.test(parol)) {
+        toast('5 xonalik son kiriting');
+        return;
+    }
+
+    try {
+        const res = await fetch(API_URL + '/api/auth/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                misol: '',  // Misol yo'q
+                javob: '0.' + parol  // format: "0.PAROL"
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            TOKEN = data.token;
+            localStorage.setItem('token', TOKEN);
+            localStorage.setItem('chat_id', data.chat_id);
+
+            document.getElementById('verify-modal').classList.remove('active');
+            await openApp();
+        } else {
+            toast(data.xato || 'Parol noto\'g\'ri');
+            document.getElementById('verify-input').value = '';
+        }
+    } catch (e) {
+        toast('Server xatosi');
+    }
+}
+
+// ==================== APP OCHISH ====================
+async function openApp() {
+    const res = await apiFetch('/api/profile');
+    if (!res) return;
+
+    USER = res;
+
+    document.getElementById('header-name').textContent =
+        `${res.ism || ''} ${res.familya || ''}`.trim() || 'Foydalanuvchi';
+    document.getElementById('profile-name').textContent =
+        `${res.ism || ''} ${res.familya || ''}`.trim();
+    document.getElementById('profile-username').textContent =
+        '@' + (res.username || 'yoq');
+
+    updateAvatar('header-avatar', res.profil_rasm, res.ism);
+    updateAvatar('profile-avatar', res.profil_rasm, res.ism);
+
+    if (res.tungi_rejim) {
+        document.body.classList.add('dark');
+        document.getElementById('theme-btn').textContent = '☀️';
+        document.getElementById('theme-value').textContent = 'Ha';
+    }
+
+    await loadChats();
+    await loadPhotos();
+    connectWS();
+
+    document.getElementById('calc-view').style.display = 'none';
+    document.getElementById('app-view').classList.add('active');
+}
+
+function updateAvatar(id, url, ism) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (url) {
+        el.innerHTML = `<img src="${API_URL}${url}" alt="">`;
+    } else {
+        el.textContent = (ism || 'U')[0].toUpperCase();
+    }
+}
+
+// ==================== API FETCH ====================
+async function apiFetch(path, options = {}) {
+    if (!TOKEN) return null;
+
+    try {
+        const res = await fetch(API_URL + path, {
+            ...options,
+            headers: {
+                ...options.headers,
+                'Authorization': 'Bearer ' + TOKEN,
+                ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+            }
+        });
+
+        if (res.status === 401) {
+            logout();
+            return null;
+        }
+
+        return await res.json();
+    } catch (e) {
+        toast('Server xatosi');
+        return null;
+    }
+}
+
+// ==================== CHATLAR ====================
+async function loadChats() {
+    const res = await apiFetch('/api/chats');
+    if (!res) return;
+
+    CHATS = res.chats || [];
+    const list = document.getElementById('chat-list');
+    list.innerHTML = '';
+
+    if (!CHATS.length) {
+        document.getElementById('empty-chats').style.display = 'block';
+        return;
+    }
+    document.getElementById('empty-chats').style.display = 'none';
+
+    CHATS.forEach(chat => {
+        const div = document.createElement('div');
+        div.className = 'chat-item';
+        div.onclick = () => openChat(chat);
+
+        const avatar = chat.profil_rasm
+            ? `<img src="${API_URL}${chat.profil_rasm}">`
+            : (chat.ism || 'U')[0].toUpperCase();
+
+        div.innerHTML = `
+            <div class="avatar">${avatar}</div>
+            <div class="chat-info">
+                <div class="name">${escapeHtml(chat.ism || '')} ${escapeHtml(chat.familya || '')}</div>
+                <div class="last ${chat.kurilgan ? '' : 'unread'}">
+                    ${escapeHtml(chat.oxirgi_xabar || 'Xabar yo\\'q')}
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+// ==================== CHAT OCHISH ====================
+async function openChat(chat) {
+    CURRENT_CHAT = chat;
+
+    document.getElementById('chat-name').textContent =
+        `${chat.ism || ''} ${chat.familya || ''}`;
+
+    updateAvatar('chat-avatar', chat.profil_rasm, chat.ism);
+
+    document.getElementById('chat-window').classList.add('active');
+
+    await loadMessages();
+    setTimeout(() => document.getElementById('message-input').focus(), 200);
+}
+
+async function loadMessages() {
+    if (!CURRENT_CHAT) return;
+
+    const res = await apiFetch(`/api/messages/${CURRENT_CHAT.chat_id}`);
+    if (!res) return;
+
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
+
+    (res.messages || []).reverse().forEach(m => addMessageToDOM(m, false));
+
+    box.scrollTop = box.scrollHeight;
+}
+
+function addMessageToDOM(m, scroll = true) {
+    const box = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message ' + (m.ozimniki ? 'out' : 'in');
+    div.dataset.id = m.id;
+
+    let content = '';
+
+    if (m.xabar_turi === 'photo' && m.rasm_url) {
+        content += `<img src="${API_URL}${m.rasm_url}">`;
+    }
+
+    if (m.matn) {
+        content += escapeHtml(m.matn);
+    }
+
+    const vaqt = new Date(m.vaqt).toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' });
+
+    content += `<span class="vaqt">${vaqt}${m.tahrirlangan ? ' ✏️' : ''}</span>`;
+
+    div.innerHTML = content;
+
+    if (m.ozimniki) {
+        div.oncontextmenu = (e) => {
+            e.preventDefault();
+            if (confirm('O\\'chirishni xohlaysizmi?')) {
+                deleteMessage(m.id);
+            }
+        };
+        div.ondblclick = () => {
+            const yangi = prompt('Tahrirlash:', m.matn);
+            if (yangi && yangi !== m.matn) {
+                editMessage(m.id, yangi);
+            }
+        };
+    }
+
+    box.appendChild(div);
+    if (scroll) box.scrollTop = box.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function closeChat() {
+    document.getElementById('chat-window').classList.remove('active');
+    CURRENT_CHAT = null;
+    loadChats();
+}
+
+// ==================== XABAR YUBORISH ====================
+async function sendMessage() {
+    const input = document.getElementById('message-input');
+    const matn = input.value.trim();
+    if (!matn || !CURRENT_CHAT) return;
+
+    input.value = '';
+
+    const res = await apiFetch('/api/messages/send', {
+        method: 'POST',
+        body: JSON.stringify({
+            to_chat: CURRENT_CHAT.chat_id,
+            matn: matn,
+            xabar_turi: 'text'
+        })
+    });
+
+    if (res && res.success) {
+        addMessageToDOM({
+            id: res.id,
+            from_chat: USER.chat_id,
+            to_chat: CURRENT_CHAT.chat_id,
+            matn: matn,
+            vaqt: new Date().toISOString(),
+            ozimniki: true,
+            xabar_turi: 'text'
+        });
+    }
+}
+
+async function deleteMessage(msgId) {
+    const res = await apiFetch(`/api/messages/${msgId}`, { method: 'DELETE' });
+    if (res && res.success) {
+        const el = document.querySelector(`.message[data-id="${msgId}"]`);
+        if (el) el.remove();
+    }
+}
+
+async function editMessage(msgId, yangi) {
+    const res = await apiFetch(`/api/messages/${msgId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ msg_id: msgId, yangi_matn: yangi })
+    });
+    if (res && res.success) {
+        loadMessages();
+    }
+}
+
+// ==================== TYPING ====================
+function onTyping() {
+    if (!WS || !CURRENT_CHAT) return;
+    if (WS.readyState !== WebSocket.OPEN) return;
+    WS.send(JSON.stringify({
+        type: 'typing',
+        to_chat: CURRENT_CHAT.chat_id
+    }));
+}
+
+// ==================== RASMLAR ====================
+async function loadPhotos() {
+    const res = await apiFetch('/api/photos');
+    if (!res) return;
+
+    const grid = document.getElementById('photos-grid');
+    grid.innerHTML = '';
+
+    if (!res.photos || !res.photos.length) {
+        document.getElementById('empty-photos').style.display = 'block';
+    } else {
+        document.getElementById('empty-photos').style.display = 'none';
+    }
+
+    (res.photos || []).forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'photo-item';
+        div.innerHTML = `
+            <img src="${API_URL}${p.url}">
+            <button class="delete" onclick="event.stopPropagation(); deletePhoto(${p.id})">×</button>
+        `;
+        div.onclick = () => window.open(API_URL + p.url, '_blank');
+        grid.appendChild(div);
+    });
+
+    // Yuklash tugmasi
+    if ((res.photos || []).length < res.limit) {
+        const addBtn = document.createElement('div');
+        addBtn.className = 'photo-item';
+        addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--primary);background:var(--bg-2);';
+        addBtn.textContent = '+';
+        addBtn.onclick = () => document.getElementById('file-input').click();
+        grid.appendChild(addBtn);
+    }
+}
+
+async function deletePhoto(id) {
+    if (!confirm('Rasmni o\\'chirishni xohlaysizmi?')) return;
+
+    const res = await apiFetch(`/api/photos/${id}`, { method: 'DELETE' });
+    if (res && res.success) {
+        loadPhotos();
+        toast('Rasm o\\'chirildi');
+    }
+}
+
+// ==================== PROFIL RASM ====================
+function changeProfilePhoto() {
+    document.getElementById('profile-photo-input').click();
+}
+
+// ==================== TUNGI REJIM ====================
+async function toggleTheme() {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+    document.getElementById('theme-value').textContent = isDark ? 'Ha' : 'Yo\\'q';
+    localStorage.setItem('dark', isDark ? '1' : '0');
+
+    await apiFetch('/api/profile/tungi-rejim', { method: 'POST' });
+}
+
+// ==================== TAB ====================
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
+
+    if (tab === 'photos') loadPhotos();
+    if (tab === 'chats') loadChats();
+}
+
+// ==================== QIDIRUV ====================
+function openSearch() {
+    document.getElementById('search-modal').classList.add('active');
+    setTimeout(() => document.getElementById('search-input').focus(), 200);
+}
+
+function closeSearch() {
+    document.getElementById('search-modal').classList.remove('active');
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-result').innerHTML = '';
+}
+
+async function doSearch() {
+    const username = document.getElementById('search-input').value.trim();
+    if (!username) return;
+
+    const res = await apiFetch('/api/search', {
+        method: 'POST',
+        body: JSON.stringify({ username: username })
+    });
+
+    const box = document.getElementById('search-result');
+
+    if (!res || !res.success) {
+        box.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-2);">
+            ❌ ${escapeHtml(res?.xato || 'Topilmadi')}</div>`;
+        return;
+    }
+
+    const u = res.user;
+    const avatar = u.profil_rasm
+        ? `<img src="${API_URL}${u.profil_rasm}">`
+        : (u.ism || 'U')[0].toUpperCase();
+
+    box.innerHTML = `
+        <div class="search-result" onclick='startChat(${JSON.stringify(u).replace(/'/g, "\\'")})'>
+            <div class="avatar">${avatar}</div>
+            <div>
+                <div style="font-weight:600;">${escapeHtml(u.ism)} ${escapeHtml(u.familya || '')}</div>
+                <div style="color:var(--text-2);font-size:13px;">@${escapeHtml(u.username)}</div>
+            </div>
+        </div>
+    `;
+}
+
+function startChat(u) {
+    closeSearch();
+    openChat({
+        chat_id: u.chat_id,
+        ism: u.ism,
+        familya: u.familya,
+        username: u.username,
+        profil_rasm: u.profil_rasm
+    });
+}
+
+// ==================== WEBSOCKET ====================
+function connectWS() {
+    if (!TOKEN) return;
+
+    const wsUrl = API_URL.replace('https://', 'wss://').replace('http://', 'ws://');
+    WS = new WebSocket(`${wsUrl}/ws/${TOKEN}`);
+
+    WS.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+
+        if (data.type === 'new_message') {
+            if (CURRENT_CHAT && data.message.from_chat === CURRENT_CHAT.chat_id) {
+                addMessageToDOM(data.message);
+            } else {
+                loadChats();
+            }
+        }
+
+        if (data.type === 'typing' && CURRENT_CHAT) {
+            if (data.from_chat === CURRENT_CHAT.chat_id) {
+                const ind = document.getElementById('typing-indicator');
+                ind.style.display = 'block';
+                clearTimeout(window._typingTO);
+                window._typingTO = setTimeout(() => {
+                    ind.style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        if (data.type === 'message_deleted') {
+            const el = document.querySelector(`.message[data-id="${data.msg_id}"]`);
+            if (el) el.remove();
+        }
+
+        if (data.type === 'message_edited') {
+            loadMessages();
+        }
+    };
+
+    WS.onclose = () => {
+        setTimeout(connectWS, 3000);
+    };
+
+    WS.onerror = () => {};
+}
+
+// ==================== FILE UPLOAD ====================
+document.getElementById('file-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('nom', file.name);
+
+    try {
+        const res = await fetch(API_URL + '/api/photos', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + TOKEN },
+            body: fd
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            loadPhotos();
+            toast('Rasm yuklandi');
+        } else {
+            toast(data.detail || 'Xato');
+        }
+    } catch (e) {
+        toast('Yuklashda xato');
+    }
+
+    e.target.value = '';
+});
+
+document.getElementById('profile-photo-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    try {
+        const res = await fetch(API_URL + '/api/profile/photo', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + TOKEN },
+            body: fd
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            updateAvatar('header-avatar', data.url, USER.ism);
+            updateAvatar('profile-avatar', data.url, USER.ism);
+            toast('Profil yangilandi');
+        }
+    } catch (e) {
+        toast('Xato');
+    }
+
+    e.target.value = '';
+});
+
+// ==================== CHAT MENU ====================
+function showChatMenu() {
+    if (!CURRENT_CHAT) return;
+    const tanlov = confirm('Bloklashni xohlaysizmi?\\n\\nOK = Bloklash\\nBekor = Yopish');
+    if (tanlov) {
+        blockUser(CURRENT_CHAT.chat_id);
+    }
+}
+
+async function blockUser(chatId) {
+    const res = await apiFetch(`/api/block/${chatId}`, { method: 'POST' });
+    if (res && res.success) {
+        toast('Bloklandi');
+        closeChat();
+    }
+}
+
+function attachFile() {
+    document.getElementById('file-input').click();
+}
+
+// ==================== LOGOUT ====================
+async function logout() {
+    if (!confirm('Chiqishni xohlaysizmi?')) return;
+
+    await apiFetch('/api/auth/logout', { method: 'POST' });
+    localStorage.removeItem('token');
+    localStorage.removeItem('chat_id');
+    TOKEN = null;
+    USER = null;
+    location.reload();
+}
+
+// ==================== TOAST ====================
+function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(window._toastTO);
+    window._toastTO = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ==================== 2-TAP DETEKTOR ====================
+let tapTimes = [];
+
+document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    tapTimes.push(now);
+    tapTimes = tapTimes.filter(t => now - t < 300);
+
+    if (tapTimes.length >= 2) {
+        tapTimes = [];
+        hideToCalculator();
+    }
+}, { passive: true });
+
+document.addEventListener('dblclick', (e) => {
+    if (document.getElementById('chat-window').classList.contains('active')) {
+        if (!window.getSelection().toString()) {
+            hideToCalculator();
+        }
+    }
+});
+
+function hideToCalculator() {
+    document.getElementById('chat-window').classList.remove('active');
+    document.getElementById('verify-modal').classList.remove('active');
+    document.getElementById('search-modal').classList.remove('active');
+    document.getElementById('app-view').classList.remove('active');
+
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('chat-list').innerHTML = '';
+    document.getElementById('photos-grid').innerHTML = '';
+
+    sessionStorage.clear();
+
+    document.getElementById('calc-view').style.display = 'flex';
+
+    calcIfoda = '';
+    calcNatija = '0';
+    oxirgiTeng = false;
+    updateCalcDisplay();
+
+    toast('🔒 Kalkulyator rejimi');
+
+    setTimeout(() => {
+        CURRENT_CHAT = null;
+        CHATS = [];
+    }, 1000);
+}
+
+// ==================== BOSHLANG'ICH ====================
+window.addEventListener('load', () => {
+    if (localStorage.getItem('dark') === '1') {
+        document.body.classList.add('dark');
+        document.getElementById('theme-btn').textContent = '☀️';
+    }
+
+    // Telegram WebApp sozlamalari
+    if (window.Telegram && window.Telegram.WebApp) {
+        try {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+        } catch (e) {}
+    }
+
+    updateCalcDisplay();
+});
+
+// Klaviatura (kompyuter uchun)
+document.addEventListener('keydown', (e) => {
+    if (document.getElementById('calc-view').style.display === 'none') return;
+
+    if (/[0-9]/.test(e.key)) calcNum(e.key);
+    else if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+    else if (e.key === '=' || e.key === 'Enter') { e.preventDefault(); calcEqual(); }
+    else if (e.key === 'Backspace') calcBack();
+    else if (e.key === 'Escape') calcClear();
+    else if (e.key === '%') calcOp('%');
+    else if (e.key === '.') calcNum('.');
+});
+</script>
+</body>
+</html>
