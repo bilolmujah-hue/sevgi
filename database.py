@@ -4,12 +4,11 @@ asyncpg orqali
 """
 
 import asyncpg
+from datetime import datetime
 from config import config
 
 
 # ==================== SQL KONSTANTALAR ====================
-# Bu SQL lar PyCharm tomonidan buzilmasligi uchun
-# alohida konstanta sifatida saqlanadi
 
 SQL_CREATE_USERS = """
 CREATE TABLE IF NOT EXISTS users (
@@ -27,7 +26,10 @@ CREATE TABLE IF NOT EXISTS users (
     maxfiylik_vaqt TIMESTAMP,
     profil_rasm TEXT,
     tungi_rejim BOOLEAN DEFAULT FALSE,
+    tugilgan_kun DATE,
+    bio TEXT,
     oxirgi_faollik TIMESTAMP DEFAULT NOW(),
+    online BOOLEAN DEFAULT FALSE,
     sana TIMESTAMP DEFAULT NOW()
 )
 """
@@ -39,6 +41,8 @@ CREATE TABLE IF NOT EXISTS messages (
     to_chat BIGINT,
     matn TEXT,
     rasm_url TEXT,
+    ovoz_url TEXT,
+    ovoz_davomiyligi INTEGER,
     stiker_id TEXT,
     xabar_turi TEXT DEFAULT 'text',
     ochirilgan BOOLEAN DEFAULT FALSE,
@@ -87,9 +91,22 @@ CREATE TABLE IF NOT EXISTS admin_logs (
 )
 """
 
+SQL_CREATE_REACTIONS = """
+CREATE TABLE IF NOT EXISTS reactions (
+    id SERIAL PRIMARY KEY,
+    msg_id INTEGER,
+    chat_id BIGINT,
+    emoji TEXT,
+    vaqt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(msg_id, chat_id, emoji)
+)
+"""
+
 SQL_CREATE_INDEX_1 = "CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(from_chat, to_chat)"
 SQL_CREATE_INDEX_2 = "CREATE INDEX IF NOT EXISTS idx_messages_vaqt ON messages(vaqt DESC)"
 SQL_CREATE_INDEX_3 = "CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)"
+SQL_CREATE_INDEX_4 = "CREATE INDEX IF NOT EXISTS idx_messages_kurilgan ON messages(to_chat, kurilgan)"
+SQL_CREATE_INDEX_5 = "CREATE INDEX IF NOT EXISTS idx_reactions_msg ON reactions(msg_id)"
 
 
 class Database:
@@ -98,10 +115,18 @@ class Database:
 
     async def connect(self):
         """Database ga ulanish"""
+        url = config.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+
+        # Railway uchun SSL
+        ssl_param = "require" if "railway" in url or "render" in url else None
+
         self.pool = await asyncpg.create_pool(
-            config.DATABASE_URL,
-            min_size=5,
-            max_size=20
+            url,
+            min_size=2,
+            max_size=10,
+            ssl=ssl_param
         )
         await self.create_tables()
         print("✅ Database ulandi")
@@ -115,17 +140,29 @@ class Database:
             await conn.execute(SQL_CREATE_BLOCKS)
             await conn.execute(SQL_CREATE_SESSIONS)
             await conn.execute(SQL_CREATE_ADMIN_LOGS)
+            await conn.execute(SQL_CREATE_REACTIONS)
 
             await conn.execute(SQL_CREATE_INDEX_1)
             await conn.execute(SQL_CREATE_INDEX_2)
             await conn.execute(SQL_CREATE_INDEX_3)
+            await conn.execute(SQL_CREATE_INDEX_4)
+            await conn.execute(SQL_CREATE_INDEX_5)
+
+            # Ustunlarni qo'shish (agar eski baza bo'lsa)
+            try:
+                await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS tugilgan_kun DATE")
+                await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT")
+                await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS online BOOLEAN DEFAULT FALSE")
+                await conn.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS ovoz_url TEXT")
+                await conn.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS ovoz_davomiyligi INTEGER")
+            except Exception:
+                pass
 
         print("✅ Jadvallar yaratildi")
 
     # ==================== FOYDALANUVCHILAR ====================
 
     async def add_user(self, chat_id, ism, familya, username, telefon):
-        """Yangi foydalanuvchi qo'shish"""
         sql = (
             "INSERT INTO users (chat_id, ism, familya, username, telefon) "
             "VALUES ($1, $2, $3, $4, $5) "
@@ -136,96 +173,106 @@ class Database:
             await conn.execute(sql, chat_id, ism, familya, username, telefon)
 
     async def get_user(self, chat_id):
-        """Foydalanuvchini olish"""
         async with self.pool.acquire() as conn:
-            return await conn.fetchrow(
-                "SELECT * FROM users WHERE chat_id = $1", chat_id
-            )
+            return await conn.fetchrow("SELECT * FROM users WHERE chat_id = $1", chat_id)
 
     async def get_user_by_username(self, username):
-        """Username orqali foydalanuvchi olish"""
         username = username.lstrip("@")
         async with self.pool.acquire() as conn:
-            return await conn.fetchrow(
-                "SELECT * FROM users WHERE username = $1", username
-            )
+            return await conn.fetchrow("SELECT * FROM users WHERE username = $1", username)
 
     async def update_parol(self, chat_id, parol_hash):
-        """Parolni yangilash"""
-        sql = (
-            "UPDATE users SET parol_hash = $1, parol_vaqt = NOW() "
-            "WHERE chat_id = $2"
-        )
+        sql = "UPDATE users SET parol_hash = $1, parol_vaqt = NOW() WHERE chat_id = $2"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, parol_hash, chat_id)
 
     async def update_blok(self, chat_id, blok_vaqt, blok_son, blok_soat):
-        """Vaqt blokni yangilash"""
-        sql = (
-            "UPDATE users SET blok_vaqt = $1, blok_son = $2, blok_soat = $3 "
-            "WHERE chat_id = $4"
-        )
+        sql = "UPDATE users SET blok_vaqt = $1, blok_son = $2, blok_soat = $3 WHERE chat_id = $4"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, blok_vaqt, blok_son, blok_soat, chat_id)
 
     async def clear_blok(self, chat_id):
-        """Blokni tozalash"""
-        sql = (
-            "UPDATE users SET blok_vaqt = NULL, blok_son = NULL, blok_soat = NULL "
-            "WHERE chat_id = $1"
-        )
+        sql = "UPDATE users SET blok_vaqt = NULL, blok_son = NULL, blok_soat = NULL WHERE chat_id = $1"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, chat_id)
 
     async def update_maxfiylik(self, chat_id, holat):
-        """Maxfiylikni yangilash"""
-        sql = (
-            "UPDATE users SET maxfiylik = $1, maxfiylik_vaqt = NOW() "
-            "WHERE chat_id = $2"
-        )
+        sql = "UPDATE users SET maxfiylik = $1, maxfiylik_vaqt = NOW() WHERE chat_id = $2"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, holat, chat_id)
 
     async def update_profil_rasm(self, chat_id, rasm_url):
-        """Profil rasmini yangilash"""
-        sql = "UPDATE users SET profil_rasm = $1 WHERE chat_id = $2"
         async with self.pool.acquire() as conn:
-            await conn.execute(sql, rasm_url, chat_id)
+            await conn.execute("UPDATE users SET profil_rasm = $1 WHERE chat_id = $2", rasm_url, chat_id)
 
     async def update_tungi_rejim(self, chat_id, holat):
-        """Tungi rejimni yangilash"""
-        sql = "UPDATE users SET tungi_rejim = $1 WHERE chat_id = $2"
         async with self.pool.acquire() as conn:
-            await conn.execute(sql, holat, chat_id)
+            await conn.execute("UPDATE users SET tungi_rejim = $1 WHERE chat_id = $2", holat, chat_id)
 
     async def get_all_users(self):
-        """Barcha foydalanuvchilarni olish (admin uchun)"""
         async with self.pool.acquire() as conn:
             return await conn.fetch("SELECT * FROM users ORDER BY sana DESC")
 
     async def update_oxirgi_faollik(self, chat_id):
-        """Oxirgi faollikni yangilash"""
         sql = "UPDATE users SET oxirgi_faollik = NOW() WHERE chat_id = $1"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, chat_id)
 
+    async def set_online(self, chat_id, online: bool):
+        """Online statusni yangilash"""
+        sql = "UPDATE users SET online = $1, oxirgi_faollik = NOW() WHERE chat_id = $2"
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, online, chat_id)
+
+    async def update_profile(self, chat_id, ism=None, familya=None, tugilgan_kun=None, bio=None):
+        """Profilni yangilash"""
+        updates = []
+        params = []
+        i = 1
+
+        if ism is not None:
+            updates.append(f"ism = ${i}")
+            params.append(ism)
+            i += 1
+        if familya is not None:
+            updates.append(f"familya = ${i}")
+            params.append(familya)
+            i += 1
+        if tugilgan_kun is not None:
+            updates.append(f"tugilgan_kun = ${i}")
+            params.append(tugilgan_kun)
+            i += 1
+        if bio is not None:
+            updates.append(f"bio = ${i}")
+            params.append(bio)
+            i += 1
+
+        if not updates:
+            return
+
+        params.append(chat_id)
+        sql = f"UPDATE users SET {', '.join(updates)} WHERE chat_id = ${i}"
+
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, *params)
+
     # ==================== XABARLAR ====================
 
     async def add_message(self, from_chat, to_chat, matn=None,
-                          rasm_url=None, stiker_id=None, xabar_turi='text'):
-        """Yangi xabar qo'shish"""
+                          rasm_url=None, stiker_id=None, xabar_turi='text',
+                          ovoz_url=None, ovoz_davomiyligi=None):
         sql = (
             "INSERT INTO messages "
-            "(from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi) "
-            "VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+            "(from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi, ovoz_url, ovoz_davomiyligi) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"
         )
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(
-                sql, from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi
+                sql, from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi,
+                ovoz_url, ovoz_davomiyligi
             )
 
     async def get_messages(self, chat1, chat2, limit=50, offset=0):
-        """Ikki foydalanuvchi orasidagi xabarlar"""
         sql = (
             "SELECT * FROM messages "
             "WHERE ((from_chat = $1 AND to_chat = $2) "
@@ -238,7 +285,6 @@ class Database:
             return await conn.fetch(sql, chat1, chat2, limit, offset)
 
     async def delete_message(self, msg_id, chat_id):
-        """Xabarni o'chirish (faqat o'zi yozgan)"""
         sql = (
             "UPDATE messages SET ochirilgan = TRUE "
             "WHERE id = $1 AND from_chat = $2 RETURNING *"
@@ -247,7 +293,6 @@ class Database:
             return await conn.fetchrow(sql, msg_id, chat_id)
 
     async def edit_message(self, msg_id, chat_id, yangi_matn):
-        """Xabarni tahrirlash"""
         sql = (
             "UPDATE messages SET matn = $1, tahrirlangan = TRUE "
             "WHERE id = $2 AND from_chat = $3 RETURNING *"
@@ -264,30 +309,41 @@ class Database:
         async with self.pool.acquire() as conn:
             await conn.execute(sql, from_chat, to_chat)
 
+    async def get_unread_count(self, from_chat, to_chat):
+        """O'qilmagan xabarlar soni (from_chat dan to_chat ga)"""
+        sql = (
+            "SELECT COUNT(*) FROM messages "
+            "WHERE from_chat = $1 AND to_chat = $2 AND kurilgan = FALSE AND ochirilgan = FALSE"
+        )
+        async with self.pool.acquire() as conn:
+            return await conn.fetchval(sql, from_chat, to_chat)
+
+    async def get_total_unread(self, chat_id):
+        """Foydalanuvchi uchun jami o'qilmagan xabarlar"""
+        sql = (
+            "SELECT COUNT(*) FROM messages "
+            "WHERE to_chat = $1 AND kurilgan = FALSE AND ochirilgan = FALSE"
+        )
+        async with self.pool.acquire() as conn:
+            return await conn.fetchval(sql, chat_id)
+
     # ==================== RASMLAR ====================
 
     async def add_photo(self, chat_id, rasm_url, nom=None):
-        """Rasm qo'shish (20 ta limit)"""
         async with self.pool.acquire() as conn:
             count = await conn.fetchval(
                 "SELECT COUNT(*) FROM photos WHERE chat_id = $1", chat_id
             )
             if count >= config.MAX_PHOTOS_PER_USER:
                 return None
-            sql = (
-                "INSERT INTO photos (chat_id, rasm_url, nom) "
-                "VALUES ($1, $2, $3) RETURNING id"
-            )
+            sql = "INSERT INTO photos (chat_id, rasm_url, nom) VALUES ($1, $2, $3) RETURNING id"
             return await conn.fetchrow(sql, chat_id, rasm_url, nom)
 
     async def get_photos(self, chat_id):
-        """Foydalanuvchi rasmlarini olish"""
-        sql = "SELECT * FROM photos WHERE chat_id = $1 ORDER BY vaqt DESC"
         async with self.pool.acquire() as conn:
-            return await conn.fetch(sql, chat_id)
+            return await conn.fetch("SELECT * FROM photos WHERE chat_id = $1 ORDER BY vaqt DESC", chat_id)
 
     async def delete_photo(self, photo_id, chat_id):
-        """Rasmni o'chirish"""
         sql = "DELETE FROM photos WHERE id = $1 AND chat_id = $2 RETURNING *"
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(sql, photo_id, chat_id)
@@ -295,36 +351,25 @@ class Database:
     # ==================== BLOKLAR ====================
 
     async def block_user(self, chat_id, blocked_chat):
-        """Foydalanuvchini bloklash"""
-        sql = (
-            "INSERT INTO blocks (chat_id, blocked_chat) "
-            "VALUES ($1, $2) ON CONFLICT DO NOTHING"
-        )
+        sql = "INSERT INTO blocks (chat_id, blocked_chat) VALUES ($1, $2) ON CONFLICT DO NOTHING"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, chat_id, blocked_chat)
 
     async def unblock_user(self, chat_id, blocked_chat):
-        """Blokdan chiqarish"""
         sql = "DELETE FROM blocks WHERE chat_id = $1 AND blocked_chat = $2"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, chat_id, blocked_chat)
 
     async def is_blocked(self, chat_id, blocked_chat):
-        """Bloklanganligini tekshirish"""
-        sql = (
-            "SELECT COUNT(*) FROM blocks "
-            "WHERE chat_id = $1 AND blocked_chat = $2"
-        )
+        sql = "SELECT COUNT(*) FROM blocks WHERE chat_id = $1 AND blocked_chat = $2"
         async with self.pool.acquire() as conn:
             result = await conn.fetchval(sql, chat_id, blocked_chat)
             return result > 0
 
     async def get_blocked_list(self, chat_id):
-        """Bloklangan foydalanuvchilar ro'yxati"""
         sql = (
             "SELECT b.blocked_chat, u.ism, u.familya, u.username "
-            "FROM blocks b "
-            "JOIN users u ON u.chat_id = b.blocked_chat "
+            "FROM blocks b JOIN users u ON u.chat_id = b.blocked_chat "
             "WHERE b.chat_id = $1"
         )
         async with self.pool.acquire() as conn:
@@ -333,36 +378,77 @@ class Database:
     # ==================== SESSIONS ====================
 
     async def save_session(self, token, chat_id, ip=None):
-        """Session saqlash"""
         sql = "INSERT INTO sessions (token, chat_id, ip) VALUES ($1, $2, $3)"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, token, chat_id, ip)
 
     async def get_session(self, token):
-        """Session olish"""
         async with self.pool.acquire() as conn:
-            return await conn.fetchrow(
-                "SELECT * FROM sessions WHERE token = $1", token
-            )
+            return await conn.fetchrow("SELECT * FROM sessions WHERE token = $1", token)
 
     async def delete_session(self, token):
-        """Session o'chirish"""
         async with self.pool.acquire() as conn:
             await conn.execute("DELETE FROM sessions WHERE token = $1", token)
+
+    # ==================== REACTIONS ====================
+
+    async def add_reaction(self, msg_id, chat_id, emoji):
+        """Reaction qo'shish"""
+        sql = (
+            "INSERT INTO reactions (msg_id, chat_id, emoji) "
+            "VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
+        )
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, msg_id, chat_id, emoji)
+
+    async def remove_reaction(self, msg_id, chat_id, emoji):
+        """Reaction olib tashlash"""
+        sql = "DELETE FROM reactions WHERE msg_id = $1 AND chat_id = $2 AND emoji = $3"
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, msg_id, chat_id, emoji)
+
+    async def get_reactions(self, msg_id):
+        """Xabar reaksiyalarini olish"""
+        sql = (
+            "SELECT emoji, COUNT(*) as count, "
+            "       array_agg(chat_id) as chat_ids "
+            "FROM reactions WHERE msg_id = $1 "
+            "GROUP BY emoji"
+        )
+        async with self.pool.acquire() as conn:
+            return await conn.fetch(sql, msg_id)
+
+    async def get_reactions_for_messages(self, msg_ids):
+        """Bir nechta xabar uchun reaksiyalar"""
+        if not msg_ids:
+            return {}
+        sql = (
+            "SELECT msg_id, emoji, COUNT(*) as count, array_agg(chat_id) as chat_ids "
+            "FROM reactions WHERE msg_id = ANY($1) "
+            "GROUP BY msg_id, emoji"
+        )
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch(sql, msg_ids)
+
+        result = {}
+        for r in rows:
+            if r['msg_id'] not in result:
+                result[r['msg_id']] = []
+            result[r['msg_id']].append({
+                'emoji': r['emoji'],
+                'count': r['count'],
+                'chat_ids': r['chat_ids']
+            })
+        return result
 
     # ==================== ADMIN ====================
 
     async def log_admin_action(self, admin_id, harakat, tafsilot=None):
-        """Admin harakatini log qilish"""
-        sql = (
-            "INSERT INTO admin_logs (admin_id, harakat, tafsilot) "
-            "VALUES ($1, $2, $3)"
-        )
+        sql = "INSERT INTO admin_logs (admin_id, harakat, tafsilot) VALUES ($1, $2, $3)"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, admin_id, harakat, tafsilot)
 
     async def close(self):
-        """Ulanishni yopish"""
         if self.pool:
             await self.pool.close()
 
