@@ -1,13 +1,15 @@
 """
 FastAPI Server
-API + WebSocket + Static Files
+API + WebSocket + Static Files + Telegram Bot + Userbot
 """
 
 import os
 import uuid
 import shutil
+import asyncio
 from datetime import datetime
 from typing import Optional
+from contextlib import asynccontextmanager
 
 from fastapi import (
     FastAPI, WebSocket, WebSocketDisconnect,
@@ -29,11 +31,78 @@ from calculator import hisobla
 from userbot import userbot
 from scheduler import start_scheduler
 
+# 🤖 Telegram Bot import
+from bot import bot as tg_bot, dp as tg_dp
+
+
+# ==================== LIFESPAN (startup/shutdown) ====================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Server ishga tushganda va to'xtaganda"""
+
+    # ========== STARTUP ==========
+    print("🚀 Server ishga tushmoqda...")
+
+    # 1. Database
+    await db.connect()
+
+    # 2. Scheduler
+    start_scheduler()
+
+    # 3. Userbot
+    try:
+        await userbot.start()
+    except Exception as e:
+        print(f"⚠️ Userbot ishga tushmadi: {e}")
+
+    # 4. 🤖 Telegram Bot (alohida task sifatida)
+    async def run_bot():
+        try:
+            print("🤖 Bot ishga tushdi...")
+            await tg_dp.start_polling(tg_bot)
+        except Exception as e:
+            print(f"❌ Bot xatosi: {e}")
+
+    bot_task = asyncio.create_task(run_bot())
+
+    print("🚀 Server tayyor!")
+
+    # ========== YIELD (server ishlayapti) ==========
+    yield
+
+    # ========== SHUTDOWN ==========
+    print("🛑 Server to'xtamoqda...")
+
+    # Botni to'xtatish
+    bot_task.cancel()
+    try:
+        await bot_task
+    except asyncio.CancelledError:
+        pass
+
+    try:
+        await tg_bot.session.close()
+    except Exception:
+        pass
+
+    # Userbotni to'xtatish
+    try:
+        await userbot.stop()
+    except Exception:
+        pass
+
+    # Database
+    await db.close()
+
+    print("👋 Server to'xtadi")
+
+
 # ==================== APP SETUP ====================
 
-app = FastAPI(title="Sevgi Bot API")
+app = FastAPI(title="Sevgi Bot API", lifespan=lifespan)
 
-# CORS (Netlify uchun)
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -45,27 +114,6 @@ app.add_middleware(
 # Static files
 os.makedirs(config.UPLOAD_DIR, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-# ==================== STARTUP / SHUTDOWN ====================
-
-@app.on_event("startup")
-async def startup():
-    """Server ishga tushganda"""
-    await db.connect()
-    start_scheduler()
-    try:
-        await userbot.start()
-    except Exception as e:
-        print(f"⚠️ Userbot ishga tushmadi: {e}")
-    print("🚀 Server tayyor!")
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    """Server to'xtaganda"""
-    await userbot.stop()
-    await db.close()
 
 
 # ==================== PYDANTIC MODELLAR ====================
@@ -134,7 +182,6 @@ async def verify_parol(data: VerifyRequest, request: Request):
     Kalkulyator natijasi + parol tekshirish
     Format: "26.11100" -> javob=26, parol=11100
     """
-    # Javobni ajratish
     qismlar = data.javob.split(".")
     if len(qismlar) != 2:
         return {"success": False, "xato": "Format: javob.parol"}
@@ -147,17 +194,10 @@ async def verify_parol(data: VerifyRequest, request: Request):
     if xato:
         return {"success": False, "xato": "Misol xato"}
 
-    # Javob to'g'rimi?
     if str(togr_javob) != misol_javob:
         return {"success": False, "xato": "Javob noto'g'ri"}
 
-    # Parolni qidirish (barcha foydalanuvchilar orasidan)
-    # ⚠️ Bu yerda username orqali emas, parol orqali tekshirish kerak
-    # Lekin bu xavfsiz emas - bir xil parol ko'p odamda bo'lishi mumkin
-    # Shuning uchun bu yerda faqat parolni tekshiramiz
-
-    # Foydalanuvchini topish (kelajakda: login/parol tizimi)
-    # Hozircha: parolni barcha userlarda tekshiramiz
+    # Parolni barcha foydalanuvchilardan qidirish
     async with db.pool.acquire() as conn:
         users = await conn.fetch(
             "SELECT chat_id, parol_hash FROM users WHERE parol_hash IS NOT NULL"
@@ -207,23 +247,20 @@ async def get_profile(user=Depends(get_current_user)):
 
 @app.post("/api/profile/photo")
 async def upload_profile_photo(
-        file: UploadFile = File(...),
-        user=Depends(get_current_user)
+    file: UploadFile = File(...),
+    user=Depends(get_current_user)
 ):
     """Profil rasm yuklash"""
-    # Fayl tekshirish
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in config.ALLOWED_EXTENSIONS:
         raise HTTPException(400, "Faqat rasm fayllari")
 
-    # Saqlash
     filename = f"profile_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
     filepath = os.path.join(config.UPLOAD_DIR, filename)
 
     with open(filepath, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
-    # DB yangilash
     url = f"/static/uploads/{filename}"
     await db.update_profil_rasm(user['chat_id'], url)
 
@@ -251,11 +288,9 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
     if topilgan['chat_id'] == user['chat_id']:
         return {"success": False, "xato": "O'zingizni qidirdingiz"}
 
-    # Maxfiylikni tekshirish
     if topilgan['maxfiylik']:
         return {"success": False, "xato": "Foydalanuvchi maxfiy"}
 
-    # Bloklanganmi?
     bloklangan = await db.is_blocked(topilgan['chat_id'], user['chat_id'])
     if bloklangan:
         return {"success": False, "xato": "Siz bloklangansiz"}
@@ -269,7 +304,7 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
             "username": topilgan['username'],
             "profil_rasm": topilgan['profil_rasm'],
             "oxirgi_faollik": topilgan['oxirgi_faollik'].isoformat()
-            if topilgan['oxirgi_faollik'] else None
+                if topilgan['oxirgi_faollik'] else None
         }
     }
 
@@ -278,18 +313,18 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
 
 @app.get("/api/chats")
 async def get_chats(user=Depends(get_current_user)):
-    """Chat ro'yxati (oxirgi xabar yuborilganlar)"""
+    """Chat ro'yxati"""
     async with db.pool.acquire() as conn:
         chats = await conn.fetch("""
-                                 SELECT DISTINCT CASE
-                                                     WHEN from_chat = $1 THEN to_chat
-                                                     ELSE from_chat
-                                                     END AS chat_id
-                                 FROM messages
-                                 WHERE (from_chat = $1 OR to_chat = $1)
-                                   AND ochirilgan = FALSE
-                                 ORDER BY chat_id
-                                 """, user['chat_id'])
+            SELECT DISTINCT
+                CASE 
+                    WHEN from_chat = $1 THEN to_chat
+                    ELSE from_chat
+                END AS chat_id
+            FROM messages
+            WHERE (from_chat = $1 OR to_chat = $1) AND ochirilgan = FALSE
+            ORDER BY chat_id
+        """, user['chat_id'])
 
     natija = []
     for c in chats:
@@ -297,16 +332,14 @@ async def get_chats(user=Depends(get_current_user)):
         if not u or u['maxfiylik']:
             continue
 
-        # Oxirgi xabar
         async with db.pool.acquire() as conn:
             last = await conn.fetchrow("""
-                                       SELECT *
-                                       FROM messages
-                                       WHERE (from_chat = $1 AND to_chat = $2)
-                                          OR (from_chat = $2 AND to_chat = $1)
-                                           AND ochirilgan = FALSE
-                                       ORDER BY vaqt DESC LIMIT 1
-                                       """, user['chat_id'], c['chat_id'])
+                SELECT * FROM messages
+                WHERE ((from_chat = $1 AND to_chat = $2)
+                    OR (from_chat = $2 AND to_chat = $1))
+                  AND ochirilgan = FALSE
+                ORDER BY vaqt DESC LIMIT 1
+            """, user['chat_id'], c['chat_id'])
 
         natija.append({
             "chat_id": u['chat_id'],
@@ -319,22 +352,19 @@ async def get_chats(user=Depends(get_current_user)):
             "kurilgan": last['kurilgan'] if last else True
         })
 
-    # Oxirgi vaqt bo'yicha tartiblash
     natija.sort(key=lambda x: x['oxirgi_vaqt'] or "", reverse=True)
     return {"chats": natija}
 
 
 @app.get("/api/messages/{chat_id}")
 async def get_messages(
-        chat_id: int,
-        limit: int = 50,
-        offset: int = 0,
-        user=Depends(get_current_user)
+    chat_id: int,
+    limit: int = 50,
+    offset: int = 0,
+    user=Depends(get_current_user)
 ):
     """Chatdagi xabarlar"""
-    # O'qilgan deb belgilash
     await db.mark_as_read(chat_id, user['chat_id'])
-
     xabarlar = await db.get_messages(user['chat_id'], chat_id, limit, offset)
 
     return {
@@ -356,20 +386,17 @@ async def get_messages(
 
 @app.post("/api/messages/send")
 async def send_message(
-        data: SendMessageRequest,
-        user=Depends(get_current_user)
+    data: SendMessageRequest,
+    user=Depends(get_current_user)
 ):
     """Xabar yuborish"""
-    # Bloklanganmi?
     if await db.is_blocked(data.to_chat, user['chat_id']):
         raise HTTPException(403, "Siz bloklangansiz")
 
-    # Maxfiylikni tekshirish
     qabul = await db.get_user(data.to_chat)
     if not qabul or qabul['maxfiylik']:
         raise HTTPException(404, "Foydalanuvchi mavjud emas")
 
-    # Saqlash
     result = await db.add_message(
         user['chat_id'],
         data.to_chat,
@@ -379,7 +406,6 @@ async def send_message(
         data.xabar_turi
     )
 
-    # WebSocket orqali yuborish
     await manager.send_to(data.to_chat, {
         "type": "new_message",
         "message": {
@@ -405,13 +431,11 @@ async def delete_message(msg_id: int, user=Depends(get_current_user)):
     if not result:
         raise HTTPException(404, "Xabar topilmadi")
 
-    # Userbot orqali Telegramdan ham o'chirish
     try:
         await userbot.delete_messages(result['to_chat'], [msg_id])
     except Exception:
         pass
 
-    # WebSocket orqali xabar berish
     await manager.send_to(result['to_chat'], {
         "type": "message_deleted",
         "msg_id": msg_id
@@ -422,9 +446,9 @@ async def delete_message(msg_id: int, user=Depends(get_current_user)):
 
 @app.put("/api/messages/{msg_id}")
 async def edit_message(
-        msg_id: int,
-        data: EditMessageRequest,
-        user=Depends(get_current_user)
+    msg_id: int,
+    data: EditMessageRequest,
+    user=Depends(get_current_user)
 ):
     """Xabarni tahrirlash"""
     result = await db.edit_message(msg_id, user['chat_id'], data.yangi_matn)
@@ -444,7 +468,7 @@ async def edit_message(
 
 @app.get("/api/photos")
 async def get_photos(user=Depends(get_current_user)):
-    """Foydalanuvchi rasmlarini olish"""
+    """Rasmlar ro'yxati"""
     rasmlar = await db.get_photos(user['chat_id'])
     return {
         "photos": [{
@@ -459,22 +483,19 @@ async def get_photos(user=Depends(get_current_user)):
 
 @app.post("/api/photos")
 async def upload_photo(
-        file: UploadFile = File(...),
-        nom: str = Form(""),
-        user=Depends(get_current_user)
+    file: UploadFile = File(...),
+    nom: str = Form(""),
+    user=Depends(get_current_user)
 ):
     """Rasm yuklash (20 ta limit)"""
-    # Limitni tekshirish
     mavjud = await db.get_photos(user['chat_id'])
     if len(mavjud) >= config.MAX_PHOTOS_PER_USER:
         raise HTTPException(400, f"Limit: {config.MAX_PHOTOS_PER_USER} ta rasm")
 
-    # Fayl tekshirish
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in config.ALLOWED_EXTENSIONS:
         raise HTTPException(400, "Faqat rasm fayllari")
 
-    # Saqlash
     filename = f"photo_{user['chat_id']}_{uuid.uuid4().hex[:8]}{ext}"
     filepath = os.path.join(config.UPLOAD_DIR, filename)
 
@@ -494,7 +515,6 @@ async def delete_photo(photo_id: int, user=Depends(get_current_user)):
     if not result:
         raise HTTPException(404, "Rasm topilmadi")
 
-    # Faylni o'chirish
     try:
         filepath = result['rasm_url'].replace("/static/", "static/")
         if os.path.exists(filepath):
@@ -553,7 +573,6 @@ async def calculate(data: dict):
 
 class ConnectionManager:
     """WebSocket ulanishlar boshqaruvi"""
-
     def __init__(self):
         self.connections: dict[int, list[WebSocket]] = {}
 
@@ -573,15 +592,14 @@ class ConnectionManager:
         print(f"🔌 WebSocket uzildi: {chat_id}")
 
     async def send_to(self, chat_id: int, data: dict):
-        """Foydalanuvchiga xabar yuborish"""
         if chat_id not in self.connections:
             return
-
         for ws in self.connections[chat_id][:]:
             try:
                 await ws.send_json(data)
             except Exception:
-                self.connections[chat_id].remove(ws)
+                if ws in self.connections.get(chat_id, []):
+                    self.connections[chat_id].remove(ws)
 
 
 manager = ConnectionManager()
@@ -603,20 +621,16 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             turi = data.get("type")
 
             if turi == "typing":
-                # "Yozayapti..." ni qabul qiluvchiga yuborish
                 await manager.send_to(data["to_chat"], {
                     "type": "typing",
                     "from_chat": chat_id
                 })
-
             elif turi == "read":
-                # O'qilgan deb belgilash
                 await db.mark_as_read(data["from_chat"], chat_id)
                 await manager.send_to(data["from_chat"], {
                     "type": "read",
                     "by_chat": chat_id
                 })
-
             elif turi == "ping":
                 await websocket.send_json({"type": "pong"})
 

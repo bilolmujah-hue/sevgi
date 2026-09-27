@@ -1,6 +1,6 @@
 """
 Telegram Bot - aiogram 3.x
-Yashirin buyruqlar: /parol.XXXXX va /paroluzgar.XXXXX
+Railway + main.py integratsiyasi uchun
 """
 
 import asyncio
@@ -26,11 +26,13 @@ from calculator import hisobla
 
 
 # ==================== BOT SETUP ====================
+
 bot = Bot(token=config.BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
 
-# ==================== FSM STATES (faqat keraklilari) ====================
+# ==================== FSM STATES ====================
+
 class VaqtBlokStates(StatesGroup):
     kutish_soat = State()
     kutish_bekor = State()
@@ -122,7 +124,7 @@ async def contact_handler(message: Message):
     )
 
 
-# ==================== 🆕 /PAROL.XXXXX (PAROL QO'YISH) ====================
+# ==================== /PAROL.XXXXX (PAROL QO'YISH) ====================
 
 @dp.message(F.text.regexp(r'^/parol\.\d{5}$'))
 async def parol_quyish(message: Message):
@@ -137,7 +139,6 @@ async def parol_quyish(message: Message):
         await message.answer("❗ Avval /start bosing")
         return
 
-    # Parolni ajratib olish
     parol = message.text.split(".")[1].strip()
 
     if not parolni_tekshir(parol):
@@ -146,10 +147,8 @@ async def parol_quyish(message: Message):
         )
         return
 
-    # Parolni saqlash
     await db.update_parol(chat_id, hash_parol(parol))
 
-    # Xabarni o'chirish (bot o'zi yuborgan xabarlarni)
     try:
         await message.delete()
     except Exception:
@@ -161,7 +160,7 @@ async def parol_quyish(message: Message):
     )
 
 
-# ==================== 🆕 /PAROLUZGAR.XXXXX (PAROLNI O'ZGARTIRISH) ====================
+# ==================== /PAROLUZGAR.XXXXX (PAROLNI O'ZGARTIRISH) ====================
 
 @dp.message(F.text.regexp(r'^/paroluzgar\.\d{5}$'))
 async def parol_uzgartirish(message: Message):
@@ -183,7 +182,6 @@ async def parol_uzgartirish(message: Message):
         )
         return
 
-    # Yangi parolni ajratib olish
     yangi_parol = message.text.split(".")[1].strip()
 
     if not parolni_tekshir(yangi_parol):
@@ -192,10 +190,8 @@ async def parol_uzgartirish(message: Message):
         )
         return
 
-    # Yangi parolni saqlash
     await db.update_parol(chat_id, hash_parol(yangi_parol))
 
-    # Xabarni o'chirish
     try:
         await message.delete()
     except Exception:
@@ -223,14 +219,12 @@ async def kalkulyator_handler(message: Message, state: FSMContext):
         await message.answer("❗ Avval /start bosing va ro'yxatdan o'ting")
         return
 
-    # Hisoblash
     natija, xato = hisobla(message.text)
 
     if xato:
         await message.answer(xato)
         return
 
-    # Javobni ko'rsatish + Web App tugmasi
     await message.answer(
         f"📊 `{message.text}` = *{natija}*",
         parse_mode="Markdown",
@@ -256,7 +250,6 @@ async def vaqtblok_start(message: Message, state: FSMContext):
         )
         return
 
-    # Agar blok mavjud bo'lsa — bekor qilish
     if user['blok_vaqt'] and user['blok_vaqt'] > datetime.now():
         await state.set_state(VaqtBlokStates.kutish_bekor)
         await message.answer("🔓 Blokni bekor qilish uchun 3 xonalik kodni yozing:")
@@ -422,8 +415,10 @@ async def adminpanel(message: Message):
 
 
 # ==================== MAIN ====================
+# ⚠️ MUHIM: Bu qism faqat python bot.py bilan ishga tushganda chaqiriladi
 
 async def main():
+    """Faqat python bot.py bilan ishga tushganda"""
     await db.connect()
     print("🤖 Bot ishga tushdi...")
     await dp.start_polling(bot)
