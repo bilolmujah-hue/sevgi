@@ -24,8 +24,11 @@
     --primary: #3b82f6;
     --primary-dark: #2563eb;
     --border: #e5e7eb;
-    --msg-out: #dbeafe;
-    --msg-in: #f3f4f6;
+    /* ⚡ CHAT RANGLARI */
+    --msg-out: #effdde;      /* O'zim — yashil-ko'k */
+    --msg-out-text: #0f172a;
+    --msg-in: #ffffff;       /* Boshqalar — oq */
+    --msg-in-text: #0f172a;
     --danger: #ef4444;
     --success: #10b981;
     --shadow: 0 4px 16px rgba(0,0,0,0.08);
@@ -44,8 +47,11 @@ body.dark {
     --primary: #3b82f6;
     --primary-dark: #2563eb;
     --border: #1e293b;
-    --msg-out: #1e40af;
-    --msg-in: #1e293b;
+    /* ⚡ CHAT RANGLARI (Tungi) */
+    --msg-out: #2b5278;      /* O'zim — ko'k */
+    --msg-out-text: #ffffff;
+    --msg-in: #182533;       /* Boshqalar — quyuq */
+    --msg-in-text: #ffffff;
     --shadow: 0 4px 16px rgba(0,0,0,0.3);
     --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
 }
@@ -134,10 +140,7 @@ body {
     font-family: inherit;
 }
 
-.calc-btn:active {
-    transform: scale(0.94);
-    background: var(--bg-3);
-}
+.calc-btn:active { transform: scale(0.94); background: var(--bg-3); }
 
 .calc-btn.op { background: var(--primary); color: white; font-weight: 600; }
 .calc-btn.eq { background: var(--primary); color: white; font-weight: 700; grid-column: span 2; }
@@ -522,19 +525,14 @@ body {
     display: none;
     flex-direction: column;
     z-index: 100;
+    background: var(--bg-2);
 }
 
 #chat-window.active { display: flex; }
 
+/* ⚡ FON RASMI OLIB TASHLANDI */
 .chat-bg {
-    position: absolute;
-    inset: 0;
-    background: var(--bg-2);
-    background-size: cover;
-    background-position: center;
-    opacity: 0.15;
-    z-index: 0;
-    pointer-events: none;
+    display: none;
 }
 
 .chat-header {
@@ -557,6 +555,15 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chat-header-info .name .group-username {
+    font-size: 12px;
+    color: var(--text-2);
+    font-weight: 400;
 }
 
 .chat-header-info .status {
@@ -578,6 +585,7 @@ body {
     -webkit-overflow-scrolling: touch;
     position: relative;
     z-index: 1;
+    background: var(--bg-2);
 }
 
 .msg-wrap {
@@ -608,6 +616,7 @@ body {
     position: relative;
     animation: msgIn 0.2s ease;
     cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
 
 @keyframes msgIn {
@@ -615,15 +624,16 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ⚡ CHAT RANGLARI — Telegram kabi */
 .message.out {
     background: var(--msg-out);
+    color: var(--msg-out-text);
     border-bottom-right-radius: 6px;
 }
 
-body.dark .message.out { color: white; }
-
 .message.in {
     background: var(--msg-in);
+    color: var(--msg-in-text);
     border-bottom-left-radius: 6px;
 }
 
@@ -632,6 +642,7 @@ body.dark .message.out { color: white; }
     line-height: 1;
     background: transparent !important;
     padding: 4px;
+    box-shadow: none;
 }
 
 .message img.msg-img,
@@ -674,11 +685,11 @@ body.dark .message.out { color: white; }
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.file-info .file-size { font-size: 12px; color: var(--text-2); }
+.file-info .file-size { font-size: 12px; opacity: 0.7; }
 
 .msg-time {
     font-size: 10px;
-    color: var(--text-2);
+    opacity: 0.7;
     margin-left: 8px;
     float: right;
     margin-top: 6px;
@@ -687,12 +698,12 @@ body.dark .message.out { color: white; }
     gap: 2px;
 }
 
-body.dark .message.out .msg-time { color: rgba(255,255,255,0.7); }
-
 .msg-time .check { display: inline-flex; align-items: center; }
 .msg-time .check svg { width: 14px; height: 14px; stroke-width: 2.5; }
 .msg-time .check.read svg { color: #3b82f6; }
-.msg-time .check:not(.read) svg { color: var(--text-2); }
+.msg-time .check:not(.read) svg { color: rgba(255,255,255,0.7); }
+
+body:not(.dark) .message.in .msg-time .check:not(.read) svg { color: var(--text-2); }
 
 /* Voice */
 .voice-player {
@@ -729,11 +740,12 @@ body.dark .message.out .msg-time { color: rgba(255,255,255,0.7); }
 
 .voice-wave span {
     flex: 1;
-    background: var(--text-2);
+    background: currentColor;
+    opacity: 0.4;
     border-radius: 2px;
 }
 
-.voice-duration { font-size: 12px; color: var(--text-2); min-width: 30px; text-align: right; }
+.voice-duration { font-size: 12px; opacity: 0.7; min-width: 30px; text-align: right; }
 
 /* Reply */
 .reply-quote {
@@ -752,7 +764,7 @@ body.dark .message.out .msg-time { color: rgba(255,255,255,0.7); }
 }
 
 .reply-quote .text {
-    color: var(--text-2);
+    opacity: 0.7;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -764,7 +776,7 @@ body.dark .message.out .msg-time { color: rgba(255,255,255,0.7); }
     align-items: center;
     gap: 10px;
     padding: 8px 14px;
-    background: var(--bg-2);
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
     font-size: 13px;
     position: relative;
@@ -962,10 +974,7 @@ body.dark .reaction-item { background: var(--bg-2); }
     flex-shrink: 0;
 }
 
-#attach-menu .item .icon-circle svg {
-    width: 18px;
-    height: 18px;
-}
+#attach-menu .item .icon-circle svg { width: 18px; height: 18px; }
 
 #attach-menu .item[data-type="photo"] .icon-circle { background: #3b82f6; }
 #attach-menu .item[data-type="video"] .icon-circle { background: #8b5cf6; }
@@ -1315,6 +1324,30 @@ body.dark .reaction-item { background: var(--bg-2); }
     box-shadow: var(--shadow-lg);
 }
 
+.search-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.search-tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: var(--bg-2);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.search-tab.active {
+    background: var(--primary);
+    color: white;
+}
+
 .search-box input {
     width: 100%;
     padding: 14px;
@@ -1513,9 +1546,7 @@ body.dark .reaction-item { background: var(--bg-2); }
     cursor: pointer;
 }
 
-.group-member-item.selected {
-    background: rgba(59, 130, 246, 0.2);
-}
+.group-member-item.selected { background: rgba(59, 130, 246, 0.2); }
 
 .group-member-item .avatar {
     width: 36px;
@@ -1530,6 +1561,41 @@ body.dark .reaction-item { background: var(--bg-2); }
 }
 
 .group-member-item.selected .check { display: block; }
+
+/* Username input with @ */
+.username-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 12px;
+}
+
+.username-input-wrap .at {
+    background: var(--bg-3);
+    color: var(--text-2);
+    padding: 14px;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    font-weight: 600;
+    border: 2px solid var(--border);
+    border-right: none;
+}
+
+.username-input-wrap input {
+    margin-bottom: 0 !important;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
+    flex: 1;
+}
+
+.username-status {
+    font-size: 12px;
+    margin-top: -8px;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    font-weight: 500;
+}
+
+.username-status.ok { color: var(--success); }
+.username-status.err { color: var(--danger); }
 </style>
 </head>
 <body>
@@ -1669,6 +1735,15 @@ body.dark .reaction-item { background: var(--bg-2); }
     <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
         <polyline points="13 2 13 9 20 9"/>
+    </symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+    </symbol>
+    <symbol id="icon-log-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+        <polyline points="10 17 15 12 10 7"/>
+        <line x1="15" y1="12" x2="3" y2="12"/>
     </symbol>
 </svg>
 
@@ -1837,17 +1912,27 @@ body.dark .reaction-item { background: var(--bg-2); }
     </div>
 </div>
 
-<!-- ==================== CREATE GROUP ==================== -->
+<!-- ==================== CREATE GROUP (username bilan) ==================== -->
 <div id="create-group-modal" class="modal">
     <div class="modal-box">
         <div class="icon"><svg><use href="#icon-users"/></svg></div>
         <h3>Yangi guruh</h3>
-        <div class="subtitle">Guruh nomi va a'zolarni tanlang</div>
+        <div class="subtitle">Guruh ma'lumotlarini kiriting</div>
+
         <label>Guruh nomi</label>
         <input type="text" id="group-nom" placeholder="Masalan: Oila" maxlength="50">
-        <label>A'zolar (username orqali qidiring)</label>
-        <input type="text" id="group-search" placeholder="@username" oninput="searchUsersForGroup()">
+
+        <label>Username (majburiy emas)</label>
+        <div class="username-input-wrap">
+            <span class="at">@</span>
+            <input type="text" id="group-username" placeholder="oila_guruhi" maxlength="32" autocomplete="off" autocapitalize="off" oninput="checkGroupUsername()">
+        </div>
+        <div class="username-status" id="group-username-status"></div>
+
+        <label>A'zolar (ixtiyoriy)</label>
+        <input type="text" id="group-search" placeholder="@username qidirish" oninput="searchUsersForGroup()">
         <div class="group-members-list" id="group-members-list"></div>
+
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeCreateGroup()">Bekor qilish</button>
             <button class="btn-primary" onclick="createGroup()">Yaratish</button>
@@ -1855,17 +1940,19 @@ body.dark .reaction-item { background: var(--bg-2); }
     </div>
 </div>
 
-<!-- ==================== CHAT FON ==================== -->
-<div id="chat-fon-modal" class="modal">
+<!-- ==================== JOIN GROUP ==================== -->
+<div id="join-group-modal" class="modal">
     <div class="modal-box">
-        <div class="icon"><svg><use href="#icon-image"/></svg></div>
-        <h3>Chat fon rasmi</h3>
-        <div class="subtitle">Bu chat uchun fon rasmi tanlang</div>
-        <input type="file" id="fon-file-input" accept="image/*" style="display:none">
-        <button onclick="document.getElementById('fon-file-input').click()" style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;">Rasm yuklash</button>
+        <div class="icon"><svg><use href="#icon-log-in"/></svg></div>
+        <h3>Guruhga qo'shilish</h3>
+        <div class="subtitle">Username orqali guruhga kiring</div>
+        <div class="username-input-wrap">
+            <span class="at">@</span>
+            <input type="text" id="join-group-username" placeholder="guruh_username" maxlength="32" autocomplete="off" autocapitalize="off">
+        </div>
         <div class="modal-buttons">
-            <button class="btn-cancel" onclick="removeFon()">Fonni o'chirish</button>
-            <button class="btn-cancel" onclick="closeChatFon()">Yopish</button>
+            <button class="btn-cancel" onclick="closeJoinGroup()">Bekor qilish</button>
+            <button class="btn-primary" onclick="joinGroup()">Qo'shilish</button>
         </div>
     </div>
 </div>
@@ -1873,6 +1960,10 @@ body.dark .reaction-item { background: var(--bg-2); }
 <!-- ==================== QIDIRUV MODAL ==================== -->
 <div id="search-modal" class="modal" onclick="if(event.target===this) closeSearch()">
     <div class="search-box">
+        <div class="search-tabs">
+            <button class="search-tab active" id="search-tab-user" onclick="switchSearchTab('user')">👤 Foydalanuvchi</button>
+            <button class="search-tab" id="search-tab-group" onclick="switchSearchTab('group')">👥 Guruh</button>
+        </div>
         <input type="text" id="search-input" placeholder="@username yozing..."
                autocomplete="off" onkeypress="if(event.key==='Enter') doSearch()">
         <div id="search-result"></div>
@@ -1885,8 +1976,11 @@ body.dark .reaction-item { background: var(--bg-2); }
     <header class="app-header">
         <div class="avatar" id="header-avatar" onclick="switchTab('profile')">U</div>
         <div class="name" id="header-name">Foydalanuvchi</div>
-        <button class="icon-btn" onclick="openCreateGroup()" title="Guruh">
-            <svg class="svg-icon"><use href="#icon-users"/></svg>
+        <button class="icon-btn" onclick="openCreateGroup()" title="Yangi guruh">
+            <svg class="svg-icon"><use href="#icon-plus"/></svg>
+        </button>
+        <button class="icon-btn" onclick="openJoinGroup()" title="Guruhga qo'shilish">
+            <svg class="svg-icon"><use href="#icon-log-in"/></svg>
         </button>
         <button class="icon-btn" onclick="toggleTheme()" title="Tungi rejim">
             <svg class="svg-icon"><use href="#icon-moon" id="theme-icon"/></svg>
@@ -1964,7 +2058,6 @@ body.dark .reaction-item { background: var(--bg-2); }
 
 <!-- ==================== CHAT WINDOW ==================== -->
 <div id="chat-window">
-    <div class="chat-bg" id="chat-bg"></div>
     <header class="chat-header">
         <button class="icon-btn" onclick="closeChat()">
             <svg class="svg-icon"><use href="#icon-arrow-left"/></svg>
@@ -2120,8 +2213,9 @@ let TYPING_TIMEOUT = null;
 let GROUP_SELECTED_USERS = [];
 let _pendingAction = null;
 let IS_RECORDING = false;
+let SEARCH_TAB = 'user';
 
-// ⚡ Telegram ID olish
+// ==================== TELEGRAM ====================
 function getTelegramUser() {
     try {
         if (window.Telegram && window.Telegram.WebApp) {
@@ -2336,7 +2430,7 @@ function insertEmoji(emoji) {
     updateSendButton();
 }
 
-// ==================== MODAL: VERIFY ====================
+// ==================== VERIFY ====================
 function showVerifyModal() {
     document.getElementById('verify-input').value = '';
     document.getElementById('verify-modal').classList.add('active');
@@ -2351,7 +2445,6 @@ function verifyCancel() {
     updateSciDisplay();
 }
 
-// ⚡ YANGI: telegram_id ishlatiladi
 async function verifySubmit() {
     const parol = document.getElementById('verify-input').value.trim();
     if (!parol || parol.length !== 5 || !/^\d+$/.test(parol)) {
@@ -2359,9 +2452,7 @@ async function verifySubmit() {
         return;
     }
 
-    // ⚡ Telegram ID ni olish
     const tgUser = getTelegramUser();
-    
     if (!tgUser || !tgUser.id) {
         toast('Telegram orqali oching');
         return;
@@ -2392,7 +2483,7 @@ async function verifySubmit() {
     } catch (e) { toast('Server xatosi'); }
 }
 
-// ==================== MODAL: PROFILE EDIT ====================
+// ==================== PROFILE EDIT ====================
 function openProfileEdit() {
     if (!USER) return;
     document.getElementById('edit-ism').value = USER.ism || '';
@@ -2423,7 +2514,7 @@ async function saveProfile() {
     }
 }
 
-// ==================== MODAL: EDIT MESSAGE ====================
+// ==================== EDIT MESSAGE ====================
 function openEditMsgModal(matn) {
     document.getElementById('edit-msg-textarea').value = matn || '';
     document.getElementById('edit-msg-modal').classList.add('active');
@@ -2439,7 +2530,7 @@ function saveEditMsgModal() {
     closeEditMsgModal();
 }
 
-// ==================== MODAL: CONFIRM ====================
+// ==================== CONFIRM ====================
 function showConfirmModal(title, text, btnText, action) {
     document.getElementById('confirm-title').textContent = title;
     document.getElementById('confirm-text').textContent = text;
@@ -2457,7 +2548,7 @@ function confirmAction() {
     if (action) action();
 }
 
-// ==================== MODAL: USER PROFILE ====================
+// ==================== USER PROFILE ====================
 let _profileUser = null;
 
 async function openUserProfile(userId) {
@@ -2496,31 +2587,71 @@ function startChatFromProfile() {
     const u = _profileUser;
     closeUserProfile();
     openChat({
-        chat_id: u.chat_id,
-        ism: u.ism,
-        familya: u.familya,
-        username: u.username,
-        profil_rasm: u.profil_rasm,
-        online: u.online,
-        oxirgi_faollik: u.oxirgi_faollik
+        chat_id: u.chat_id, ism: u.ism, familya: u.familya, username: u.username,
+        profil_rasm: u.profil_rasm, online: u.online, oxirgi_faollik: u.oxirgi_faollik
     });
 }
 
 function openChatPartnerProfile() {
-    if (IS_GROUP || !CURRENT_CHAT) return;
+    if (IS_GROUP) return;
+    if (!CURRENT_CHAT) return;
     if (CURRENT_CHAT.is_saved) return;
     openUserProfile(CURRENT_CHAT.chat_id);
 }
 
-// ==================== MODAL: CREATE GROUP ====================
+// ==================== CREATE GROUP ====================
 function openCreateGroup() {
     GROUP_SELECTED_USERS = [];
     document.getElementById('group-nom').value = '';
+    document.getElementById('group-username').value = '';
     document.getElementById('group-search').value = '';
     document.getElementById('group-members-list').innerHTML = '';
+    document.getElementById('group-username-status').textContent = '';
     document.getElementById('create-group-modal').classList.add('active');
 }
 function closeCreateGroup() { document.getElementById('create-group-modal').classList.remove('active'); }
+
+let _usernameCheckTimer = null;
+function checkGroupUsername() {
+    const username = document.getElementById('group-username').value.trim().toLowerCase();
+    const status = document.getElementById('group-username-status');
+    
+    if (!username) {
+        status.textContent = '';
+        status.className = 'username-status';
+        return;
+    }
+    
+    if (username.length < 3) {
+        status.textContent = '❌ Kamida 3 ta belgi';
+        status.className = 'username-status err';
+        return;
+    }
+    
+    if (!/^[a-z0-9_]+$/.test(username)) {
+        status.textContent = '❌ Faqat harf, son va _';
+        status.className = 'username-status err';
+        return;
+    }
+    
+    status.textContent = '⏳ Tekshirilmoqda...';
+    status.className = 'username-status';
+    
+    clearTimeout(_usernameCheckTimer);
+    _usernameCheckTimer = setTimeout(async () => {
+        const res = await apiFetch('/api/groups/check-username', {
+            method: 'POST',
+            body: JSON.stringify({ username })
+        });
+        if (res && res.success) {
+            status.textContent = `✅ @${username} bo'sh`;
+            status.className = 'username-status ok';
+        } else {
+            status.textContent = `❌ ${res?.xato || 'Band'}`;
+            status.className = 'username-status err';
+        }
+    }, 500);
+}
 
 async function searchUsersForGroup() {
     const q = document.getElementById('group-search').value.trim();
@@ -2555,11 +2686,24 @@ function toggleGroupUser(chatId, el) {
 
 async function createGroup() {
     const nom = document.getElementById('group-nom').value.trim();
-    if (!nom) { toast('Nom kiriting'); return; }
+    const username = document.getElementById('group-username').value.trim().toLowerCase();
+    
+    if (!nom) { toast('Guruh nomini kiriting'); return; }
+    
+    if (username) {
+        if (username.length < 3) { toast('Username kamida 3 ta belgi'); return; }
+        if (!/^[a-z0-9_]+$/.test(username)) { toast('Username: faqat harf, son va _'); return; }
+    }
+    
     const res = await apiFetch('/api/groups/create', {
         method: 'POST',
-        body: JSON.stringify({ nom: nom, azo_ids: GROUP_SELECTED_USERS })
+        body: JSON.stringify({ 
+            nom: nom, 
+            username: username || null,
+            azo_ids: GROUP_SELECTED_USERS 
+        })
     });
+    
     if (res && res.success) {
         closeCreateGroup();
         toast('Guruh yaratildi ✅');
@@ -2569,20 +2713,32 @@ async function createGroup() {
     }
 }
 
-// ==================== MODAL: CHAT FON ====================
-function openChatFon() {
-    if (!CURRENT_CHAT && !CURRENT_GROUP) return;
-    document.getElementById('chat-fon-modal').classList.add('active');
+// ==================== JOIN GROUP ====================
+function openJoinGroup() {
+    document.getElementById('join-group-username').value = '';
+    document.getElementById('join-group-modal').classList.add('active');
+    setTimeout(() => document.getElementById('join-group-username').focus(), 200);
 }
-function closeChatFon() { document.getElementById('chat-fon-modal').classList.remove('active'); }
+function closeJoinGroup() { document.getElementById('join-group-modal').classList.remove('active'); }
 
-async function removeFon() {
-    if (!CURRENT_CHAT && !CURRENT_GROUP) return;
-    const otherId = IS_GROUP ? -CURRENT_GROUP.id : CURRENT_CHAT.chat_id;
-    await apiFetch(`/api/chat/fon/${otherId}`, { method: 'DELETE' });
+async function joinGroup() {
+    const username = document.getElementById('join-group-username').value.trim().lstrip('@').toLowerCase();
+    if (!username) { toast('Username kiriting'); return; }
+    
+    const res = await apiFetch(`/api/groups/join/${username}`, { method: 'POST' });
+    if (res && res.success) {
+        closeJoinGroup();
+        toast(`"${res.nom}" ga qo'shildingiz ✅`);
+        await loadChats();
+    } else {
+        toast(res?.xato || 'Xato');
+    }
+}
+
+// ==================== CHAT FON (olib tashlandi) ====================
+async function loadChatFon(otherChat) {
+    // ⚡ FON RASMI OLIB TASHLANDI
     document.getElementById('chat-bg').style.backgroundImage = '';
-    closeChatFon();
-    toast('Fon o\'chirildi');
 }
 
 // ==================== API ====================
@@ -2666,13 +2822,8 @@ function renderSavedMessages() {
 
 function openSavedMessages() {
     openChat({
-        chat_id: USER.chat_id,
-        ism: 'Saqlangan',
-        familya: 'xabarlar',
-        username: 'me',
-        profil_rasm: USER.profil_rasm,
-        is_saved: true,
-        online: true
+        chat_id: USER.chat_id, ism: 'Saqlangan', familya: 'xabarlar',
+        username: 'me', profil_rasm: USER.profil_rasm, is_saved: true, online: true
     });
 }
 
@@ -2805,7 +2956,9 @@ async function openChat(chat) {
     REPLY_TO = null;
     cancelReply();
 
-    document.getElementById('chat-name').textContent = chat.is_saved ? 'Saqlangan xabarlar' : `${chat.ism || ''} ${chat.familya || ''}`;
+    const nameEl = document.getElementById('chat-name');
+    nameEl.textContent = chat.is_saved ? 'Saqlangan xabarlar' : `${chat.ism || ''} ${chat.familya || ''}`;
+    
     updateAvatar('chat-avatar', chat.profil_rasm, chat.ism);
     updateOnlineDot(chat.online);
     updateChatStatus(chat);
@@ -2813,7 +2966,6 @@ async function openChat(chat) {
     document.getElementById('chat-window').classList.add('active');
     closeEmojiPicker();
 
-    await loadChatFon(chat.chat_id);
     await loadMessages(false);
     markAsRead();
     setTimeout(() => document.getElementById('message-input').focus(), 200);
@@ -2830,7 +2982,13 @@ async function openGroupChat(group) {
     REPLY_TO = null;
     cancelReply();
 
-    document.getElementById('chat-name').textContent = res.group.nom;
+    const nameEl = document.getElementById('chat-name');
+    if (res.group.username) {
+        nameEl.innerHTML = `${escapeHtml(res.group.nom)} <span class="group-username">@${escapeHtml(res.group.username)}</span>`;
+    } else {
+        nameEl.textContent = res.group.nom;
+    }
+    
     updateAvatar('chat-avatar', res.group.rasm, res.group.nom);
     updateOnlineDot(false);
     document.getElementById('chat-status').textContent = `${res.members.length} a'zo`;
@@ -2838,20 +2996,10 @@ async function openGroupChat(group) {
 
     document.getElementById('chat-window').classList.add('active');
     closeEmojiPicker();
-    document.getElementById('chat-bg').style.backgroundImage = '';
 
     await loadMessages(true);
     setTimeout(() => document.getElementById('message-input').focus(), 200);
     updateSendButton();
-}
-
-async function loadChatFon(otherChat) {
-    const res = await apiFetch(`/api/chat/fon/${otherChat}`);
-    if (res && res.success && res.fon_url) {
-        document.getElementById('chat-bg').style.backgroundImage = `url(${API_URL}${res.fon_url})`;
-    } else {
-        document.getElementById('chat-bg').style.backgroundImage = '';
-    }
 }
 
 function updateOnlineDot(online) {
@@ -3292,13 +3440,10 @@ function markAsRead() {
     WS.send(JSON.stringify({ type: 'read', from_chat: CURRENT_CHAT.chat_id }));
 }
 
-// ==================== VOICE RECORDING ====================
+// ==================== VOICE ====================
 async function toggleRecording() {
-    if (IS_RECORDING) {
-        stopRecording();
-    } else {
-        await startRecording();
-    }
+    if (IS_RECORDING) stopRecording();
+    else await startRecording();
 }
 
 async function startRecording() {
@@ -3500,36 +3645,6 @@ document.getElementById('profile-photo-input').addEventListener('change', async 
     e.target.value = '';
 });
 
-document.getElementById('fon-file-input')?.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file || (!CURRENT_CHAT && !CURRENT_GROUP)) return;
-
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('turi', 'image');
-
-    try {
-        const res = await fetch(API_URL + '/api/messages/upload', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + TOKEN },
-            body: fd
-        });
-        const data = await res.json();
-        if (!data.success) { toast('Xato'); return; }
-
-        const otherId = IS_GROUP ? -CURRENT_GROUP.id : CURRENT_CHAT.chat_id;
-        await apiFetch('/api/chat/fon', {
-            method: 'POST',
-            body: JSON.stringify({ other_chat: otherId, fon_url: data.url })
-        });
-
-        document.getElementById('chat-bg').style.backgroundImage = `url(${API_URL}${data.url})`;
-        closeChatFon();
-        toast('Fon o\'rnatildi ✅');
-    } catch (e) { toast('Xato'); }
-    e.target.value = '';
-});
-
 // ==================== RASMLAR ====================
 async function loadPhotos() {
     const res = await apiFetch('/api/photos');
@@ -3614,27 +3729,70 @@ function openSearch() {
     setTimeout(() => document.getElementById('search-input')?.focus(), 200);
 }
 
+function switchSearchTab(tab) {
+    SEARCH_TAB = tab;
+    document.getElementById('search-tab-user').classList.toggle('active', tab === 'user');
+    document.getElementById('search-tab-group').classList.toggle('active', tab === 'group');
+    document.getElementById('search-input').placeholder = tab === 'user' ? '@username' : '@guruh_username';
+    document.getElementById('search-result').innerHTML = '';
+}
+
 async function doSearch() {
     const username = document.getElementById('search-input').value.trim();
     if (!username) return;
-    const res = await apiFetch('/api/search', { method: 'POST', body: JSON.stringify({ username: username }) });
+    
     const box = document.getElementById('search-result');
+    box.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-2);">⏳ Qidirilmoqda...</div>';
+    
+    const endpoint = SEARCH_TAB === 'user' ? '/api/search' : '/api/search/group';
+    const res = await apiFetch(endpoint, { method: 'POST', body: JSON.stringify({ username: username }) });
+    
     if (!res || !res.success) {
         box.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-2);">❌ ${escapeHtml(res?.xato || 'Topilmadi')}</div>`;
         return;
     }
-    const u = res.user;
-    const avatar = u.profil_rasm ? `<img src="${API_URL}${u.profil_rasm}">` : (u.ism || 'U')[0].toUpperCase();
-    const userJson = JSON.stringify(u).replace(/'/g, "&apos;").replace(/"/g, '&quot;');
-    box.innerHTML = `
-        <div class="search-result" onclick='startChatFromJson(this)' data-user='${userJson}'>
-            <div class="avatar">${avatar}</div>
-            <div>
-                <div style="font-weight:600;">${escapeHtml(u.ism)} ${escapeHtml(u.familya || '')}</div>
-                <div style="color:var(--text-2);font-size:13px;">@${escapeHtml(u.username)}</div>
+    
+    if (SEARCH_TAB === 'user') {
+        const u = res.user;
+        const avatar = u.profil_rasm ? `<img src="${API_URL}${u.profil_rasm}">` : (u.ism || 'U')[0].toUpperCase();
+        const userJson = JSON.stringify(u).replace(/'/g, "&apos;").replace(/"/g, '&quot;');
+        box.innerHTML = `
+            <div class="search-result" onclick='startChatFromJson(this)' data-user='${userJson}'>
+                <div class="avatar">${avatar}</div>
+                <div>
+                    <div style="font-weight:600;">${escapeHtml(u.ism)} ${escapeHtml(u.familya || '')}</div>
+                    <div style="color:var(--text-2);font-size:13px;">@${escapeHtml(u.username)}</div>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        const g = res.group;
+        const avatar = g.rasm ? `<img src="${API_URL}${g.rasm}">` : '<svg style="width:24px;height:24px;stroke:white;fill:none;stroke-width:2;"><use href="#icon-users"/></svg>';
+        const joinBtn = g.is_member 
+            ? `<div style="padding:8px 12px;font-size:12px;color:var(--success);font-weight:600;">✅ A'zo</div>`
+            : `<button onclick="event.stopPropagation(); joinGroupFromSearch('${g.username}')" style="padding:8px 12px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Qo'shilish</button>`;
+        box.innerHTML = `
+            <div class="search-result">
+                <div class="avatar">${avatar}</div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;">${escapeHtml(g.nom)}</div>
+                    <div style="color:var(--text-2);font-size:13px;">@${escapeHtml(g.username || '')}</div>
+                </div>
+                ${joinBtn}
+            </div>
+        `;
+    }
+}
+
+async function joinGroupFromSearch(username) {
+    const res = await apiFetch(`/api/groups/join/${username}`, { method: 'POST' });
+    if (res && res.success) {
+        toast('Guruhga qo\'shildingiz ✅');
+        closeSearch();
+        await loadChats();
+    } else {
+        toast(res?.xato || 'Xato');
+    }
 }
 
 function startChatFromJson(el) {
@@ -3755,6 +3913,10 @@ function connectWS() {
                 toast('Guruhga qo\'shildingiz');
                 loadChats();
             }
+
+            if (data.type === 'group_member_added') {
+                toast(`${data.user?.ism || 'Kimdir'} guruhga qo'shildi`);
+            }
         } catch (err) {}
     };
 
@@ -3871,7 +4033,7 @@ function hideToCalculator() {
     document.getElementById('profile-edit-modal').classList.remove('active');
     document.getElementById('user-profile-modal').classList.remove('active');
     document.getElementById('create-group-modal').classList.remove('active');
-    document.getElementById('chat-fon-modal').classList.remove('active');
+    document.getElementById('join-group-modal').classList.remove('active');
     document.getElementById('search-modal')?.classList.remove('active');
     document.getElementById('app-view').classList.remove('active');
     document.getElementById('scientific-view').classList.remove('active');
