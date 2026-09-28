@@ -110,10 +110,12 @@ CREATE TABLE IF NOT EXISTS reactions (
 )
 """
 
+# ⚡ YANGI: username ustuni qo'shildi
 SQL_CREATE_GROUPS = """
 CREATE TABLE IF NOT EXISTS groups (
     id SERIAL PRIMARY KEY,
     nom TEXT NOT NULL,
+    username TEXT UNIQUE,
     yaratuvchi BIGINT,
     rasm TEXT,
     vaqt TIMESTAMP DEFAULT NOW()
@@ -167,7 +169,6 @@ class Database:
     async def create_tables(self):
         """Jadvallarni yaratish + migration"""
         async with self.pool.acquire() as conn:
-            # Asosiy jadvallar
             await conn.execute(SQL_CREATE_USERS)
             await conn.execute(SQL_CREATE_MESSAGES)
             await conn.execute(SQL_CREATE_PHOTOS)
@@ -194,12 +195,21 @@ class Database:
                 "ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER",
                 "ALTER TABLE messages ADD COLUMN IF NOT EXISTS pinned BOOLEAN DEFAULT FALSE",
                 "ALTER TABLE messages ADD COLUMN IF NOT EXISTS group_id INTEGER",
+                "ALTER TABLE groups ADD COLUMN IF NOT EXISTS username TEXT",  # ⚡ YANGI
             ]
             for sql in alters:
                 try:
                     await conn.execute(sql)
                 except Exception:
                     pass
+
+            # ⚡ YANGI: username uchun unique index
+            try:
+                await conn.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_groups_username ON groups(username) WHERE username IS NOT NULL"
+                )
+            except Exception:
+                pass
 
             # Indexlar
             indexes = [
@@ -404,21 +414,17 @@ class Database:
             return await conn.fetchval(sql, chat_id)
 
     async def pin_message(self, msg_id, chat_id):
-        """Xabarni mahkamlash"""
         async with self.pool.acquire() as conn:
-            # Avvalgi pinni olib tashlash
             msg = await conn.fetchrow("SELECT * FROM messages WHERE id = $1", msg_id)
             if not msg:
                 return None
 
-            # Agar guruh bo'lsa
             if msg['group_id']:
                 await conn.execute(
                     "UPDATE messages SET pinned = FALSE WHERE group_id = $1 AND pinned = TRUE",
                     msg['group_id']
                 )
             else:
-                # 1-to-1 chat
                 await conn.execute(
                     "UPDATE messages SET pinned = FALSE "
                     "WHERE ((from_chat = $1 AND to_chat = $2) OR (from_chat = $2 AND to_chat = $1)) "
@@ -426,14 +432,12 @@ class Database:
                     msg['from_chat'], msg['to_chat']
                 )
 
-            # Yangi pinni o'rnatish
             return await conn.fetchrow(
                 "UPDATE messages SET pinned = TRUE WHERE id = $1 RETURNING *",
                 msg_id
             )
 
     async def unpin_message(self, msg_id, chat_id):
-        """Pinni olib tashlash"""
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(
                 "UPDATE messages SET pinned = FALSE WHERE id = $1 AND from_chat = $2 RETURNING *",
@@ -441,7 +445,6 @@ class Database:
             )
 
     async def get_pinned_message(self, chat1, chat2):
-        """1-to-1 chatdagi pinni olish"""
         sql = (
             "SELECT * FROM messages "
             "WHERE ((from_chat = $1 AND to_chat = $2) OR (from_chat = $2 AND to_chat = $1)) "
@@ -452,7 +455,6 @@ class Database:
             return await conn.fetchrow(sql, chat1, chat2)
 
     async def get_group_pinned_message(self, group_id):
-        """Guruhdagi pinni olish"""
         sql = (
             "SELECT * FROM messages "
             "WHERE group_id = $1 AND pinned = TRUE AND ochirilgan = FALSE "
@@ -589,14 +591,13 @@ class Database:
 
     # ==================== GROUPS ====================
 
-    async def create_group(self, nom, yaratuvchi, rasm=None):
+    async def create_group(self, nom, yaratuvchi, username=None, rasm=None):
         """Guruh yaratish"""
         async with self.pool.acquire() as conn:
             group = await conn.fetchrow(
-                "INSERT INTO groups (nom, yaratuvchi, rasm) VALUES ($1, $2, $3) RETURNING *",
-                nom, yaratuvchi, rasm
+                "INSERT INTO groups (nom, username, yaratuvchi, rasm) VALUES ($1, $2, $3, $4) RETURNING *",
+                nom, username, yaratuvchi, rasm
             )
-            # Yaratuvchini admin qilib qo'shish
             await conn.execute(
                 "INSERT INTO group_members (group_id, chat_id, rol) VALUES ($1, $2, 'admin')",
                 group['id'], yaratuvchi
@@ -607,8 +608,29 @@ class Database:
         async with self.pool.acquire() as conn:
             return await conn.fetchrow("SELECT * FROM groups WHERE id = $1", group_id)
 
+    async def get_group_by_username(self, username):
+        """Username orqali guruhni topish"""
+        username = username.lstrip("@")
+        async with self.pool.acquire() as conn:
+            return await conn.fetchrow("SELECT * FROM groups WHERE username = $1", username)
+
+    async def username_exists(self, username, exclude_group_id=None):
+        """Username bandligini tekshirish"""
+        username = username.lstrip("@")
+        async with self.pool.acquire() as conn:
+            if exclude_group_id:
+                result = await conn.fetchval(
+                    "SELECT COUNT(*) FROM groups WHERE username = $1 AND id != $2",
+                    username, exclude_group_id
+                )
+            else:
+                result = await conn.fetchval(
+                    "SELECT COUNT(*) FROM groups WHERE username = $1",
+                    username
+                )
+            return result > 0
+
     async def get_user_groups(self, chat_id):
-        """Foydalanuvchi a'zo bo'lgan guruhlar"""
         sql = (
             "SELECT g.*, gm.rol FROM groups g "
             "JOIN group_members gm ON gm.group_id = g.id "
@@ -619,7 +641,6 @@ class Database:
             return await conn.fetch(sql, chat_id)
 
     async def add_group_member(self, group_id, chat_id, rol='member'):
-        """Guruhga a'zo qo'shish"""
         sql = (
             "INSERT INTO group_members (group_id, chat_id, rol) "
             "VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
@@ -628,13 +649,11 @@ class Database:
             await conn.execute(sql, group_id, chat_id, rol)
 
     async def remove_group_member(self, group_id, chat_id):
-        """Guruhdan a'zoni o'chirish"""
         sql = "DELETE FROM group_members WHERE group_id = $1 AND chat_id = $2"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, group_id, chat_id)
 
     async def get_group_members(self, group_id):
-        """Guruh a'zolari"""
         sql = (
             "SELECT gm.*, u.ism, u.familya, u.username, u.profil_rasm, u.online "
             "FROM group_members gm "
@@ -645,21 +664,18 @@ class Database:
             return await conn.fetch(sql, group_id)
 
     async def is_group_member(self, group_id, chat_id):
-        """A'zo ekanligini tekshirish"""
         sql = "SELECT COUNT(*) FROM group_members WHERE group_id = $1 AND chat_id = $2"
         async with self.pool.acquire() as conn:
             result = await conn.fetchval(sql, group_id, chat_id)
             return result > 0
 
     async def is_group_admin(self, group_id, chat_id):
-        """Admin ekanligini tekshirish"""
         sql = "SELECT rol FROM group_members WHERE group_id = $1 AND chat_id = $2"
         async with self.pool.acquire() as conn:
             result = await conn.fetchval(sql, group_id, chat_id)
             return result == 'admin'
 
     async def update_group(self, group_id, nom=None, rasm=None):
-        """Guruhni yangilash"""
         updates = []
         params = []
         i = 1
@@ -679,16 +695,14 @@ class Database:
             await conn.execute(sql, *params)
 
     async def delete_group(self, group_id):
-        """Guruhni o'chirish"""
         async with self.pool.acquire() as conn:
             await conn.execute("DELETE FROM group_members WHERE group_id = $1", group_id)
             await conn.execute("DELETE FROM messages WHERE group_id = $1", group_id)
             await conn.execute("DELETE FROM groups WHERE id = $1", group_id)
 
-    # ==================== CHAT SETTINGS (fon rasmi) ====================
+    # ==================== CHAT SETTINGS ====================
 
     async def set_chat_fon(self, chat_id, other_chat, fon_url):
-        """Chat fon rasmini saqlash"""
         sql = (
             "INSERT INTO chat_settings (chat_id, other_chat, fon_url) "
             "VALUES ($1, $2, $3) "
@@ -699,14 +713,12 @@ class Database:
             await conn.execute(sql, chat_id, other_chat, fon_url)
 
     async def get_chat_fon(self, chat_id, other_chat):
-        """Chat fon rasmini olish"""
         sql = "SELECT fon_url FROM chat_settings WHERE chat_id = $1 AND other_chat = $2"
         async with self.pool.acquire() as conn:
             result = await conn.fetchval(sql, chat_id, other_chat)
             return result
 
     async def delete_chat_fon(self, chat_id, other_chat):
-        """Chat fon rasmini o'chirish"""
         sql = "DELETE FROM chat_settings WHERE chat_id = $1 AND other_chat = $2"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, chat_id, other_chat)
