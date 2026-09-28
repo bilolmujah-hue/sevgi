@@ -39,13 +39,20 @@ CREATE TABLE IF NOT EXISTS messages (
     id SERIAL PRIMARY KEY,
     from_chat BIGINT,
     to_chat BIGINT,
+    group_id INTEGER,
     matn TEXT,
     rasm_url TEXT,
     ovoz_url TEXT,
     ovoz_davomiyligi INTEGER,
+    video_url TEXT,
+    video_davomiyligi INTEGER,
+    fayl_url TEXT,
+    fayl_nom TEXT,
+    fayl_hajm BIGINT,
     stiker_id TEXT,
     xabar_turi TEXT DEFAULT 'text',
     reply_to_id INTEGER,
+    pinned BOOLEAN DEFAULT FALSE,
     ochirilgan BOOLEAN DEFAULT FALSE,
     tahrirlangan BOOLEAN DEFAULT FALSE,
     kurilgan BOOLEAN DEFAULT FALSE,
@@ -103,6 +110,38 @@ CREATE TABLE IF NOT EXISTS reactions (
 )
 """
 
+SQL_CREATE_GROUPS = """
+CREATE TABLE IF NOT EXISTS groups (
+    id SERIAL PRIMARY KEY,
+    nom TEXT NOT NULL,
+    yaratuvchi BIGINT,
+    rasm TEXT,
+    vaqt TIMESTAMP DEFAULT NOW()
+)
+"""
+
+SQL_CREATE_GROUP_MEMBERS = """
+CREATE TABLE IF NOT EXISTS group_members (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER,
+    chat_id BIGINT,
+    rol TEXT DEFAULT 'member',
+    vaqt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(group_id, chat_id)
+)
+"""
+
+SQL_CREATE_CHAT_SETTINGS = """
+CREATE TABLE IF NOT EXISTS chat_settings (
+    id SERIAL PRIMARY KEY,
+    chat_id BIGINT,
+    other_chat BIGINT,
+    fon_url TEXT,
+    vaqt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(chat_id, other_chat)
+)
+"""
+
 
 class Database:
     def __init__(self):
@@ -113,9 +152,9 @@ class Database:
         url = config.DATABASE_URL
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
-        
+
         ssl_param = "require" if ("railway" in url or "render" in url) else None
-        
+
         self.pool = await asyncpg.create_pool(
             url,
             min_size=2,
@@ -126,8 +165,9 @@ class Database:
         print("✅ Database ulandi")
 
     async def create_tables(self):
-        """Jadvallarni yaratish"""
+        """Jadvallarni yaratish + migration"""
         async with self.pool.acquire() as conn:
+            # Asosiy jadvallar
             await conn.execute(SQL_CREATE_USERS)
             await conn.execute(SQL_CREATE_MESSAGES)
             await conn.execute(SQL_CREATE_PHOTOS)
@@ -135,15 +175,25 @@ class Database:
             await conn.execute(SQL_CREATE_SESSIONS)
             await conn.execute(SQL_CREATE_ADMIN_LOGS)
             await conn.execute(SQL_CREATE_REACTIONS)
+            await conn.execute(SQL_CREATE_GROUPS)
+            await conn.execute(SQL_CREATE_GROUP_MEMBERS)
+            await conn.execute(SQL_CREATE_CHAT_SETTINGS)
 
-            # Ustunlarni qo'shish (agar eski baza bo'lsa)
+            # Migration: yangi ustunlar
             alters = [
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS tugilgan_kun DATE",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS online BOOLEAN DEFAULT FALSE",
                 "ALTER TABLE messages ADD COLUMN IF NOT EXISTS ovoz_url TEXT",
                 "ALTER TABLE messages ADD COLUMN IF NOT EXISTS ovoz_davomiyligi INTEGER",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS video_url TEXT",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS video_davomiyligi INTEGER",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS fayl_url TEXT",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS fayl_nom TEXT",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS fayl_hajm BIGINT",
                 "ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS pinned BOOLEAN DEFAULT FALSE",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS group_id INTEGER",
             ]
             for sql in alters:
                 try:
@@ -155,9 +205,11 @@ class Database:
             indexes = [
                 "CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(from_chat, to_chat)",
                 "CREATE INDEX IF NOT EXISTS idx_messages_vaqt ON messages(vaqt DESC)",
+                "CREATE INDEX IF NOT EXISTS idx_messages_group ON messages(group_id)",
                 "CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)",
                 "CREATE INDEX IF NOT EXISTS idx_messages_kurilgan ON messages(to_chat, kurilgan)",
                 "CREATE INDEX IF NOT EXISTS idx_reactions_msg ON reactions(msg_id)",
+                "CREATE INDEX IF NOT EXISTS idx_group_members ON group_members(group_id, chat_id)",
             ]
             for sql in indexes:
                 try:
@@ -226,17 +278,15 @@ class Database:
             await conn.execute(sql, chat_id)
 
     async def set_online(self, chat_id, online: bool):
-        """Online statusni yangilash"""
         sql = "UPDATE users SET online = $1, oxirgi_faollik = NOW() WHERE chat_id = $2"
         async with self.pool.acquire() as conn:
             await conn.execute(sql, online, chat_id)
 
     async def update_profile(self, chat_id, ism=None, familya=None, tugilgan_kun=None, bio=None):
-        """Profilni yangilash"""
         updates = []
         params = []
         i = 1
-        
+
         if ism is not None:
             updates.append(f"ism = ${i}")
             params.append(ism)
@@ -253,13 +303,13 @@ class Database:
             updates.append(f"bio = ${i}")
             params.append(bio)
             i += 1
-        
+
         if not updates:
             return
-        
+
         params.append(chat_id)
         sql = f"UPDATE users SET {', '.join(updates)} WHERE chat_id = ${i}"
-        
+
         async with self.pool.acquire() as conn:
             await conn.execute(sql, *params)
 
@@ -267,17 +317,23 @@ class Database:
 
     async def add_message(self, from_chat, to_chat, matn=None,
                           rasm_url=None, stiker_id=None, xabar_turi='text',
-                          ovoz_url=None, ovoz_davomiyligi=None, reply_to_id=None):
+                          ovoz_url=None, ovoz_davomiyligi=None,
+                          video_url=None, video_davomiyligi=None,
+                          fayl_url=None, fayl_nom=None, fayl_hajm=None,
+                          reply_to_id=None, group_id=None):
         sql = (
             "INSERT INTO messages "
-            "(from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi, "
-            "ovoz_url, ovoz_davomiyligi, reply_to_id) "
-            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id"
+            "(from_chat, to_chat, group_id, matn, rasm_url, stiker_id, xabar_turi, "
+            "ovoz_url, ovoz_davomiyligi, video_url, video_davomiyligi, "
+            "fayl_url, fayl_nom, fayl_hajm, reply_to_id) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) "
+            "RETURNING id"
         )
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(
-                sql, from_chat, to_chat, matn, rasm_url, stiker_id, xabar_turi,
-                ovoz_url, ovoz_davomiyligi, reply_to_id
+                sql, from_chat, to_chat, group_id, matn, rasm_url, stiker_id, xabar_turi,
+                ovoz_url, ovoz_davomiyligi, video_url, video_davomiyligi,
+                fayl_url, fayl_nom, fayl_hajm, reply_to_id
             )
 
     async def get_messages(self, chat1, chat2, limit=50, offset=0):
@@ -285,12 +341,23 @@ class Database:
             "SELECT * FROM messages "
             "WHERE ((from_chat = $1 AND to_chat = $2) "
             "    OR (from_chat = $2 AND to_chat = $1)) "
+            "  AND group_id IS NULL "
             "  AND ochirilgan = FALSE "
             "ORDER BY vaqt DESC "
             "LIMIT $3 OFFSET $4"
         )
         async with self.pool.acquire() as conn:
             return await conn.fetch(sql, chat1, chat2, limit, offset)
+
+    async def get_group_messages(self, group_id, limit=50, offset=0):
+        sql = (
+            "SELECT * FROM messages "
+            "WHERE group_id = $1 AND ochirilgan = FALSE "
+            "ORDER BY vaqt DESC "
+            "LIMIT $2 OFFSET $3"
+        )
+        async with self.pool.acquire() as conn:
+            return await conn.fetch(sql, group_id, limit, offset)
 
     async def get_message_by_id(self, msg_id):
         async with self.pool.acquire() as conn:
@@ -335,6 +402,64 @@ class Database:
         )
         async with self.pool.acquire() as conn:
             return await conn.fetchval(sql, chat_id)
+
+    async def pin_message(self, msg_id, chat_id):
+        """Xabarni mahkamlash"""
+        async with self.pool.acquire() as conn:
+            # Avvalgi pinni olib tashlash
+            msg = await conn.fetchrow("SELECT * FROM messages WHERE id = $1", msg_id)
+            if not msg:
+                return None
+
+            # Agar guruh bo'lsa
+            if msg['group_id']:
+                await conn.execute(
+                    "UPDATE messages SET pinned = FALSE WHERE group_id = $1 AND pinned = TRUE",
+                    msg['group_id']
+                )
+            else:
+                # 1-to-1 chat
+                await conn.execute(
+                    "UPDATE messages SET pinned = FALSE "
+                    "WHERE ((from_chat = $1 AND to_chat = $2) OR (from_chat = $2 AND to_chat = $1)) "
+                    "AND pinned = TRUE",
+                    msg['from_chat'], msg['to_chat']
+                )
+
+            # Yangi pinni o'rnatish
+            return await conn.fetchrow(
+                "UPDATE messages SET pinned = TRUE WHERE id = $1 RETURNING *",
+                msg_id
+            )
+
+    async def unpin_message(self, msg_id, chat_id):
+        """Pinni olib tashlash"""
+        async with self.pool.acquire() as conn:
+            return await conn.fetchrow(
+                "UPDATE messages SET pinned = FALSE WHERE id = $1 AND from_chat = $2 RETURNING *",
+                msg_id, chat_id
+            )
+
+    async def get_pinned_message(self, chat1, chat2):
+        """1-to-1 chatdagi pinni olish"""
+        sql = (
+            "SELECT * FROM messages "
+            "WHERE ((from_chat = $1 AND to_chat = $2) OR (from_chat = $2 AND to_chat = $1)) "
+            "AND pinned = TRUE AND ochirilgan = FALSE "
+            "LIMIT 1"
+        )
+        async with self.pool.acquire() as conn:
+            return await conn.fetchrow(sql, chat1, chat2)
+
+    async def get_group_pinned_message(self, group_id):
+        """Guruhdagi pinni olish"""
+        sql = (
+            "SELECT * FROM messages "
+            "WHERE group_id = $1 AND pinned = TRUE AND ochirilgan = FALSE "
+            "LIMIT 1"
+        )
+        async with self.pool.acquire() as conn:
+            return await conn.fetchrow(sql, group_id)
 
     # ==================== RASMLAR ====================
 
@@ -389,7 +514,6 @@ class Database:
     # ==================== SESSIONS ====================
 
     async def save_session(self, token, chat_id, ip=None):
-        """Session saqlash (UPSERT — bir xil token bo'lsa yangilanadi)"""
         sql = (
             "INSERT INTO sessions (token, chat_id, ip) "
             "VALUES ($1, $2, $3) "
@@ -408,12 +532,10 @@ class Database:
             await conn.execute("DELETE FROM sessions WHERE token = $1", token)
 
     async def clear_user_sessions(self, chat_id):
-        """Foydalanuvchining barcha eski sessionlarini tozalash"""
         async with self.pool.acquire() as conn:
             await conn.execute("DELETE FROM sessions WHERE chat_id = $1", chat_id)
 
     async def cleanup_old_sessions(self):
-        """Eskirgan sessionlarni tozalash"""
         sql = f"DELETE FROM sessions WHERE vaqt < NOW() - INTERVAL '{config.JWT_EXPIRE_MINUTES} minutes'"
         async with self.pool.acquire() as conn:
             await conn.execute(sql)
@@ -453,7 +575,7 @@ class Database:
         )
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(sql, msg_ids)
-        
+
         result = {}
         for r in rows:
             if r['msg_id'] not in result:
@@ -464,6 +586,130 @@ class Database:
                 'chat_ids': list(r['chat_ids'])
             })
         return result
+
+    # ==================== GROUPS ====================
+
+    async def create_group(self, nom, yaratuvchi, rasm=None):
+        """Guruh yaratish"""
+        async with self.pool.acquire() as conn:
+            group = await conn.fetchrow(
+                "INSERT INTO groups (nom, yaratuvchi, rasm) VALUES ($1, $2, $3) RETURNING *",
+                nom, yaratuvchi, rasm
+            )
+            # Yaratuvchini admin qilib qo'shish
+            await conn.execute(
+                "INSERT INTO group_members (group_id, chat_id, rol) VALUES ($1, $2, 'admin')",
+                group['id'], yaratuvchi
+            )
+            return group
+
+    async def get_group(self, group_id):
+        async with self.pool.acquire() as conn:
+            return await conn.fetchrow("SELECT * FROM groups WHERE id = $1", group_id)
+
+    async def get_user_groups(self, chat_id):
+        """Foydalanuvchi a'zo bo'lgan guruhlar"""
+        sql = (
+            "SELECT g.*, gm.rol FROM groups g "
+            "JOIN group_members gm ON gm.group_id = g.id "
+            "WHERE gm.chat_id = $1 "
+            "ORDER BY g.vaqt DESC"
+        )
+        async with self.pool.acquire() as conn:
+            return await conn.fetch(sql, chat_id)
+
+    async def add_group_member(self, group_id, chat_id, rol='member'):
+        """Guruhga a'zo qo'shish"""
+        sql = (
+            "INSERT INTO group_members (group_id, chat_id, rol) "
+            "VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
+        )
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, group_id, chat_id, rol)
+
+    async def remove_group_member(self, group_id, chat_id):
+        """Guruhdan a'zoni o'chirish"""
+        sql = "DELETE FROM group_members WHERE group_id = $1 AND chat_id = $2"
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, group_id, chat_id)
+
+    async def get_group_members(self, group_id):
+        """Guruh a'zolari"""
+        sql = (
+            "SELECT gm.*, u.ism, u.familya, u.username, u.profil_rasm, u.online "
+            "FROM group_members gm "
+            "JOIN users u ON u.chat_id = gm.chat_id "
+            "WHERE gm.group_id = $1"
+        )
+        async with self.pool.acquire() as conn:
+            return await conn.fetch(sql, group_id)
+
+    async def is_group_member(self, group_id, chat_id):
+        """A'zo ekanligini tekshirish"""
+        sql = "SELECT COUNT(*) FROM group_members WHERE group_id = $1 AND chat_id = $2"
+        async with self.pool.acquire() as conn:
+            result = await conn.fetchval(sql, group_id, chat_id)
+            return result > 0
+
+    async def is_group_admin(self, group_id, chat_id):
+        """Admin ekanligini tekshirish"""
+        sql = "SELECT rol FROM group_members WHERE group_id = $1 AND chat_id = $2"
+        async with self.pool.acquire() as conn:
+            result = await conn.fetchval(sql, group_id, chat_id)
+            return result == 'admin'
+
+    async def update_group(self, group_id, nom=None, rasm=None):
+        """Guruhni yangilash"""
+        updates = []
+        params = []
+        i = 1
+        if nom is not None:
+            updates.append(f"nom = ${i}")
+            params.append(nom)
+            i += 1
+        if rasm is not None:
+            updates.append(f"rasm = ${i}")
+            params.append(rasm)
+            i += 1
+        if not updates:
+            return
+        params.append(group_id)
+        sql = f"UPDATE groups SET {', '.join(updates)} WHERE id = ${i}"
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, *params)
+
+    async def delete_group(self, group_id):
+        """Guruhni o'chirish"""
+        async with self.pool.acquire() as conn:
+            await conn.execute("DELETE FROM group_members WHERE group_id = $1", group_id)
+            await conn.execute("DELETE FROM messages WHERE group_id = $1", group_id)
+            await conn.execute("DELETE FROM groups WHERE id = $1", group_id)
+
+    # ==================== CHAT SETTINGS (fon rasmi) ====================
+
+    async def set_chat_fon(self, chat_id, other_chat, fon_url):
+        """Chat fon rasmini saqlash"""
+        sql = (
+            "INSERT INTO chat_settings (chat_id, other_chat, fon_url) "
+            "VALUES ($1, $2, $3) "
+            "ON CONFLICT (chat_id, other_chat) DO UPDATE "
+            "SET fon_url = EXCLUDED.fon_url"
+        )
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, chat_id, other_chat, fon_url)
+
+    async def get_chat_fon(self, chat_id, other_chat):
+        """Chat fon rasmini olish"""
+        sql = "SELECT fon_url FROM chat_settings WHERE chat_id = $1 AND other_chat = $2"
+        async with self.pool.acquire() as conn:
+            result = await conn.fetchval(sql, chat_id, other_chat)
+            return result
+
+    async def delete_chat_fon(self, chat_id, other_chat):
+        """Chat fon rasmini o'chirish"""
+        sql = "DELETE FROM chat_settings WHERE chat_id = $1 AND other_chat = $2"
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, chat_id, other_chat)
 
     # ==================== ADMIN ====================
 
