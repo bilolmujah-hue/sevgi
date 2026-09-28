@@ -143,8 +143,10 @@ class ProfileUpdateRequest(BaseModel):
     bio: Optional[str] = None
 
 
+# ⚡ YANGI: username qo'shildi
 class CreateGroupRequest(BaseModel):
     nom: str
+    username: Optional[str] = None
     azo_ids: list[int] = []
 
 
@@ -164,7 +166,7 @@ class ChatFonRequest(BaseModel):
 # ==================== TELEGRAM ID TEKSHIRISH ====================
 
 def verify_telegram_init_data(init_data: str, bot_token: str):
-    """Telegram WebApp initData ni tekshirish (zaxira usul)"""
+    """Telegram WebApp initData ni tekshirish (zaxira)"""
     if not init_data:
         return None
     try:
@@ -239,12 +241,7 @@ async def health():
 
 @app.post("/api/auth/verify")
 async def verify_parol(data: VerifyRequest, request: Request):
-    """
-    Parol tekshirish — FAQAT o'z chat_id uchun
-    telegram_id (initDataUnsafe) yoki initData orqali
-    """
     try:
-        # Parolni ajratish
         javob = data.javob.strip()
         if "." in javob:
             qismlar = javob.split(".")
@@ -255,9 +252,8 @@ async def verify_parol(data: VerifyRequest, request: Request):
         if not parol.isdigit() or len(parol) != 5:
             return {"success": False, "xato": "5 xonalik parol kiriting"}
 
-        # ⚡ Telegram ID olish: avval to'g'ridan-to'g'ri, keyin initData orqali
+        # Telegram ID olish
         telegram_id = data.telegram_id
-
         if not telegram_id:
             tg_user = verify_telegram_init_data(data.init_data, config.BOT_TOKEN)
             if tg_user:
@@ -266,18 +262,14 @@ async def verify_parol(data: VerifyRequest, request: Request):
         if not telegram_id:
             return {"success": False, "xato": "Telegram ID topilmadi"}
 
-        # ⚡ Faqat shu chat_id ning parolini tekshirish
         user = await db.get_user(telegram_id)
         if not user:
             return {"success": False, "xato": "Foydalanuvchi topilmadi"}
-
         if not user['parol_hash']:
             return {"success": False, "xato": "Parol o'rnatilmagan"}
-
         if not tekshir_parol(parol, user['parol_hash']):
             return {"success": False, "xato": "Parol noto'g'ri"}
 
-        # Token
         await db.clear_user_sessions(telegram_id)
         token = create_token(telegram_id)
         ip = request.client.host if request.client else None
@@ -350,7 +342,7 @@ async def upload_profile_photo(
         ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".jpg"
         if ext not in config.ALLOWED_EXTENSIONS:
             return {"success": False, "xato": "Faqat rasm"}
-
+        
         contents = await file.read()
         if len(contents) > config.MAX_PHOTO_SIZE:
             mb = config.MAX_PHOTO_SIZE // 1024 // 1024
@@ -439,18 +431,20 @@ async def get_user_profile(user_id: int, user=Depends(get_current_user)):
 
 @app.post("/api/search")
 async def search_user(data: SearchRequest, user=Depends(get_current_user)):
+    """Faqat foydalanuvchini qidiradi"""
     topilgan = await db.get_user_by_username(data.username)
     if not topilgan:
-        return {"success": False, "xato": "Topilmadi"}
+        return {"success": False, "xato": "Topilmadi", "type": "user"}
     if topilgan['chat_id'] == user['chat_id']:
-        return {"success": False, "xato": "O'zingizni qidirdingiz"}
+        return {"success": False, "xato": "O'zingizni qidirdingiz", "type": "user"}
     if topilgan['maxfiylik']:
-        return {"success": False, "xato": "Foydalanuvchi maxfiy"}
+        return {"success": False, "xato": "Foydalanuvchi maxfiy", "type": "user"}
     bloklangan = await db.is_blocked(topilgan['chat_id'], user['chat_id'])
     if bloklangan:
-        return {"success": False, "xato": "Siz bloklangansiz"}
+        return {"success": False, "xato": "Siz bloklangansiz", "type": "user"}
     return {
         "success": True,
+        "type": "user",
         "user": {
             "chat_id": topilgan['chat_id'],
             "ism": topilgan['ism'],
@@ -464,11 +458,31 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
     }
 
 
+# ⚡ YANGI: Guruhni username orqali qidirish
+@app.post("/api/search/group")
+async def search_group(data: SearchRequest, user=Depends(get_current_user)):
+    """Guruhni username orqali qidirish"""
+    username = data.username.lstrip("@")
+    group = await db.get_group_by_username(username)
+    if not group:
+        return {"success": False, "xato": "Guruh topilmadi", "type": "group"}
+    return {
+        "success": True,
+        "type": "group",
+        "group": {
+            "id": group['id'],
+            "nom": group['nom'],
+            "username": group['username'],
+            "rasm": group['rasm'],
+            "is_member": await db.is_group_member(group['id'], user['chat_id'])
+        }
+    }
+
+
 # ==================== CHATLAR ====================
 
 @app.get("/api/chats")
 async def get_chats(user=Depends(get_current_user)):
-    """Chat ro'yxati (1-to-1 + guruhlar)"""
     async with db.pool.acquire() as conn:
         chats = await conn.fetch("""
             SELECT DISTINCT
@@ -526,8 +540,8 @@ async def get_chats(user=Depends(get_current_user)):
             "group_id": g['id'],
             "chat_id": g['id'],
             "ism": g['nom'],
+            "username": g['username'],
             "familya": "",
-            "username": None,
             "profil_rasm": g['rasm'],
             "online": False,
             "oxirgi_faollik": None,
@@ -916,7 +930,7 @@ async def remove_reaction(msg_id: int, emoji: str, user=Depends(get_current_user
     return {"success": True, "reactions": [{"emoji": r['emoji'], "count": r['count']} for r in reactions]}
 
 
-# ==================== RASMLAR (galereya) ====================
+# ==================== RASMLAR ====================
 
 @app.get("/api/photos")
 async def get_photos(user=Depends(get_current_user)):
@@ -973,10 +987,26 @@ async def delete_photo(photo_id: int, user=Depends(get_current_user)):
 
 @app.post("/api/groups/create")
 async def create_group_endpoint(data: CreateGroupRequest, user=Depends(get_current_user)):
+    """Guruh yaratish (username bilan)"""
     if not data.nom.strip():
         return {"success": False, "xato": "Nom kiriting"}
 
-    group = await db.create_group(data.nom.strip(), user['chat_id'])
+    # Username tekshirish
+    username = None
+    if data.username:
+        username = data.username.strip().lstrip("@").lower()
+        if len(username) < 3:
+            return {"success": False, "xato": "Username kamida 3 ta belgi"}
+        if len(username) > 32:
+            return {"success": False, "xato": "Username 32 tadan ko'p"}
+        if not all(c.isalnum() or c == '_' for c in username):
+            return {"success": False, "xato": "Faqat harf, son va _ ishlatilsin"}
+        
+        # Band bo'lsa — xato
+        if await db.username_exists(username):
+            return {"success": False, "xato": f"@{username} allaqachon mavjud"}
+
+    group = await db.create_group(data.nom.strip(), user['chat_id'], username)
 
     for azo_id in data.azo_ids:
         if azo_id != user['chat_id']:
@@ -988,11 +1018,12 @@ async def create_group_endpoint(data: CreateGroupRequest, user=Depends(get_curre
                     "group": {
                         "id": group['id'],
                         "nom": group['nom'],
+                        "username": group['username'],
                         "yaratuvchi": user['chat_id']
                     }
                 })
 
-    return {"success": True, "group_id": group['id']}
+    return {"success": True, "group_id": group['id'], "username": group['username']}
 
 
 @app.get("/api/groups/{group_id}")
@@ -1011,6 +1042,7 @@ async def get_group_endpoint(group_id: int, user=Depends(get_current_user)):
         "group": {
             "id": group['id'],
             "nom": group['nom'],
+            "username": group['username'],
             "rasm": group['rasm'],
             "yaratuvchi": group['yaratuvchi'],
             "sana": group['vaqt'].isoformat()
@@ -1025,6 +1057,54 @@ async def get_group_endpoint(group_id: int, user=Depends(get_current_user)):
             "rol": m['rol']
         } for m in members]
     }
+
+
+# ⚡ YANGI: Username orqali guruhga qo'shilish
+@app.post("/api/groups/join/{username}")
+async def join_group_by_username(username: str, user=Depends(get_current_user)):
+    """Username orqali guruhga qo'shilish"""
+    username = username.lstrip("@").lower()
+    group = await db.get_group_by_username(username)
+    if not group:
+        return {"success": False, "xato": "Guruh topilmadi"}
+
+    if await db.is_group_member(group['id'], user['chat_id']):
+        return {"success": False, "xato": "Siz allaqachon a'zosiz", "group_id": group['id']}
+
+    await db.add_group_member(group['id'], user['chat_id'])
+
+    # Guruh a'zolariga xabar
+    members = await db.get_group_members(group['id'])
+    for m in members:
+        if m['chat_id'] != user['chat_id']:
+            await manager.send_to(m['chat_id'], {
+                "type": "group_member_added",
+                "group_id": group['id'],
+                "user": {
+                    "chat_id": user['chat_id'],
+                    "ism": user['ism'],
+                    "familya": user['familya'],
+                    "username": user['username']
+                }
+            })
+
+    return {"success": True, "group_id": group['id'], "nom": group['nom']}
+
+
+# ⚡ YANGI: Username bandligini tekshirish
+@app.post("/api/groups/check-username")
+async def check_group_username(data: SearchRequest, user=Depends(get_current_user)):
+    """Username bandligini tekshirish"""
+    username = data.username.lstrip("@").lower()
+    if len(username) < 3:
+        return {"success": False, "xato": "Kamida 3 ta belgi"}
+    if not all(c.isalnum() or c == '_' for c in username):
+        return {"success": False, "xato": "Faqat harf, son va _"}
+    
+    exists = await db.username_exists(username)
+    if exists:
+        return {"success": False, "xato": f"@{username} band"}
+    return {"success": True, "available": True}
 
 
 @app.post("/api/groups/{group_id}/add")
