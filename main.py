@@ -102,6 +102,7 @@ class VerifyRequest(BaseModel):
     misol: str = ""
     javob: str
     init_data: str = ""
+    telegram_id: Optional[int] = None
 
 
 class SendMessageRequest(BaseModel):
@@ -163,7 +164,7 @@ class ChatFonRequest(BaseModel):
 # ==================== TELEGRAM ID TEKSHIRISH ====================
 
 def verify_telegram_init_data(init_data: str, bot_token: str):
-    """Telegram WebApp initData ni xavfsiz tekshirish"""
+    """Telegram WebApp initData ni tekshirish (zaxira usul)"""
     if not init_data:
         return None
     try:
@@ -177,19 +178,16 @@ def verify_telegram_init_data(init_data: str, bot_token: str):
         if not hash_:
             return None
 
-        # Data check string
         data_check_string = '\n'.join(
             f"{k}={v}" for k, v in sorted(params.items())
         )
 
-        # Secret key (Telegram bot token)
         secret_key = hmac.new(
             b"WebAppData",
             bot_token.encode(),
             hashlib.sha256
         ).digest()
 
-        # Hash
         calculated_hash = hmac.new(
             secret_key,
             data_check_string.encode(),
@@ -197,18 +195,16 @@ def verify_telegram_init_data(init_data: str, bot_token: str):
         ).hexdigest()
 
         if calculated_hash != hash_:
-            print("❌ initData hash noto'g'ri")
             return None
 
-        # User ma'lumotlari
         user_str = unquote(params.get('user', '{}'))
         return json.loads(user_str)
     except Exception as e:
-        print(f"❌ initData xatosi: {e}")
+        print(f"⚠️ initData xatosi: {e}")
         return None
 
 
-# ==================== AUTH ====================
+# ==================== AUTH DEPENDENCY ====================
 
 async def get_current_user(authorization: str = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
@@ -239,13 +235,13 @@ async def health():
     return {"status": "ok", "vaqt": datetime.now().isoformat()}
 
 
-# ==================== AUTH ENDPOINTS ====================
+# ==================== AUTH ====================
 
 @app.post("/api/auth/verify")
 async def verify_parol(data: VerifyRequest, request: Request):
     """
     Parol tekshirish — FAQAT o'z chat_id uchun
-    Telegram initData orqali chat_id olinadi
+    telegram_id (initDataUnsafe) yoki initData orqali
     """
     try:
         # Parolni ajratish
@@ -259,12 +255,14 @@ async def verify_parol(data: VerifyRequest, request: Request):
         if not parol.isdigit() or len(parol) != 5:
             return {"success": False, "xato": "5 xonalik parol kiriting"}
 
-        # ⚡ Telegram ID ni xavfsiz olish
-        tg_user = verify_telegram_init_data(data.init_data, config.BOT_TOKEN)
-        if not tg_user:
-            return {"success": False, "xato": "Telegram imzo noto'g'ri"}
+        # ⚡ Telegram ID olish: avval to'g'ridan-to'g'ri, keyin initData orqali
+        telegram_id = data.telegram_id
 
-        telegram_id = tg_user.get('id')
+        if not telegram_id:
+            tg_user = verify_telegram_init_data(data.init_data, config.BOT_TOKEN)
+            if tg_user:
+                telegram_id = tg_user.get('id')
+
         if not telegram_id:
             return {"success": False, "xato": "Telegram ID topilmadi"}
 
@@ -413,7 +411,6 @@ async def set_offline(request: Request, authorization: str = Header(None)):
 
 @app.get("/api/user/{user_id}")
 async def get_user_profile(user_id: int, user=Depends(get_current_user)):
-    """Boshqa foydalanuvchi profilini ko'rish"""
     target = await db.get_user(user_id)
     if not target:
         return {"success": False, "xato": "Topilmadi"}
@@ -472,7 +469,6 @@ async def search_user(data: SearchRequest, user=Depends(get_current_user)):
 @app.get("/api/chats")
 async def get_chats(user=Depends(get_current_user)):
     """Chat ro'yxati (1-to-1 + guruhlar)"""
-    # 1-to-1 chatlar
     async with db.pool.acquire() as conn:
         chats = await conn.fetch("""
             SELECT DISTINCT
@@ -557,9 +553,7 @@ async def get_messages(
     is_group: bool = False,
     user=Depends(get_current_user)
 ):
-    """1-to-1 yoki guruh xabarlari"""
     if is_group:
-        # Guruh a'zoligini tekshirish
         if not await db.is_group_member(chat_id, user['chat_id']):
             raise HTTPException(403, "Siz a'zo emassiz")
         xabarlar = await db.get_group_messages(chat_id, limit, offset)
@@ -569,11 +563,9 @@ async def get_messages(
         xabarlar = await db.get_messages(user['chat_id'], chat_id, limit, offset)
         pinned = await db.get_pinned_message(user['chat_id'], chat_id)
 
-    # Reactions
     msg_ids = [m['id'] for m in xabarlar]
     reactions_map = await db.get_reactions_for_messages(msg_ids)
 
-    # Reply ma'lumotlari
     reply_ids = [m['reply_to_id'] for m in xabarlar if m['reply_to_id']]
     reply_map = {}
     if reply_ids:
@@ -585,7 +577,6 @@ async def get_messages(
             for r in replies:
                 reply_map[r['id']] = r
 
-    # Foydalanuvchi ma'lumotlari (guruh uchun)
     sender_ids = list(set(m['from_chat'] for m in xabarlar))
     users_map = {}
     if sender_ids:
@@ -639,7 +630,6 @@ async def get_messages(
 
 @app.post("/api/messages/send")
 async def send_message(data: SendMessageRequest, user=Depends(get_current_user)):
-    """Xabar yuborish (1-to-1 yoki guruh)"""
     is_group = data.group_id is not None
 
     if is_group:
@@ -671,7 +661,6 @@ async def send_message(data: SendMessageRequest, user=Depends(get_current_user))
         reply_to_id=data.reply_to_id
     )
 
-    # Reply ma'lumoti
     reply_data = None
     if data.reply_to_id:
         reply_msg = await db.get_message_by_id(data.reply_to_id)
@@ -683,7 +672,6 @@ async def send_message(data: SendMessageRequest, user=Depends(get_current_user))
                 "ozimniki": reply_msg['from_chat'] == (data.to_chat if not is_group else user['chat_id'])
             }
 
-    # WebSocket yuborish
     msg_payload = {
         "id": result['id'],
         "from_chat": user['chat_id'],
@@ -714,7 +702,6 @@ async def send_message(data: SendMessageRequest, user=Depends(get_current_user))
     }
 
     if is_group:
-        # Guruh a'zolariga yuborish
         members = await db.get_group_members(data.group_id)
         for m in members:
             if m['chat_id'] != user['chat_id']:
@@ -739,7 +726,6 @@ async def upload_message_file(
     turi: str = Form("image"),
     user=Depends(get_current_user)
 ):
-    """Rasm, video, ovoz yoki fayl yuklash"""
     try:
         ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".bin"
         contents = await file.read()
@@ -751,7 +737,7 @@ async def upload_message_file(
                 return {"success": False, "xato": "Rasm juda katta"}
             prefix = "img"
         elif turi == "video":
-            if len(contents) > 50 * 1024 * 1024:  # 50 MB
+            if len(contents) > 50 * 1024 * 1024:
                 return {"success": False, "xato": "Video juda katta"}
             prefix = "video"
         elif turi == "voice":
@@ -761,7 +747,7 @@ async def upload_message_file(
             if not ext or ext == ".bin":
                 ext = ".webm"
         elif turi == "file":
-            if len(contents) > 20 * 1024 * 1024:  # 20 MB
+            if len(contents) > 20 * 1024 * 1024:
                 return {"success": False, "xato": "Fayl juda katta"}
             prefix = "file"
         else:
@@ -786,7 +772,6 @@ async def delete_message(msg_id: int, user=Depends(get_current_user)):
     if not result:
         raise HTTPException(404, "Xabar topilmadi")
 
-    # WebSocket xabar
     if result['group_id']:
         members = await db.get_group_members(result['group_id'])
         for m in members:
@@ -833,12 +818,10 @@ async def edit_message(msg_id: int, data: EditMessageRequest, user=Depends(get_c
 
 @app.post("/api/messages/pin")
 async def pin_message_endpoint(data: PinRequest, user=Depends(get_current_user)):
-    """Xabarni mahkamlash"""
     result = await db.pin_message(data.msg_id, user['chat_id'])
     if not result:
         return {"success": False, "xato": "Xabar topilmadi"}
 
-    # WebSocket
     if result['group_id']:
         members = await db.get_group_members(result['group_id'])
         for m in members:
@@ -861,7 +844,6 @@ async def pin_message_endpoint(data: PinRequest, user=Depends(get_current_user))
 
 @app.delete("/api/messages/pin/{msg_id}")
 async def unpin_message_endpoint(msg_id: int, user=Depends(get_current_user)):
-    """Pinni olib tashlash"""
     result = await db.unpin_message(msg_id, user['chat_id'])
     if not result:
         return {"success": False, "xato": "Xabar topilmadi"}
@@ -991,19 +973,16 @@ async def delete_photo(photo_id: int, user=Depends(get_current_user)):
 
 @app.post("/api/groups/create")
 async def create_group_endpoint(data: CreateGroupRequest, user=Depends(get_current_user)):
-    """Guruh yaratish"""
     if not data.nom.strip():
         return {"success": False, "xato": "Nom kiriting"}
 
     group = await db.create_group(data.nom.strip(), user['chat_id'])
 
-    # A'zolarni qo'shish
     for azo_id in data.azo_ids:
         if azo_id != user['chat_id']:
             target = await db.get_user(azo_id)
             if target:
                 await db.add_group_member(group['id'], azo_id)
-                # Xabar yuborish
                 await manager.send_to(azo_id, {
                     "type": "added_to_group",
                     "group": {
@@ -1018,7 +997,6 @@ async def create_group_endpoint(data: CreateGroupRequest, user=Depends(get_curre
 
 @app.get("/api/groups/{group_id}")
 async def get_group_endpoint(group_id: int, user=Depends(get_current_user)):
-    """Guruh ma'lumotlari"""
     if not await db.is_group_member(group_id, user['chat_id']):
         return {"success": False, "xato": "Siz a'zo emassiz"}
 
@@ -1051,7 +1029,6 @@ async def get_group_endpoint(group_id: int, user=Depends(get_current_user)):
 
 @app.post("/api/groups/{group_id}/add")
 async def add_group_member_endpoint(group_id: int, data: AddGroupMemberRequest, user=Depends(get_current_user)):
-    """Guruhga a'zo qo'shish (faqat admin)"""
     if not await db.is_group_admin(group_id, user['chat_id']):
         return {"success": False, "xato": "Faqat admin"}
 
@@ -1069,7 +1046,6 @@ async def add_group_member_endpoint(group_id: int, data: AddGroupMemberRequest, 
 
 @app.delete("/api/groups/{group_id}/remove/{chat_id}")
 async def remove_group_member_endpoint(group_id: int, chat_id: int, user=Depends(get_current_user)):
-    """Guruhdan a'zoni o'chirish (faqat admin yoki o'zi)"""
     if chat_id != user['chat_id'] and not await db.is_group_admin(group_id, user['chat_id']):
         return {"success": False, "xato": "Faqat admin"}
 
@@ -1079,14 +1055,12 @@ async def remove_group_member_endpoint(group_id: int, chat_id: int, user=Depends
 
 @app.post("/api/groups/{group_id}/leave")
 async def leave_group_endpoint(group_id: int, user=Depends(get_current_user)):
-    """Guruhdan chiqish"""
     await db.remove_group_member(group_id, user['chat_id'])
     return {"success": True}
 
 
 @app.delete("/api/groups/{group_id}")
 async def delete_group_endpoint(group_id: int, user=Depends(get_current_user)):
-    """Guruhni o'chirish (faqat yaratuvchi)"""
     group = await db.get_group(group_id)
     if not group:
         return {"success": False, "xato": "Topilmadi"}
@@ -1101,21 +1075,18 @@ async def delete_group_endpoint(group_id: int, user=Depends(get_current_user)):
 
 @app.post("/api/chat/fon")
 async def set_chat_fon_endpoint(data: ChatFonRequest, user=Depends(get_current_user)):
-    """Chat fon rasmini saqlash"""
     await db.set_chat_fon(user['chat_id'], data.other_chat, data.fon_url)
     return {"success": True}
 
 
 @app.get("/api/chat/fon/{other_chat}")
 async def get_chat_fon_endpoint(other_chat: int, user=Depends(get_current_user)):
-    """Chat fon rasmini olish"""
     fon = await db.get_chat_fon(user['chat_id'], other_chat)
     return {"success": True, "fon_url": fon}
 
 
 @app.delete("/api/chat/fon/{other_chat}")
 async def delete_chat_fon_endpoint(other_chat: int, user=Depends(get_current_user)):
-    """Chat fon rasmini o'chirish"""
     await db.delete_chat_fon(user['chat_id'], other_chat)
     return {"success": True}
 
