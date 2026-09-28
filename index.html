@@ -165,6 +165,7 @@ body {
     height: 100dvh;
     padding: 12px;
     background: var(--bg);
+    position: relative;
 }
 
 #scientific-view.active { display: flex; }
@@ -185,6 +186,7 @@ body {
     padding: 4px 10px;
     background: var(--bg-2);
     border-radius: 8px;
+    cursor: pointer;
 }
 
 .sci-display {
@@ -223,49 +225,13 @@ body {
     transition: all 0.12s;
 }
 
-.sci-grid button:active {
-    transform: scale(0.94);
-    background: var(--bg-3);
-}
-
-.sci-grid button.sci-num {
-    background: var(--bg-2);
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.sci-grid button.sci-op {
-    background: var(--primary);
-    color: white;
-    font-weight: 600;
-    font-size: 18px;
-}
-
-.sci-grid button.sci-fn {
-    background: var(--bg-3);
-    color: var(--text);
-    font-size: 13px;
-}
-
-.sci-grid button.sci-eq {
-    background: var(--primary);
-    color: white;
-    font-weight: 700;
-    grid-column: span 2;
-    font-size: 18px;
-}
-
-.sci-grid button.sci-clr {
-    background: var(--danger);
-    color: white;
-    font-weight: 600;
-}
-
-.sci-grid button.active {
-    background: var(--primary);
-    color: white;
-}
+.sci-grid button:active { transform: scale(0.94); background: var(--bg-3); }
+.sci-grid button.sci-num { font-size: 18px; font-weight: 600; }
+.sci-grid button.sci-op { background: var(--primary); color: white; font-weight: 600; font-size: 18px; }
+.sci-grid button.sci-fn { background: var(--bg-3); font-size: 13px; }
+.sci-grid button.sci-eq { background: var(--primary); color: white; font-weight: 700; grid-column: span 2; font-size: 18px; }
+.sci-grid button.sci-clr { background: var(--danger); color: white; font-weight: 600; }
+.sci-grid button.active { background: var(--primary); color: white; }
 
 .sci-close {
     position: absolute;
@@ -325,7 +291,6 @@ body {
 }
 
 .modal-box .icon svg { width: 48px; height: 48px; }
-
 .modal-box.danger .icon { color: var(--danger); }
 
 .modal-box h3 {
@@ -359,9 +324,7 @@ body {
 }
 
 .modal-box input:focus,
-.modal-box textarea:focus {
-    border-color: var(--primary);
-}
+.modal-box textarea:focus { border-color: var(--primary); }
 
 .modal-box label {
     display: block;
@@ -371,10 +334,7 @@ body {
     font-weight: 600;
 }
 
-.modal-box textarea {
-    resize: none;
-    min-height: 80px;
-}
+.modal-box textarea { resize: none; min-height: 80px; }
 
 .modal-buttons {
     display: flex;
@@ -394,20 +354,9 @@ body {
     transition: all 0.15s;
 }
 
-.modal-buttons .btn-cancel {
-    background: var(--bg-2);
-    color: var(--text);
-}
-
-.modal-buttons .btn-primary {
-    background: var(--primary);
-    color: white;
-}
-
-.modal-buttons .btn-danger {
-    background: var(--danger);
-    color: white;
-}
+.modal-buttons .btn-cancel { background: var(--bg-2); color: var(--text); }
+.modal-buttons .btn-primary { background: var(--primary); color: white; }
+.modal-buttons .btn-danger { background: var(--danger); color: white; }
 
 #verify-input {
     text-align: center;
@@ -647,6 +596,7 @@ body {
     color: var(--primary);
     margin-bottom: 2px;
     padding-left: 8px;
+    cursor: pointer;
 }
 
 .message {
@@ -692,8 +642,6 @@ body.dark .message.out { color: white; }
     display: block;
     cursor: pointer;
 }
-
-.message audio { width: 100%; margin: 4px 0; }
 
 .file-attach {
     display: flex;
@@ -821,14 +769,12 @@ body.dark .message.out .msg-time { color: rgba(255,255,255,0.7); }
     font-size: 13px;
     position: relative;
     z-index: 2;
+    cursor: pointer;
 }
 
 .pinned-banner.active { display: flex; }
 
-.pinned-banner .pin-icon {
-    color: var(--primary);
-    flex-shrink: 0;
-}
+.pinned-banner .pin-icon { color: var(--primary); flex-shrink: 0; }
 
 .pinned-banner .pin-text {
     flex: 1;
@@ -920,7 +866,7 @@ body.dark .reaction-item { background: var(--bg-2); }
 
 .send-btn svg, .mic-btn svg, .attach-btn svg { width: 20px; height: 20px; }
 
-/* Recording indicator */
+/* Recording */
 .recording-indicator {
     display: none;
     align-items: center;
@@ -1024,7 +970,6 @@ body.dark .reaction-item { background: var(--bg-2); }
 #attach-menu .item[data-type="photo"] .icon-circle { background: #3b82f6; }
 #attach-menu .item[data-type="video"] .icon-circle { background: #8b5cf6; }
 #attach-menu .item[data-type="file"] .icon-circle { background: #f59e0b; }
-#attach-menu .item[data-type="location"] .icon-circle { background: #10b981; }
 
 /* ==================== MESSAGE ACTIONS ==================== */
 .msg-actions {
@@ -1171,10 +1116,7 @@ body.dark .reaction-item { background: var(--bg-2); }
     justify-content: center;
 }
 
-.emoji-item:active {
-    transform: scale(1.3);
-    background: var(--bg-2);
-}
+.emoji-item:active { transform: scale(1.3); background: var(--bg-2); }
 
 /* ==================== BOTTOM NAV ==================== */
 .bottom-nav {
@@ -1493,8 +1435,6 @@ body.dark .reaction-item { background: var(--bg-2); }
 }
 
 /* ==================== USER PROFILE VIEW ==================== */
-#user-profile-modal .modal-box { text-align: center; }
-
 .user-profile-avatar {
     width: 100px;
     height: 100px;
@@ -1516,12 +1456,14 @@ body.dark .reaction-item { background: var(--bg-2); }
     font-size: 20px;
     font-weight: 700;
     margin-bottom: 4px;
+    text-align: center;
 }
 
 .user-profile-username {
     color: var(--text-2);
     font-size: 14px;
     margin-bottom: 16px;
+    text-align: center;
 }
 
 .user-profile-info {
@@ -1588,21 +1530,6 @@ body.dark .reaction-item { background: var(--bg-2); }
 }
 
 .group-member-item.selected .check { display: block; }
-
-/* ==================== NOTIFICATION DOT ==================== */
-.notif-dot {
-    display: none;
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--danger);
-    border: 2px solid var(--bg);
-}
-
-.notif-dot.active { display: block; }
 </style>
 </head>
 <body>
@@ -1714,10 +1641,6 @@ body.dark .reaction-item { background: var(--bg-2); }
         <polyline points="3 6 5 6 21 6"/>
         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
     </symbol>
-    <symbol id="icon-forward" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 17 20 12 15 7"/>
-        <path d="M4 18v-2a4 4 0 0 1 4-4h12"/>
-    </symbol>
     <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -1739,10 +1662,6 @@ body.dark .reaction-item { background: var(--bg-2); }
     <symbol id="icon-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
     </symbol>
-    <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-    </symbol>
     <symbol id="icon-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="23 7 16 12 23 17 23 7"/>
         <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
@@ -1750,25 +1669,6 @@ body.dark .reaction-item { background: var(--bg-2); }
     <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
         <polyline points="13 2 13 9 20 9"/>
-    </symbol>
-    <symbol id="icon-map-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-    </symbol>
-    <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-        <line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
-    </symbol>
-    <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="16" x2="12" y2="12"/>
-        <line x1="12" y1="8" x2="12.01" y2="8"/>
-    </symbol>
-    <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </symbol>
 </svg>
 
@@ -1869,30 +1769,27 @@ body.dark .reaction-item { background: var(--bg-2); }
         <h3>Maxfiy kirish</h3>
         <div class="subtitle">5 xonalik parolingizni kiriting</div>
         <input type="tel" id="verify-input" placeholder="•••••" maxlength="5" inputmode="numeric" autocomplete="off">
-        <button onclick="verifySubmit()" style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">Kirish</button>
-        <button class="cancel" onclick="verifyCancel()" style="width:100%;padding:14px;background:var(--bg-2);color:var(--text);border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit;">Bekor qilish</button>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="verifyCancel()">Bekor qilish</button>
+            <button class="btn-primary" onclick="verifySubmit()">Kirish</button>
+        </div>
     </div>
 </div>
 
-<!-- ==================== PROFILE EDIT MODAL ==================== -->
+<!-- ==================== PROFILE EDIT ==================== -->
 <div id="profile-edit-modal" class="modal">
     <div class="modal-box">
         <div class="icon"><svg><use href="#icon-user"/></svg></div>
         <h3>Shaxsiylik</h3>
         <div class="subtitle">Ma'lumotlaringizni tahrirlang</div>
-
         <label>Ism</label>
         <input type="text" id="edit-ism" placeholder="Ismingiz" maxlength="50">
-
         <label>Familya</label>
         <input type="text" id="edit-familya" placeholder="Familyangiz" maxlength="50">
-
         <label>Tug'ilgan kun</label>
         <input type="date" id="edit-tugilgan-kun">
-
         <label>Bio</label>
         <textarea id="edit-bio" placeholder="O'zingiz haqingizda..." rows="3" maxlength="200"></textarea>
-
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeProfileEdit()">Bekor qilish</button>
             <button class="btn-primary" onclick="saveProfile()">Saqlash</button>
@@ -1900,7 +1797,7 @@ body.dark .reaction-item { background: var(--bg-2); }
     </div>
 </div>
 
-<!-- ==================== EDIT MESSAGE MODAL ==================== -->
+<!-- ==================== EDIT MESSAGE ==================== -->
 <div id="edit-msg-modal" class="modal">
     <div class="modal-box">
         <div class="icon"><svg><use href="#icon-edit"/></svg></div>
@@ -1913,7 +1810,7 @@ body.dark .reaction-item { background: var(--bg-2); }
     </div>
 </div>
 
-<!-- ==================== CONFIRM MODAL ==================== -->
+<!-- ==================== CONFIRM ==================== -->
 <div id="confirm-modal" class="modal">
     <div class="modal-box danger">
         <div class="icon"><svg><use href="#icon-trash"/></svg></div>
@@ -1926,7 +1823,7 @@ body.dark .reaction-item { background: var(--bg-2); }
     </div>
 </div>
 
-<!-- ==================== USER PROFILE MODAL ==================== -->
+<!-- ==================== USER PROFILE ==================== -->
 <div id="user-profile-modal" class="modal">
     <div class="modal-box">
         <div class="user-profile-avatar" id="user-profile-avatar">U</div>
@@ -1934,26 +1831,23 @@ body.dark .reaction-item { background: var(--bg-2); }
         <div class="user-profile-username" id="user-profile-username"></div>
         <div class="user-profile-info" id="user-profile-info"></div>
         <div class="modal-buttons" style="margin-top:16px;">
-            <button class="btn-primary" onclick="startChatFromProfile()">Xabar yozish</button>
             <button class="btn-cancel" onclick="closeUserProfile()">Yopish</button>
+            <button class="btn-primary" onclick="startChatFromProfile()">Xabar yozish</button>
         </div>
     </div>
 </div>
 
-<!-- ==================== CREATE GROUP MODAL ==================== -->
+<!-- ==================== CREATE GROUP ==================== -->
 <div id="create-group-modal" class="modal">
     <div class="modal-box">
         <div class="icon"><svg><use href="#icon-users"/></svg></div>
         <h3>Yangi guruh</h3>
         <div class="subtitle">Guruh nomi va a'zolarni tanlang</div>
-
         <label>Guruh nomi</label>
         <input type="text" id="group-nom" placeholder="Masalan: Oila" maxlength="50">
-
         <label>A'zolar (username orqali qidiring)</label>
         <input type="text" id="group-search" placeholder="@username" oninput="searchUsersForGroup()">
         <div class="group-members-list" id="group-members-list"></div>
-
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeCreateGroup()">Bekor qilish</button>
             <button class="btn-primary" onclick="createGroup()">Yaratish</button>
@@ -1961,21 +1855,28 @@ body.dark .reaction-item { background: var(--bg-2); }
     </div>
 </div>
 
-<!-- ==================== CHAT FON MODAL ==================== -->
+<!-- ==================== CHAT FON ==================== -->
 <div id="chat-fon-modal" class="modal">
     <div class="modal-box">
         <div class="icon"><svg><use href="#icon-image"/></svg></div>
         <h3>Chat fon rasmi</h3>
         <div class="subtitle">Bu chat uchun fon rasmi tanlang</div>
-
         <input type="file" id="fon-file-input" accept="image/*" style="display:none">
-
         <button onclick="document.getElementById('fon-file-input').click()" style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;">Rasm yuklash</button>
-
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="removeFon()">Fonni o'chirish</button>
             <button class="btn-cancel" onclick="closeChatFon()">Yopish</button>
         </div>
+    </div>
+</div>
+
+<!-- ==================== QIDIRUV MODAL ==================== -->
+<div id="search-modal" class="modal" onclick="if(event.target===this) closeSearch()">
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="@username yozing..."
+               autocomplete="off" onkeypress="if(event.key==='Enter') doSearch()">
+        <div id="search-result"></div>
+        <button style="width:100%; padding:14px; margin-top:10px; border:none; border-radius:12px; background:var(--bg-2); color:var(--text); cursor:pointer; font-family:inherit; font-weight:600;" onclick="closeSearch()">Yopish</button>
     </div>
 </div>
 
@@ -2120,12 +2021,11 @@ body.dark .reaction-item { background: var(--bg-2); }
         <button class="send-btn" id="send-btn" onclick="sendMessage()" style="display:none;">
             <svg><use href="#icon-send"/></svg>
         </button>
-        <button class="mic-btn" id="mic-btn" onclick="startRecording()" onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()">
+        <button class="mic-btn" id="mic-btn" onclick="toggleRecording()">
             <svg><use href="#icon-mic"/></svg>
         </button>
     </div>
 
-    <!-- Attach menu -->
     <div id="attach-menu">
         <div class="item" data-type="photo" onclick="attachFileByType('image')">
             <div class="icon-circle"><svg><use href="#icon-image"/></svg></div>
@@ -2133,7 +2033,7 @@ body.dark .reaction-item { background: var(--bg-2); }
         </div>
         <div class="item" data-type="video" onclick="attachFileByType('video')">
             <div class="icon-circle"><svg><use href="#icon-video"/></svg></div>
-            <span>Video xabar</span>
+            <span>Video</span>
         </div>
         <div class="item" data-type="file" onclick="attachFileByType('file')">
             <div class="icon-circle"><svg><use href="#icon-file"/></svg></div>
@@ -2219,9 +2119,18 @@ let RECORDING_TIMER = null;
 let TYPING_TIMEOUT = null;
 let GROUP_SELECTED_USERS = [];
 let _pendingAction = null;
-let _actionBtnText = 'Ha';
+let IS_RECORDING = false;
 
-// ==================== TELEGRAM INIT ====================
+// ⚡ Telegram ID olish
+function getTelegramUser() {
+    try {
+        if (window.Telegram && window.Telegram.WebApp) {
+            return window.Telegram.WebApp.initDataUnsafe?.user || null;
+        }
+    } catch (e) {}
+    return null;
+}
+
 function getInitData() {
     try {
         if (window.Telegram && window.Telegram.WebApp) {
@@ -2379,7 +2288,6 @@ function sciEqual() {
     try {
         let expr = sciIfoda;
         if (sciMode === 'deg') {
-            // Degrees → radians almashtirish
             expr = expr.replace(/(sin|cos|tan)\(([^)]+)\)/g, (m, fn, arg) => {
                 return `${fn}((${arg}) * pi / 180)`;
             });
@@ -2443,6 +2351,7 @@ function verifyCancel() {
     updateSciDisplay();
 }
 
+// ⚡ YANGI: telegram_id ishlatiladi
 async function verifySubmit() {
     const parol = document.getElementById('verify-input').value.trim();
     if (!parol || parol.length !== 5 || !/^\d+$/.test(parol)) {
@@ -2450,8 +2359,10 @@ async function verifySubmit() {
         return;
     }
 
-    const initData = getInitData();
-    if (!initData) {
+    // ⚡ Telegram ID ni olish
+    const tgUser = getTelegramUser();
+    
+    if (!tgUser || !tgUser.id) {
         toast('Telegram orqali oching');
         return;
     }
@@ -2463,7 +2374,8 @@ async function verifySubmit() {
             body: JSON.stringify({
                 misol: '',
                 javob: '0.' + parol,
-                init_data: initData
+                telegram_id: tgUser.id,
+                init_data: getInitData()
             })
         });
         const data = await res.json();
@@ -2659,14 +2571,14 @@ async function createGroup() {
 
 // ==================== MODAL: CHAT FON ====================
 function openChatFon() {
-    if (!CURRENT_CHAT) return;
+    if (!CURRENT_CHAT && !CURRENT_GROUP) return;
     document.getElementById('chat-fon-modal').classList.add('active');
 }
 function closeChatFon() { document.getElementById('chat-fon-modal').classList.remove('active'); }
 
 async function removeFon() {
-    if (!CURRENT_CHAT) return;
-    const otherId = IS_GROUP ? -CURRENT_CHAT.id : CURRENT_CHAT.chat_id;
+    if (!CURRENT_CHAT && !CURRENT_GROUP) return;
+    const otherId = IS_GROUP ? -CURRENT_GROUP.id : CURRENT_CHAT.chat_id;
     await apiFetch(`/api/chat/fon/${otherId}`, { method: 'DELETE' });
     document.getElementById('chat-bg').style.backgroundImage = '';
     closeChatFon();
@@ -2901,9 +2813,7 @@ async function openChat(chat) {
     document.getElementById('chat-window').classList.add('active');
     closeEmojiPicker();
 
-    // Fon rasmi
     await loadChatFon(chat.chat_id);
-
     await loadMessages(false);
     markAsRead();
     setTimeout(() => document.getElementById('message-input').focus(), 200);
@@ -2928,7 +2838,6 @@ async function openGroupChat(group) {
 
     document.getElementById('chat-window').classList.add('active');
     closeEmojiPicker();
-
     document.getElementById('chat-bg').style.backgroundImage = '';
 
     await loadMessages(true);
@@ -2974,12 +2883,8 @@ async function loadMessages(isGroup = false) {
     const box = document.getElementById('messages');
     box.innerHTML = '';
 
-    // Pinned banner
-    if (res.pinned) {
-        showPinnedBanner(res.pinned);
-    } else {
-        hidePinnedBanner();
-    }
+    if (res.pinned) showPinnedBanner(res.pinned);
+    else hidePinnedBanner();
 
     (res.messages || []).reverse().forEach(m => addMessageToDOM(m, false));
     box.scrollTop = box.scrollHeight;
@@ -3005,7 +2910,6 @@ function scrollToPinned() {
     const el = document.querySelector(`.msg-wrap[data-id="${pinId}"]`);
     if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.style.transition = 'background 0.5s';
         const msg = el.querySelector('.message');
         if (msg) {
             msg.style.boxShadow = '0 0 0 3px var(--primary)';
@@ -3044,7 +2948,6 @@ function addMessageToDOM(m, scroll = true) {
     wrap.className = 'msg-wrap ' + (m.ozimniki ? 'out' : 'in');
     wrap.dataset.id = m.id;
 
-    // Group sender
     if (IS_GROUP && !m.ozimniki && m.sender) {
         const sender = document.createElement('div');
         sender.className = 'msg-sender';
@@ -3058,7 +2961,6 @@ function addMessageToDOM(m, scroll = true) {
 
     let content = '';
 
-    // Reply
     if (m.reply_to && m.reply_to.id) {
         content += `
             <div class="reply-quote">
@@ -3068,22 +2970,18 @@ function addMessageToDOM(m, scroll = true) {
         `;
     }
 
-    // Rasm
     if (m.xabar_turi === 'photo' && m.rasm_url) {
         content += `<img class="msg-img" src="${API_URL}${m.rasm_url}" onclick="event.stopPropagation(); openImageViewer('${API_URL}${m.rasm_url}', 'image')">`;
     }
 
-    // Video
     if (m.xabar_turi === 'video' && m.video_url) {
         content += `<video class="msg-video" controls src="${API_URL}${m.video_url}"></video>`;
     }
 
-    // Ovoz
     if (m.xabar_turi === 'voice' && m.ovoz_url) {
         content += renderVoicePlayer(m);
     }
 
-    // Fayl
     if (m.xabar_turi === 'file' && m.fayl_url) {
         const ext = (m.fayl_nom || '').split('.').pop().toUpperCase().slice(0, 4) || 'FILE';
         content += `
@@ -3097,7 +2995,6 @@ function addMessageToDOM(m, scroll = true) {
         `;
     }
 
-    // Matn
     if (m.matn) {
         if (isEmojiOnly(m.matn)) {
             msg.classList.add('emoji-only');
@@ -3107,7 +3004,6 @@ function addMessageToDOM(m, scroll = true) {
         }
     }
 
-    // Time
     const vaqt = new Date(m.vaqt).toLocaleTimeString('uz', {hour:'2-digit', minute:'2-digit'});
     let checkHtml = '';
     if (m.ozimniki && !msg.classList.contains('emoji-only')) {
@@ -3120,14 +3016,9 @@ function addMessageToDOM(m, scroll = true) {
 
     msg.innerHTML = content;
 
-    // Long press
     let pressTimer = null;
-    const startPress = (e) => {
-        pressTimer = setTimeout(() => showMessageActions(m, wrap), 500);
-    };
-    const cancelPress = () => {
-        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-    };
+    const startPress = () => { pressTimer = setTimeout(() => showMessageActions(m, wrap), 500); };
+    const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
 
     msg.addEventListener('touchstart', startPress, { passive: true });
     msg.addEventListener('touchend', cancelPress);
@@ -3139,7 +3030,6 @@ function addMessageToDOM(m, scroll = true) {
 
     wrap.appendChild(msg);
 
-    // Reactions
     if (m.reactions && m.reactions.length > 0) {
         const reactionsDiv = document.createElement('div');
         reactionsDiv.className = 'reactions';
@@ -3403,6 +3293,14 @@ function markAsRead() {
 }
 
 // ==================== VOICE RECORDING ====================
+async function toggleRecording() {
+    if (IS_RECORDING) {
+        stopRecording();
+    } else {
+        await startRecording();
+    }
+}
+
 async function startRecording() {
     if (MEDIA_RECORDER) return;
     try {
@@ -3410,6 +3308,7 @@ async function startRecording() {
         MEDIA_RECORDER = new MediaRecorder(stream);
         AUDIO_CHUNKS = [];
         RECORDING_START = Date.now();
+        IS_RECORDING = true;
 
         MEDIA_RECORDER.ondataavailable = (e) => { if (e.data.size > 0) AUDIO_CHUNKS.push(e.data); };
         MEDIA_RECORDER.onstop = async () => {
@@ -3429,11 +3328,12 @@ async function startRecording() {
             const sec = Math.round((Date.now() - RECORDING_START) / 1000);
             document.getElementById('recording-time').textContent = formatDuration(sec);
         }, 100);
-    } catch (e) { toast('Mikrofonga ruxsat kerak'); }
+    } catch (e) { toast('Mikrofonga ruxsat kerak'); IS_RECORDING = false; }
 }
 
 function stopRecording() {
     if (MEDIA_RECORDER && MEDIA_RECORDER.state === 'recording') MEDIA_RECORDER.stop();
+    IS_RECORDING = false;
 }
 
 function cancelRecording() {
@@ -3441,6 +3341,7 @@ function cancelRecording() {
         MEDIA_RECORDER.onstop = () => { MEDIA_RECORDER.stream.getTracks().forEach(t => t.stop()); };
         MEDIA_RECORDER.stop();
     }
+    IS_RECORDING = false;
     resetRecordingUI();
 }
 
@@ -3599,10 +3500,9 @@ document.getElementById('profile-photo-input').addEventListener('change', async 
     e.target.value = '';
 });
 
-// Chat fon rasmi yuklash
 document.getElementById('fon-file-input')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
-    if (!file || !CURRENT_CHAT) return;
+    if (!file || (!CURRENT_CHAT && !CURRENT_GROUP)) return;
 
     const fd = new FormData();
     fd.append('file', file);
@@ -3803,7 +3703,6 @@ function connectWS() {
             if (data.type === 'group_typing' && IS_GROUP && CURRENT_GROUP) {
                 if (data.group_id === CURRENT_GROUP.id) {
                     const ind = document.getElementById('chat-status');
-                    const original = ind.textContent;
                     ind.textContent = 'yozmoqda...';
                     ind.className = 'status typing';
                     clearTimeout(window._typingTO);
@@ -4029,16 +3928,5 @@ String.prototype.lstrip = function(chars) {
     return s;
 };
 </script>
-
-<!-- Search modal -->
-<div id="search-modal" class="modal" onclick="if(event.target===this) closeSearch()">
-    <div class="search-box">
-        <input type="text" id="search-input" placeholder="@username yozing..."
-               autocomplete="off" onkeypress="if(event.key==='Enter') doSearch()">
-        <div id="search-result"></div>
-        <button style="width:100%; padding:14px; margin-top:10px; border:none; border-radius:12px; background:var(--bg-2); color:var(--text); cursor:pointer; font-family:inherit; font-weight:600;" onclick="closeSearch()">Yopish</button>
-    </div>
-</div>
-
 </body>
 </html>
