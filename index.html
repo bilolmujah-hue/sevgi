@@ -8,1743 +8,393 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mathjs@12.0.0/lib/browser/math.js"></script>
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 :root {
-    --bg: #ffffff;
-    --bg-2: #f5f6f8;
-    --bg-3: #eef0f3;
-    --text: #0f172a;
-    --text-2: #6b7280;
-    --primary: #3b82f6;
-    --primary-dark: #2563eb;
+    --bg: #ffffff; --bg-2: #f5f6f8; --bg-3: #eef0f3;
+    --text: #0f172a; --text-2: #6b7280;
+    --primary: #3b82f6; --primary-dark: #2563eb;
     --border: #e5e7eb;
-    /* ⚡ CHAT RANGLARI */
-    --msg-out: #effdde;      /* O'zim — yashil-ko'k */
-    --msg-out-text: #0f172a;
-    --msg-in: #ffffff;       /* Boshqalar — oq */
-    --msg-in-text: #0f172a;
-    --danger: #ef4444;
-    --success: #10b981;
+    --msg-out: #e7fdd8; --msg-out-text: #0f172a;
+    --msg-in: #ffffff; --msg-in-text: #0f172a;
+    --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
     --shadow: 0 4px 16px rgba(0,0,0,0.08);
     --shadow-lg: 0 20px 60px rgba(0,0,0,0.15);
-    --radius: 14px;
-    --radius-sm: 10px;
+    --radius: 14px; --radius-sm: 10px;
     --online: #10b981;
 }
-
 body.dark {
-    --bg: #0f172a;
-    --bg-2: #1e293b;
-    --bg-3: #334155;
-    --text: #f1f5f9;
-    --text-2: #94a3b8;
-    --primary: #3b82f6;
-    --primary-dark: #2563eb;
+    --bg: #0f172a; --bg-2: #1e293b; --bg-3: #334155;
+    --text: #f1f5f9; --text-2: #94a3b8;
+    --primary: #3b82f6; --primary-dark: #2563eb;
     --border: #1e293b;
-    /* ⚡ CHAT RANGLARI (Tungi) */
-    --msg-out: #2b5278;      /* O'zim — ko'k */
-    --msg-out-text: #ffffff;
-    --msg-in: #182533;       /* Boshqalar — quyuq */
-    --msg-in-text: #ffffff;
+    --msg-out: #2b5278; --msg-out-text: #ffffff;
+    --msg-in: #182533; --msg-in-text: #ffffff;
+    --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
     --shadow: 0 4px 16px rgba(0,0,0,0.3);
     --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
 }
-
-html, body {
-    height: 100%;
-    overflow: hidden;
-}
-
+html, body { height: 100%; overflow: hidden; }
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    user-select: none;
-    -webkit-font-smoothing: antialiased;
-    transition: background 0.3s, color 0.3s;
+    background: var(--bg); color: var(--text); user-select: none;
+    -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s;
 }
-
-.svg-icon {
-    width: 22px;
-    height: 22px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    display: block;
-}
+.svg-icon { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
 .svg-icon-sm { width: 18px; height: 18px; }
 
 /* ==================== KALKULYATOR ==================== */
-#calc-view {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-    padding: 16px;
-    background: var(--bg);
-}
-
-#calc-display {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: flex-end;
-    padding: 20px 16px;
-    overflow-y: auto;
-}
-
-#calc-display .ifoda {
-    font-size: 22px;
-    color: var(--text-2);
-    margin-bottom: 12px;
-    word-break: break-all;
-    text-align: right;
-    min-height: 28px;
-}
-
-#calc-display .natija {
-    font-size: 56px;
-    font-weight: 300;
-    color: var(--text);
-    word-break: break-all;
-    text-align: right;
-    line-height: 1.1;
-}
-
-.calc-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    padding-bottom: 8px;
-}
-
-.calc-btn {
-    padding: 22px 0;
-    font-size: 24px;
-    font-weight: 500;
-    border: none;
-    border-radius: var(--radius);
-    background: var(--bg-2);
-    color: var(--text);
-    cursor: pointer;
-    transition: all 0.12s ease;
-    font-family: inherit;
-}
-
+#calc-view { display: flex; flex-direction: column; height: 100vh; height: 100dvh; padding: 16px; background: var(--bg); }
+#calc-display { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-end; padding: 20px 16px; overflow-y: auto; }
+#calc-display .ifoda { font-size: 22px; color: var(--text-2); margin-bottom: 12px; word-break: break-all; text-align: right; min-height: 28px; }
+#calc-display .natija { font-size: 56px; font-weight: 300; color: var(--text); word-break: break-all; text-align: right; line-height: 1.1; }
+.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding-bottom: 8px; }
+.calc-btn { padding: 22px 0; font-size: 24px; font-weight: 500; border: none; border-radius: var(--radius); background: var(--bg-2); color: var(--text); cursor: pointer; font-family: inherit; transition: all 0.12s; }
 .calc-btn:active { transform: scale(0.94); background: var(--bg-3); }
-
 .calc-btn.op { background: var(--primary); color: white; font-weight: 600; }
 .calc-btn.eq { background: var(--primary); color: white; font-weight: 700; grid-column: span 2; }
 .calc-btn.clr { background: var(--danger); color: white; font-weight: 600; }
-
-.scientific-toggle {
-    width: 100%;
-    padding: 14px;
-    margin-top: 8px;
-    border: none;
-    border-radius: var(--radius);
-    background: var(--bg-2);
-    color: var(--primary);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-}
+.scientific-toggle { width: 100%; padding: 14px; margin-top: 8px; border: none; border-radius: var(--radius); background: var(--bg-2); color: var(--primary); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
 
 /* ==================== ILMIY KALKULYATOR ==================== */
-#scientific-view {
-    display: none;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-    padding: 12px;
-    background: var(--bg);
-    position: relative;
-}
-
+#scientific-view { display: none; flex-direction: column; height: 100vh; height: 100dvh; padding: 12px; background: var(--bg); position: relative; }
 #scientific-view.active { display: flex; }
-
-.sci-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 8px;
-    font-size: 14px;
-    color: var(--text-2);
-    flex-shrink: 0;
-}
-
-.sci-header .mode {
-    font-weight: 600;
-    color: var(--primary);
-    padding: 4px 10px;
-    background: var(--bg-2);
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.sci-display {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: flex-end;
-    padding: 12px;
-    font-size: 42px;
-    font-weight: 300;
-    color: var(--text);
-    word-break: break-all;
-    text-align: right;
-    min-height: 80px;
-    overflow-y: auto;
-}
-
-.sci-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    padding-bottom: 6px;
-}
-
-.sci-grid button {
-    padding: 14px 0;
-    font-size: 14px;
-    font-weight: 500;
-    border: none;
-    border-radius: 10px;
-    background: var(--bg-2);
-    color: var(--text);
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.12s;
-}
-
-.sci-grid button:active { transform: scale(0.94); background: var(--bg-3); }
+.sci-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; font-size: 14px; color: var(--text-2); }
+.sci-header .mode { font-weight: 600; color: var(--primary); padding: 4px 10px; background: var(--bg-2); border-radius: 8px; cursor: pointer; }
+.sci-display { flex: 1; display: flex; justify-content: flex-end; align-items: flex-end; padding: 12px; font-size: 42px; font-weight: 300; word-break: break-all; text-align: right; min-height: 80px; overflow-y: auto; }
+.sci-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding-bottom: 6px; }
+.sci-grid button { padding: 14px 0; font-size: 14px; font-weight: 500; border: none; border-radius: 10px; background: var(--bg-2); color: var(--text); cursor: pointer; font-family: inherit; }
 .sci-grid button.sci-num { font-size: 18px; font-weight: 600; }
 .sci-grid button.sci-op { background: var(--primary); color: white; font-weight: 600; font-size: 18px; }
 .sci-grid button.sci-fn { background: var(--bg-3); font-size: 13px; }
 .sci-grid button.sci-eq { background: var(--primary); color: white; font-weight: 700; grid-column: span 2; font-size: 18px; }
 .sci-grid button.sci-clr { background: var(--danger); color: white; font-weight: 600; }
 .sci-grid button.active { background: var(--primary); color: white; }
-
-.sci-close {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: var(--bg-2);
-    border: none;
-    color: var(--text);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-}
+.sci-close { position: absolute; top: 12px; right: 12px; background: var(--bg-2); border: none; color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
 
 /* ==================== MODAL ==================== */
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    padding: 20px;
-}
-
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
 .modal.active { display: flex; }
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.modal-box {
-    background: var(--bg);
-    padding: 24px;
-    border-radius: 20px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: var(--shadow-lg);
-    animation: slideUp 0.25s ease;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-box .icon {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 16px;
-    color: var(--primary);
-}
-
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.modal-box { background: var(--bg); padding: 24px; border-radius: 20px; width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); animation: slideUp 0.25s ease; max-height: 90vh; overflow-y: auto; }
+.modal-box .icon { display: flex; justify-content: center; margin-bottom: 16px; color: var(--primary); }
 .modal-box .icon svg { width: 48px; height: 48px; }
 .modal-box.danger .icon { color: var(--danger); }
-
-.modal-box h3 {
-    text-align: center;
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 8px;
-}
-
-.modal-box .subtitle {
-    text-align: center;
-    color: var(--text-2);
-    font-size: 14px;
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
-
-.modal-box input,
-.modal-box textarea {
-    width: 100%;
-    padding: 14px;
-    font-size: 15px;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-2);
-    color: var(--text);
-    margin-bottom: 12px;
-    outline: none;
-    font-family: inherit;
-    transition: border-color 0.2s;
-}
-
-.modal-box input:focus,
-.modal-box textarea:focus { border-color: var(--primary); }
-
-.modal-box label {
-    display: block;
-    font-size: 13px;
-    color: var(--text-2);
-    margin-bottom: 6px;
-    font-weight: 600;
-}
-
+.modal-box h3 { text-align: center; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.modal-box .subtitle { text-align: center; color: var(--text-2); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+.modal-box input, .modal-box textarea, .modal-box select { width: 100%; padding: 14px; font-size: 15px; border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-2); color: var(--text); margin-bottom: 12px; outline: none; font-family: inherit; }
+.modal-box input:focus, .modal-box textarea:focus { border-color: var(--primary); }
+.modal-box label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 6px; font-weight: 600; }
 .modal-box textarea { resize: none; min-height: 80px; }
-
-.modal-buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.modal-buttons button {
-    flex: 1;
-    padding: 14px;
-    font-size: 15px;
-    border: none;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-weight: 600;
-    font-family: inherit;
-    transition: all 0.15s;
-}
-
+.modal-buttons { display: flex; gap: 8px; margin-top: 4px; }
+.modal-buttons button { flex: 1; padding: 14px; font-size: 15px; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; font-family: inherit; transition: all 0.15s; }
 .modal-buttons .btn-cancel { background: var(--bg-2); color: var(--text); }
 .modal-buttons .btn-primary { background: var(--primary); color: white; }
 .modal-buttons .btn-danger { background: var(--danger); color: white; }
-
-#verify-input {
-    text-align: center;
-    letter-spacing: 8px;
-    font-weight: 600;
-    font-size: 18px;
-}
+.modal-buttons .btn-success { background: var(--success); color: white; }
+#verify-input { text-align: center; letter-spacing: 8px; font-weight: 600; font-size: 18px; }
 
 /* ==================== APP ==================== */
-#app-view {
-    display: none;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-}
-
+#app-view { display: none; flex-direction: column; height: 100vh; height: 100dvh; }
 #app-view.active { display: flex; }
-
-.app-header {
-    display: flex;
-    align-items: center;
-    padding: 12px 14px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    gap: 10px;
-    padding-top: max(12px, env(safe-area-inset-top));
-}
-
-.app-header .name {
-    flex: 1;
-    font-weight: 700;
-    font-size: 17px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.icon-btn {
-    width: 40px;
-    height: 40px;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--text);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s;
-}
-
+.app-header { display: flex; align-items: center; padding: 12px 14px; background: var(--bg); border-bottom: 1px solid var(--border); gap: 10px; padding-top: max(12px, env(safe-area-inset-top)); }
+.app-header .name { flex: 1; font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-btn { width: 40px; height: 40px; border: none; border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
 .icon-btn:active { background: var(--bg-2); }
-
-.app-content {
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 80px;
-    -webkit-overflow-scrolling: touch;
-}
-
+.app-content { flex: 1; overflow-y: auto; padding-bottom: 80px; -webkit-overflow-scrolling: touch; }
 .tab-content { display: none; padding: 8px; }
 .tab-content.active { display: block; }
 
 /* ==================== CHAT LIST ==================== */
-.chat-item {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    gap: 12px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: background 0.15s;
-}
-
+.chat-item { display: flex; align-items: center; padding: 12px; gap: 12px; border-radius: var(--radius); cursor: pointer; transition: background 0.15s; }
 .chat-item:active { background: var(--bg-2); }
-
 .avatar-wrap { position: relative; flex-shrink: 0; }
-
-.avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: 700;
-    overflow: hidden;
-}
-
+.avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; overflow: hidden; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.online-dot {
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--online);
-    border: 2.5px solid var(--bg);
-    display: none;
-}
-
+.online-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--online); border: 2.5px solid var(--bg); display: none; }
 .online-dot.active { display: block; }
-
 .chat-info { flex: 1; min-width: 0; }
-
-.chat-info .name {
-    font-weight: 600;
-    font-size: 15px;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.chat-info .name .group-icon {
-    color: var(--primary);
-    flex-shrink: 0;
-}
-
-.chat-info .last {
-    color: var(--text-2);
-    font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
+.chat-info .name { font-weight: 600; font-size: 15px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.chat-info .name .group-icon { color: var(--primary); flex-shrink: 0; }
+.chat-info .last { color: var(--text-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat-info .last.unread { color: var(--text); font-weight: 500; }
-
-.chat-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    flex-shrink: 0;
-}
-
+.chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
 .chat-time { font-size: 12px; color: var(--text-2); }
-
-.unread-badge {
-    background: var(--primary);
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 12px;
-    min-width: 20px;
-    text-align: center;
-}
+.unread-badge { background: var(--primary); color: white; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 12px; min-width: 20px; text-align: center; }
 
 /* ==================== CHAT WINDOW ==================== */
-#chat-window {
-    position: fixed;
-    inset: 0;
-    display: none;
-    flex-direction: column;
-    z-index: 100;
-    background: var(--bg-2);
-}
-
+#chat-window { position: fixed; inset: 0; display: none; flex-direction: column; z-index: 100; background: var(--bg-2); }
 #chat-window.active { display: flex; }
-
-/* ⚡ FON RASMI OLIB TASHLANDI */
-.chat-bg {
-    display: none;
-}
-
-.chat-header {
-    display: flex;
-    align-items: center;
-    padding: 10px 12px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    gap: 10px;
-    padding-top: max(10px, env(safe-area-inset-top));
-    position: relative;
-    z-index: 2;
-}
-
+.chat-header { display: flex; align-items: center; padding: 10px 12px; background: var(--bg); border-bottom: 1px solid var(--border); gap: 10px; padding-top: max(10px, env(safe-area-inset-top)); position: relative; z-index: 2; }
 .chat-header-info { flex: 1; min-width: 0; }
-
-.chat-header-info .name {
-    font-weight: 600;
-    font-size: 15px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.chat-header-info .name .group-username {
-    font-size: 12px;
-    color: var(--text-2);
-    font-weight: 400;
-}
-
-.chat-header-info .status {
-    font-size: 12px;
-    color: var(--text-2);
-    margin-top: 2px;
-}
-
+.chat-header-info .name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.chat-header-info .name .group-username { font-size: 12px; color: var(--text-2); font-weight: 400; }
+.chat-header-info .status { font-size: 12px; color: var(--text-2); margin-top: 2px; }
 .chat-header-info .status.online { color: var(--online); font-weight: 500; }
 .chat-header-info .status.typing { color: var(--primary); font-style: italic; }
-
-#messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    -webkit-overflow-scrolling: touch;
-    position: relative;
-    z-index: 1;
-    background: var(--bg-2);
-}
-
-.msg-wrap {
-    display: flex;
-    flex-direction: column;
-    max-width: 82%;
-    position: relative;
-}
-
+#messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px; -webkit-overflow-scrolling: touch; position: relative; z-index: 1; background: var(--bg-2); }
+.msg-wrap { display: flex; flex-direction: column; max-width: 82%; position: relative; }
 .msg-wrap.out { align-self: flex-end; align-items: flex-end; }
 .msg-wrap.in { align-self: flex-start; align-items: flex-start; }
-
-.msg-sender {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--primary);
-    margin-bottom: 2px;
-    padding-left: 8px;
-    cursor: pointer;
-}
-
-.message {
-    padding: 8px 12px 6px;
-    border-radius: 18px;
-    font-size: 15px;
-    word-wrap: break-word;
-    line-height: 1.4;
-    position: relative;
-    animation: msgIn 0.2s ease;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-}
-
-@keyframes msgIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ⚡ CHAT RANGLARI — Telegram kabi */
-.message.out {
-    background: var(--msg-out);
-    color: var(--msg-out-text);
-    border-bottom-right-radius: 6px;
-}
-
-.message.in {
-    background: var(--msg-in);
-    color: var(--msg-in-text);
-    border-bottom-left-radius: 6px;
-}
-
-.message.emoji-only {
-    font-size: 42px;
-    line-height: 1;
-    background: transparent !important;
-    padding: 4px;
-    box-shadow: none;
-}
-
-.message img.msg-img,
-.message video.msg-video {
-    max-width: 100%;
-    border-radius: 12px;
-    margin-bottom: 4px;
-    display: block;
-    cursor: pointer;
-}
-
-.file-attach {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 4px;
-    text-decoration: none;
-    color: inherit;
-}
-
-.file-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: var(--primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-weight: 700;
-    font-size: 12px;
-}
-
+.msg-sender { font-size: 11px; font-weight: 600; color: var(--primary); margin-bottom: 2px; padding-left: 8px; cursor: pointer; }
+.message { padding: 8px 12px 6px; border-radius: 18px; font-size: 15px; word-wrap: break-word; line-height: 1.4; position: relative; animation: msgIn 0.2s ease; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+@keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.message.out { background: var(--msg-out); color: var(--msg-out-text); border-bottom-right-radius: 6px; }
+.message.in { background: var(--msg-in); color: var(--msg-in-text); border-bottom-left-radius: 6px; }
+.message.emoji-only { font-size: 42px; line-height: 1; background: transparent !important; padding: 4px; box-shadow: none; }
+.message img.msg-img, .message video.msg-video { max-width: 100%; border-radius: 12px; margin-bottom: 4px; display: block; cursor: pointer; }
+.file-attach { display: flex; align-items: center; gap: 10px; padding: 8px 4px; text-decoration: none; color: inherit; }
+.file-icon { width: 42px; height: 42px; border-radius: 10px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; font-size: 12px; }
 .file-info { flex: 1; min-width: 0; }
-.file-info .file-name {
-    font-weight: 600;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+.file-info .file-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-info .file-size { font-size: 12px; opacity: 0.7; }
-
-.msg-time {
-    font-size: 10px;
-    opacity: 0.7;
-    margin-left: 8px;
-    float: right;
-    margin-top: 6px;
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-}
-
+.msg-time { font-size: 10px; opacity: 0.7; margin-left: 8px; float: right; margin-top: 6px; display: inline-flex; align-items: center; gap: 2px; }
 .msg-time .check { display: inline-flex; align-items: center; }
 .msg-time .check svg { width: 14px; height: 14px; stroke-width: 2.5; }
 .msg-time .check.read svg { color: #3b82f6; }
 .msg-time .check:not(.read) svg { color: rgba(255,255,255,0.7); }
-
 body:not(.dark) .message.in .msg-time .check:not(.read) svg { color: var(--text-2); }
-
-/* Voice */
-.voice-player {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 4px;
-    min-width: 200px;
-}
-
-.voice-play-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--primary);
-    color: white;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
+.voice-player { display: flex; align-items: center; gap: 10px; padding: 6px 4px; min-width: 200px; }
+.voice-play-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 .voice-play-btn svg { width: 18px; height: 18px; }
-
-.voice-wave {
-    flex: 1;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.voice-wave span {
-    flex: 1;
-    background: currentColor;
-    opacity: 0.4;
-    border-radius: 2px;
-}
-
+.voice-wave { flex: 1; height: 24px; display: flex; align-items: center; gap: 2px; }
+.voice-wave span { flex: 1; background: currentColor; opacity: 0.4; border-radius: 2px; }
 .voice-duration { font-size: 12px; opacity: 0.7; min-width: 30px; text-align: right; }
-
-/* Reply */
-.reply-quote {
-    background: rgba(59, 130, 246, 0.15);
-    border-left: 3px solid var(--primary);
-    padding: 6px 10px;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    font-size: 13px;
-}
-
-.reply-quote .name {
-    font-weight: 600;
-    color: var(--primary);
-    margin-bottom: 2px;
-}
-
-.reply-quote .text {
-    opacity: 0.7;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Pinned banner */
-.pinned-banner {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-    position: relative;
-    z-index: 2;
-    cursor: pointer;
-}
-
+.reply-quote { background: rgba(59, 130, 246, 0.15); border-left: 3px solid var(--primary); padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+.reply-quote .name { font-weight: 600; color: var(--primary); margin-bottom: 2px; }
+.reply-quote .text { opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pinned-banner { display: none; align-items: center; gap: 10px; padding: 8px 14px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 13px; position: relative; z-index: 2; cursor: pointer; }
 .pinned-banner.active { display: flex; }
-
 .pinned-banner .pin-icon { color: var(--primary); flex-shrink: 0; }
-
-.pinned-banner .pin-text {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Reactions */
-.reactions {
-    display: flex;
-    gap: 4px;
-    margin-top: 4px;
-    flex-wrap: wrap;
-}
-
-.reaction-item {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 2px 8px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-}
-
+.pinned-banner .pin-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reactions { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.reaction-item { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 2px 8px; font-size: 13px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
 body.dark .reaction-item { background: var(--bg-2); }
-
-.reaction-item.mine {
-    background: rgba(59, 130, 246, 0.2);
-    border-color: var(--primary);
-}
-
+.reaction-item.mine { background: rgba(59, 130, 246, 0.2); border-color: var(--primary); }
 .reaction-item .count { font-weight: 600; font-size: 12px; color: var(--text-2); }
-
-/* Link */
-.msg-link {
-    color: var(--primary);
-    text-decoration: underline;
-    word-break: break-all;
-}
+.msg-link { color: var(--primary); text-decoration: underline; word-break: break-all; }
 
 /* ==================== CHAT INPUT ==================== */
-.chat-input {
-    display: flex;
-    align-items: center;
-    padding: 8px;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    gap: 6px;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
-    position: relative;
-    z-index: 2;
-}
-
-.chat-input input {
-    flex: 1;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 22px;
-    background: var(--bg-2);
-    color: var(--text);
-    font-size: 15px;
-    outline: none;
-    font-family: inherit;
-    min-width: 0;
-}
-
-.send-btn, .mic-btn, .attach-btn {
-    width: 44px;
-    height: 44px;
-    border: none;
-    border-radius: 50%;
-    background: var(--primary);
-    color: white;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.mic-btn, .attach-btn {
-    background: var(--bg-2);
-    color: var(--text);
-}
-
+.chat-input { display: flex; align-items: center; padding: 8px; background: var(--bg); border-top: 1px solid var(--border); gap: 6px; padding-bottom: max(8px, env(safe-area-inset-bottom)); position: relative; z-index: 2; }
+.chat-input input { flex: 1; padding: 12px 16px; border: none; border-radius: 22px; background: var(--bg-2); color: var(--text); font-size: 15px; outline: none; font-family: inherit; min-width: 0; }
+.send-btn, .mic-btn, .attach-btn { width: 44px; height: 44px; border: none; border-radius: 50%; background: var(--primary); color: white; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.mic-btn, .attach-btn { background: var(--bg-2); color: var(--text); }
 .send-btn svg, .mic-btn svg, .attach-btn svg { width: 20px; height: 20px; }
-
-/* Recording */
-.recording-indicator {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    background: var(--bg-2);
-    border-top: 1px solid var(--border);
-    color: var(--danger);
-    font-weight: 500;
-    font-size: 14px;
-}
-
-.recording-indicator.active { display: flex; }
-
-.recording-indicator .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--danger);
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-}
-
-.recording-indicator .time {
-    margin-left: auto;
-    color: var(--text-2);
-}
-
-/* Reply preview */
-.reply-preview {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--bg-2);
-    border-top: 1px solid var(--border);
-    border-left: 3px solid var(--primary);
-}
-
+.mic-btn.recording { background: var(--danger) !important; color: white !important; animation: micPulse 1s infinite; }
+@keyframes micPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+.recording-time-badge { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(239,68,68,0.95); color: white; padding: 8px 18px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 150; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.recording-time-badge.active { display: flex; }
+.recording-time-badge .dot { width: 10px; height: 10px; background: white; border-radius: 50%; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.reply-preview { display: none; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg-2); border-top: 1px solid var(--border); border-left: 3px solid var(--primary); }
 .reply-preview.active { display: flex; }
-
-.reply-preview .text {
-    flex: 1;
-    font-size: 13px;
-    color: var(--text-2);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+.reply-preview .text { flex: 1; font-size: 13px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ==================== ATTACHMENT MENU ==================== */
-#attach-menu {
-    position: fixed;
-    bottom: 70px;
-    left: 12px;
-    background: var(--bg);
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    padding: 6px;
-    z-index: 200;
-    display: none;
-    border: 1px solid var(--border);
-    min-width: 180px;
-}
-
+#attach-menu { position: fixed; bottom: 70px; left: 12px; background: var(--bg); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 6px; z-index: 200; display: none; border: 1px solid var(--border); min-width: 180px; }
 #attach-menu.active { display: block; }
-
-#attach-menu .item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-}
-
+#attach-menu .item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; }
 #attach-menu .item:active { background: var(--bg-2); }
-
-#attach-menu .item .icon-circle {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    flex-shrink: 0;
-}
-
+#attach-menu .item .icon-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
 #attach-menu .item .icon-circle svg { width: 18px; height: 18px; }
-
 #attach-menu .item[data-type="photo"] .icon-circle { background: #3b82f6; }
 #attach-menu .item[data-type="video"] .icon-circle { background: #8b5cf6; }
 #attach-menu .item[data-type="file"] .icon-circle { background: #f59e0b; }
 
 /* ==================== MESSAGE ACTIONS ==================== */
-.msg-actions {
-    position: fixed;
-    background: var(--bg);
-    border-radius: 14px;
-    box-shadow: var(--shadow-lg);
-    padding: 6px;
-    z-index: 500;
-    display: none;
-    min-width: 200px;
-    border: 1px solid var(--border);
-}
-
+.msg-actions { position: fixed; background: var(--bg); border-radius: 14px; box-shadow: var(--shadow-lg); padding: 6px; z-index: 500; display: none; min-width: 200px; border: 1px solid var(--border); }
 .msg-actions.active { display: block; }
-
-.msg-actions .emoji-row {
-    display: flex;
-    gap: 4px;
-    padding: 8px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 6px;
-    overflow-x: auto;
-}
-
-.msg-actions .emoji-btn {
-    flex-shrink: 0;
-    background: transparent;
-    border: none;
-    font-size: 26px;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 8px;
-}
-
-.msg-actions .action-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-}
-
+.msg-actions .emoji-row { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--border); margin-bottom: 6px; overflow-x: auto; }
+.msg-actions .emoji-btn { flex-shrink: 0; background: transparent; border: none; font-size: 26px; cursor: pointer; padding: 4px; border-radius: 8px; }
+.msg-actions .action-btn { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text); }
 .msg-actions .action-btn:active { background: var(--bg-2); }
-
-.msg-actions .action-btn svg {
-    width: 18px;
-    height: 18px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
+.msg-actions .action-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .msg-actions .action-btn.danger { color: var(--danger); }
 
 /* ==================== EMOJI PICKER ==================== */
-#emoji-picker {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
-    z-index: 200;
-    transform: translateY(100%);
-    transition: transform 0.25s ease;
-    max-height: 55vh;
-    display: flex;
-    flex-direction: column;
-}
-
+#emoji-picker { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,0.15); z-index: 200; transform: translateY(100%); transition: transform 0.25s ease; max-height: 55vh; display: flex; flex-direction: column; }
 #emoji-picker.active { transform: translateY(0); }
-
-.emoji-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-}
-
+.emoji-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .emoji-header h4 { font-size: 15px; font-weight: 700; }
-
-.emoji-header button {
-    background: transparent;
-    border: none;
-    color: var(--text-2);
-    cursor: pointer;
-    padding: 4px;
-}
-
-.emoji-tabs {
-    display: flex;
-    gap: 4px;
-    padding: 8px 12px;
-    overflow-x: auto;
-    border-bottom: 1px solid var(--border);
-    scrollbar-width: none;
-}
-
+.emoji-header button { background: transparent; border: none; color: var(--text-2); cursor: pointer; padding: 4px; }
+.emoji-tabs { display: flex; gap: 4px; padding: 8px 12px; overflow-x: auto; border-bottom: 1px solid var(--border); scrollbar-width: none; }
 .emoji-tabs::-webkit-scrollbar { display: none; }
-
-.emoji-tab {
-    flex-shrink: 0;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: var(--bg-2);
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-}
-
+.emoji-tab { flex-shrink: 0; padding: 6px 12px; border-radius: 20px; background: var(--bg-2); border: none; font-size: 16px; cursor: pointer; }
 .emoji-tab.active { background: var(--primary); color: white; }
-
-.emoji-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-}
-
-.emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
-}
-
-.emoji-item {
-    aspect-ratio: 1;
-    border: none;
-    background: transparent;
-    font-size: 26px;
-    cursor: pointer;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
+.emoji-content { flex: 1; overflow-y: auto; padding: 12px; }
+.emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.emoji-item { aspect-ratio: 1; border: none; background: transparent; font-size: 26px; cursor: pointer; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
 .emoji-item:active { transform: scale(1.3); background: var(--bg-2); }
 
 /* ==================== BOTTOM NAV ==================== */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 68px;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    display: flex;
-    z-index: 50;
-    padding-bottom: max(0px, env(safe-area-inset-bottom));
-}
-
-.nav-btn {
-    flex: 1;
-    border: none;
-    background: transparent;
-    color: var(--text-2);
-    font-size: 11px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    font-family: inherit;
-    font-weight: 500;
-    position: relative;
-}
-
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 68px; background: var(--bg); border-top: 1px solid var(--border); display: flex; z-index: 50; padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+.nav-btn { flex: 1; border: none; background: transparent; color: var(--text-2); font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-family: inherit; font-weight: 500; position: relative; }
 .nav-btn.active { color: var(--primary); }
-
-.nav-btn svg {
-    width: 24px;
-    height: 24px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.nav-badge {
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    transform: translateX(10px);
-    background: var(--danger);
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 10px;
-    min-width: 18px;
-    text-align: center;
-}
+.nav-btn svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nav-badge { position: absolute; top: 6px; left: 50%; transform: translateX(10px); background: var(--danger); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; min-width: 18px; text-align: center; }
 
 /* ==================== PHOTOS ==================== */
-.photos-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    padding: 6px;
-}
-
-.photo-item {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--bg-2);
-    cursor: pointer;
-}
-
-.photo-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.photo-item .delete {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    border: none;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16px;
-}
+.photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; }
+.photo-item { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--bg-2); cursor: pointer; }
+.photo-item img { width: 100%; height: 100%; object-fit: cover; }
+.photo-item .delete { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 16px; }
 
 /* ==================== PROFILE ==================== */
-.profile-section {
-    padding: 24px 16px;
-    text-align: center;
-}
-
-.profile-avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48px;
-    font-weight: 700;
-    margin-bottom: 18px;
-    overflow: hidden;
-    cursor: pointer;
-    position: relative;
-    box-shadow: var(--shadow);
-}
-
+.profile-section { padding: 24px 16px; text-align: center; }
+.profile-avatar { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; margin-bottom: 18px; overflow: hidden; cursor: pointer; position: relative; box-shadow: var(--shadow); }
 .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.profile-avatar::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    right: 4px;
-    background: var(--bg);
-    border-radius: 50%;
-    width: 34px;
-    height: 34px;
-    box-shadow: var(--shadow);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-.profile-name {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.profile-username {
-    color: var(--text-2);
-    margin-bottom: 24px;
-    font-size: 15px;
-}
-
-.profile-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
-    background: var(--bg-2);
-    border-radius: var(--radius);
-    margin-bottom: 8px;
-    cursor: pointer;
-}
-
+.profile-avatar::after { content: ''; position: absolute; bottom: 4px; right: 4px; background: var(--bg); border-radius: 50%; width: 34px; height: 34px; box-shadow: var(--shadow); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; }
+.profile-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.profile-username { color: var(--text-2); margin-bottom: 24px; font-size: 15px; }
+.profile-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg-2); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; }
 .profile-row:active { background: var(--bg-3); }
-
-.profile-row .label {
-    color: var(--text);
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 500;
-}
-
-.profile-row .label svg {
-    width: 20px;
-    height: 20px;
-    color: var(--primary);
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.profile-row .value {
-    color: var(--text-2);
-    font-weight: 500;
-    font-size: 14px;
-}
+.profile-row .label { color: var(--text); font-size: 15px; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+.profile-row .label svg { width: 20px; height: 20px; color: var(--primary); stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.profile-row .value { color: var(--text-2); font-weight: 500; font-size: 14px; }
+.profile-row.danger .label { color: var(--danger); }
+.profile-row.danger .label svg { color: var(--danger); }
+.profile-section-title { font-size: 13px; color: var(--text-2); font-weight: 600; text-transform: uppercase; text-align: left; padding: 16px 16px 8px; letter-spacing: 0.5px; }
+.profile-row.admin .label { color: var(--warning); }
+.profile-row.admin .label svg { color: var(--warning); }
 
 /* ==================== SEARCH ==================== */
-.search-box {
-    background: var(--bg);
-    padding: 20px;
-    border-radius: 20px;
-    max-width: 500px;
-    width: 100%;
-    box-shadow: var(--shadow-lg);
-}
-
-.search-tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
-}
-
-.search-tab {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 10px;
-    background: var(--bg-2);
-    color: var(--text-2);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-}
-
-.search-tab.active {
-    background: var(--primary);
-    color: white;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-2);
-    color: var(--text);
-    outline: none;
-    margin-bottom: 14px;
-    font-family: inherit;
-}
-
+.search-box { background: var(--bg); padding: 20px; border-radius: 20px; max-width: 500px; width: 100%; box-shadow: var(--shadow-lg); }
+.search-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.search-tab { flex: 1; padding: 10px; border: none; border-radius: 10px; background: var(--bg-2); color: var(--text-2); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.search-tab.active { background: var(--primary); color: white; }
+.search-box input { width: 100%; padding: 14px; font-size: 16px; border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-2); color: var(--text); outline: none; margin-bottom: 14px; font-family: inherit; }
 .search-box input:focus { border-color: var(--primary); }
-
-.search-result {
-    padding: 12px;
-    background: var(--bg-2);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    margin-bottom: 8px;
-}
-
+.search-result { padding: 12px; background: var(--bg-2); border-radius: var(--radius-sm); display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 8px; }
 .search-result:active { background: var(--bg-3); }
 
 /* ==================== TOAST ==================== */
-#toast {
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: rgba(15, 23, 42, 0.95);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 24px;
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    z-index: 9999;
-    max-width: 90%;
-    text-align: center;
-}
-
-#toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
+#toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 23, 42, 0.95); color: white; padding: 12px 20px; border-radius: 24px; font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s ease; pointer-events: none; z-index: 9999; max-width: 90%; text-align: center; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ==================== EMPTY ==================== */
-.empty-state {
-    text-align: center;
-    padding: 80px 20px;
-    color: var(--text-2);
-}
-
-.empty-state .icon {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 16px;
-    opacity: 0.4;
-}
-
-.empty-state .icon svg {
-    width: 64px;
-    height: 64px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 1.5;
-}
-
-.empty-state .title {
-    font-size: 17px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--text);
-}
+.empty-state { text-align: center; padding: 80px 20px; color: var(--text-2); }
+.empty-state .icon { display: flex; justify-content: center; margin-bottom: 16px; opacity: 0.4; }
+.empty-state .icon svg { width: 64px; height: 64px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.empty-state .title { font-size: 17px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
 
 /* ==================== IMAGE VIEWER ==================== */
-#image-viewer {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 2000;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
+#image-viewer { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; }
 #image-viewer.active { display: flex; }
+#image-viewer img, #image-viewer video { max-width: 100%; max-height: 90vh; object-fit: contain; border-radius: 12px; }
+#image-viewer .close-viewer { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-#image-viewer img, #image-viewer video {
-    max-width: 100%;
-    max-height: 90vh;
-    object-fit: contain;
-    border-radius: 12px;
-}
-
-#image-viewer .close-viewer {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: none;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* ==================== USER PROFILE VIEW ==================== */
-.user-profile-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    overflow: hidden;
-}
-
+/* ==================== USER PROFILE ==================== */
+.user-profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; margin-bottom: 12px; overflow: hidden; }
 .user-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.user-profile-name {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    text-align: center;
-}
-
-.user-profile-username {
-    color: var(--text-2);
-    font-size: 14px;
-    margin-bottom: 16px;
-    text-align: center;
-}
-
-.user-profile-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    text-align: left;
-    background: var(--bg-2);
-    border-radius: 12px;
-    padding: 12px;
-    margin-top: 12px;
-}
-
-.user-profile-info .row {
-    display: flex;
-    gap: 12px;
-    font-size: 14px;
-}
-
-.user-profile-info .row .label {
-    color: var(--text-2);
-    min-width: 80px;
-    font-weight: 500;
-}
-
-.user-profile-info .row .value {
-    color: var(--text);
-    flex: 1;
-}
+.user-profile-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+.user-profile-username { color: var(--text-2); font-size: 14px; margin-bottom: 16px; text-align: center; }
+.user-profile-info { display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--bg-2); border-radius: 12px; padding: 12px; margin-top: 12px; }
+.user-profile-info .row { display: flex; gap: 12px; font-size: 14px; }
+.user-profile-info .row .label { color: var(--text-2); min-width: 80px; font-weight: 500; }
+.user-profile-info .row .value { color: var(--text); flex: 1; }
 
 /* Group create */
-.group-members-list {
-    max-height: 200px;
-    overflow-y: auto;
-    background: var(--bg-2);
-    border-radius: 10px;
-    margin-bottom: 12px;
-    padding: 8px;
-}
-
-.group-member-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
+.group-members-list { max-height: 200px; overflow-y: auto; background: var(--bg-2); border-radius: 10px; margin-bottom: 12px; padding: 8px; }
+.group-member-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; }
 .group-member-item.selected { background: rgba(59, 130, 246, 0.2); }
-
-.group-member-item .avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-}
-
-.group-member-item .check {
-    margin-left: auto;
-    color: var(--primary);
-    display: none;
-}
-
+.group-member-item .avatar { width: 36px; height: 36px; font-size: 14px; }
+.group-member-item .check { margin-left: auto; color: var(--primary); display: none; }
 .group-member-item.selected .check { display: block; }
 
-/* Username input with @ */
-.username-input-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 12px;
-}
-
-.username-input-wrap .at {
-    background: var(--bg-3);
-    color: var(--text-2);
-    padding: 14px;
-    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-    font-weight: 600;
-    border: 2px solid var(--border);
-    border-right: none;
-}
-
-.username-input-wrap input {
-    margin-bottom: 0 !important;
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
-    flex: 1;
-}
-
-.username-status {
-    font-size: 12px;
-    margin-top: -8px;
-    margin-bottom: 12px;
-    padding-left: 4px;
-    font-weight: 500;
-}
-
+/* Username input */
+.username-input-wrap { display: flex; align-items: center; margin-bottom: 12px; }
+.username-input-wrap .at { background: var(--bg-3); color: var(--text-2); padding: 14px; border-radius: var(--radius-sm) 0 0 var(--radius-sm); font-weight: 600; border: 2px solid var(--border); border-right: none; }
+.username-input-wrap input { margin-bottom: 0 !important; border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important; flex: 1; }
+.username-status { font-size: 12px; margin-top: -8px; margin-bottom: 12px; padding-left: 4px; font-weight: 500; }
 .username-status.ok { color: var(--success); }
 .username-status.err { color: var(--danger); }
+
+/* ⚡ ADMIN PANEL */
+.admin-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+.admin-stat-card { background: var(--bg-2); border-radius: 12px; padding: 14px; text-align: center; }
+.admin-stat-card .num { font-size: 24px; font-weight: 700; color: var(--primary); }
+.admin-stat-card .label { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+.admin-user-item { background: var(--bg-2); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; gap: 12px; align-items: center; cursor: pointer; }
+.admin-user-item:active { background: var(--bg-3); }
+.admin-user-item .avatar { width: 44px; height: 44px; font-size: 16px; }
+.admin-user-item .info { flex: 1; min-width: 0; }
+.admin-user-item .info .name { font-weight: 600; font-size: 15px; }
+.admin-user-item .info .meta { font-size: 12px; color: var(--text-2); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-badge { display: inline-block; padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+.admin-badge.online { background: rgba(16,185,129,0.2); color: var(--success); }
+.admin-badge.parol { background: rgba(59,130,246,0.2); color: var(--primary); }
+.admin-badge.noparol { background: rgba(239,68,68,0.2); color: var(--danger); }
+
+/* ⚡ NASTROYKA */
+.settings-group { background: var(--bg-2); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+.settings-item { display: flex; align-items: center; gap: 14px; padding: 16px; cursor: pointer; border-bottom: 1px solid var(--bg-3); }
+.settings-item:last-child { border-bottom: none; }
+.settings-item:active { background: var(--bg-3); }
+.settings-item .icon-wrap { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
+.settings-item .icon-wrap svg { width: 18px; height: 18px; }
+.settings-item .info { flex: 1; min-width: 0; }
+.settings-item .info .title { font-weight: 600; font-size: 15px; }
+.settings-item .info .desc { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.settings-item .arrow { color: var(--text-2); font-size: 18px; }
+.settings-item .toggle { width: 48px; height: 28px; border-radius: 14px; background: var(--bg-3); position: relative; flex-shrink: 0; transition: background 0.2s; }
+.settings-item .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: white; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.settings-item .toggle.on { background: var(--primary); }
+.settings-item .toggle.on::after { transform: translateX(20px); }
 </style>
 </head>
 <body>
 
-<!-- ==================== SVG IKONKALAR ==================== -->
+<!-- SVG IKONKALAR -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </symbol>
-    <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <polyline points="21 15 16 10 5 21"/>
-    </symbol>
-    <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-    </symbol>
-    <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </symbol>
-    <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </symbol>
-    <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-    </symbol>
-    <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1" x2="12" y2="3"/>
-        <line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/>
-        <line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-    </symbol>
-    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-    </symbol>
-    <symbol id="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="22" y1="2" x2="11" y2="13"/>
-        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-    </symbol>
-    <symbol id="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-        <line x1="12" y1="19" x2="12" y2="23"/>
-        <line x1="8" y1="23" x2="16" y2="23"/>
-    </symbol>
-    <symbol id="icon-paperclip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-    </symbol>
-    <symbol id="icon-smile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-        <line x1="9" y1="9" x2="9.01" y2="9"/>
-        <line x1="15" y1="9" x2="15.01" y2="9"/>
-    </symbol>
-    <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="19" y1="12" x2="5" y2="12"/>
-        <polyline points="12 19 5 12 12 5"/>
-    </symbol>
-    <symbol id="icon-more-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="1"/>
-        <circle cx="12" cy="5" r="1"/>
-        <circle cx="12" cy="19" r="1"/>
-    </symbol>
-    <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-        <polyline points="16 17 21 12 16 7"/>
-        <line x1="21" y1="12" x2="9" y2="12"/>
-    </symbol>
-    <symbol id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-    </symbol>
-    <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-    </symbol>
-    <symbol id="icon-chat-empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-    </symbol>
-    <symbol id="icon-image-empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <polyline points="21 15 16 10 5 21"/>
-    </symbol>
-    <symbol id="icon-reply" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="9 17 4 12 9 7"/>
-        <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
-    </symbol>
-    <symbol id="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="17" x2="12" y2="22"/>
-        <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24z"/>
-    </symbol>
-    <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-    </symbol>
-    <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"/>
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-    </symbol>
-    <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-    </symbol>
-    <symbol id="icon-play" viewBox="0 0 24 24" fill="currentColor">
-        <polygon points="5 3 19 12 5 21 5 3"/>
-    </symbol>
-    <symbol id="icon-pause" viewBox="0 0 24 24" fill="currentColor">
-        <rect x="6" y="4" width="4" height="16"/>
-        <rect x="14" y="4" width="4" height="16"/>
-    </symbol>
-    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
-    </symbol>
-    <symbol id="icon-check-double" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="18 6 7 17 2 12"/>
-        <polyline points="22 6 11 17 10 16"/>
-    </symbol>
-    <symbol id="icon-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-    </symbol>
-    <symbol id="icon-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="23 7 16 12 23 17 23 7"/>
-        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-    </symbol>
-    <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-        <polyline points="13 2 13 9 20 9"/>
-    </symbol>
-    <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-    </symbol>
-    <symbol id="icon-log-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-        <polyline points="10 17 15 12 10 7"/>
-        <line x1="15" y1="12" x2="3" y2="12"/>
-    </symbol>
+    <symbol id="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></symbol>
+    <symbol id="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+    <symbol id="icon-paperclip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+    <symbol id="icon-smile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></symbol>
+    <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></symbol>
+    <symbol id="icon-more-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+    <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+    <symbol id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+    <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <symbol id="icon-chat-empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+    <symbol id="icon-image-empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+    <symbol id="icon-reply" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></symbol>
+    <symbol id="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24z"/></symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="icon-check-double" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 6 7 17 2 12"/><polyline points="22 6 11 17 10 16"/></symbol>
+    <symbol id="icon-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="icon-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+    <symbol id="icon-log-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+    <symbol id="icon-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+    <symbol id="icon-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+    <symbol id="icon-database" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></symbol>
+    <symbol id="icon-user-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></symbol>
+    <symbol id="icon-user-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></symbol>
+    <symbol id="icon-megaphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol>
+    <symbol id="icon-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+    <symbol id="icon-message" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="icon-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol>
+    <symbol id="icon-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
 </svg>
 
 <!-- ==================== KALKULYATOR ==================== -->
@@ -1779,13 +429,8 @@ body.dark .reaction-item { background: var(--bg-2); }
 
 <!-- ==================== ILMIY KALKULYATOR ==================== -->
 <div id="scientific-view">
-    <button class="sci-close" onclick="closeScientific()">
-        <svg class="svg-icon"><use href="#icon-x"/></svg>
-    </button>
-    <div class="sci-header">
-        <span class="mode" id="sci-mode" onclick="sciToggleDeg()">Rad</span>
-        <span></span>
-    </div>
+    <button class="sci-close" onclick="closeScientific()"><svg class="svg-icon"><use href="#icon-x"/></svg></button>
+    <div class="sci-header"><span class="mode" id="sci-mode" onclick="sciToggleDeg()">Rad</span><span></span></div>
     <div class="sci-display" id="sci-display">0</div>
     <div class="sci-grid">
         <button class="sci-fn" onclick="sciToggle2nd()" id="sci-2nd">2nd</button>
@@ -1793,43 +438,36 @@ body.dark .reaction-item { background: var(--bg-2); }
         <button class="sci-fn" onclick="sciInsert(')')">)</button>
         <button class="sci-fn" onclick="sciMemory('mc')">mc</button>
         <button class="sci-fn" onclick="sciMemory('m+')">m+</button>
-
         <button class="sci-fn" onclick="sciInsert('^2')">x²</button>
         <button class="sci-fn" onclick="sciInsert('^3')">x³</button>
         <button class="sci-fn" onclick="sciInsert('^')">xʸ</button>
         <button class="sci-fn" onclick="sciInsert('sqrt(')">√x</button>
         <button class="sci-fn" onclick="sciMemory('mr')">mr</button>
-
         <button class="sci-fn" onclick="sciInsert('sin(')">sin</button>
         <button class="sci-fn" onclick="sciInsert('cos(')">cos</button>
         <button class="sci-fn" onclick="sciInsert('tan(')">tan</button>
         <button class="sci-fn" onclick="sciInsert('log10(')">log</button>
         <button class="sci-fn" onclick="sciInsert('log(')">ln</button>
-
         <button class="sci-fn" onclick="sciInsert('pi')">π</button>
         <button class="sci-fn" onclick="sciInsert('e')">e</button>
         <button class="sci-fn" onclick="sciInsert('!')">x!</button>
         <button class="sci-fn" onclick="sciInsert('1/')">¹/x</button>
         <button class="sci-fn" onclick="sciInsert('random()')">Rand</button>
-
         <button class="sci-num" onclick="sciInsert('7')">7</button>
         <button class="sci-num" onclick="sciInsert('8')">8</button>
         <button class="sci-num" onclick="sciInsert('9')">9</button>
         <button class="sci-op" onclick="sciInsert('/')">÷</button>
         <button class="sci-clr" onclick="sciClear()">AC</button>
-
         <button class="sci-num" onclick="sciInsert('4')">4</button>
         <button class="sci-num" onclick="sciInsert('5')">5</button>
         <button class="sci-num" onclick="sciInsert('6')">6</button>
         <button class="sci-op" onclick="sciInsert('*')">×</button>
         <button class="sci-clr" onclick="sciBack()">⌫</button>
-
         <button class="sci-num" onclick="sciInsert('1')">1</button>
         <button class="sci-num" onclick="sciInsert('2')">2</button>
         <button class="sci-num" onclick="sciInsert('3')">3</button>
         <button class="sci-op" onclick="sciInsert('-')">−</button>
         <button class="sci-op" onclick="sciInsert('%')">%</button>
-
         <button class="sci-num" onclick="sciInsert('0')">0</button>
         <button class="sci-num" onclick="sciInsert('.')">.</button>
         <button class="sci-eq" onclick="sciEqual()">=</button>
@@ -1898,6 +536,20 @@ body.dark .reaction-item { background: var(--bg-2); }
     </div>
 </div>
 
+<!-- ⚡ VOICE CONFIRM MODAL -->
+<div id="voice-confirm-modal" class="modal">
+    <div class="modal-box">
+        <div class="icon"><svg><use href="#icon-mic"/></svg></div>
+        <h3>Ovozli xabar</h3>
+        <div class="subtitle" id="voice-duration-text">0:00</div>
+        <audio id="voice-preview-audio" controls style="width:100%;margin-bottom:16px;"></audio>
+        <div class="modal-buttons">
+            <button class="btn-danger" onclick="cancelVoiceSend()">🗑️ O'chirish</button>
+            <button class="btn-primary" onclick="confirmVoiceSend()">📤 Yuborish</button>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== USER PROFILE ==================== -->
 <div id="user-profile-modal" class="modal">
     <div class="modal-box">
@@ -1912,27 +564,23 @@ body.dark .reaction-item { background: var(--bg-2); }
     </div>
 </div>
 
-<!-- ==================== CREATE GROUP (username bilan) ==================== -->
+<!-- ==================== CREATE GROUP ==================== -->
 <div id="create-group-modal" class="modal">
     <div class="modal-box">
         <div class="icon"><svg><use href="#icon-users"/></svg></div>
         <h3>Yangi guruh</h3>
         <div class="subtitle">Guruh ma'lumotlarini kiriting</div>
-
         <label>Guruh nomi</label>
         <input type="text" id="group-nom" placeholder="Masalan: Oila" maxlength="50">
-
         <label>Username (majburiy emas)</label>
         <div class="username-input-wrap">
             <span class="at">@</span>
             <input type="text" id="group-username" placeholder="oila_guruhi" maxlength="32" autocomplete="off" autocapitalize="off" oninput="checkGroupUsername()">
         </div>
         <div class="username-status" id="group-username-status"></div>
-
         <label>A'zolar (ixtiyoriy)</label>
         <input type="text" id="group-search" placeholder="@username qidirish" oninput="searchUsersForGroup()">
         <div class="group-members-list" id="group-members-list"></div>
-
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeCreateGroup()">Bekor qilish</button>
             <button class="btn-primary" onclick="createGroup()">Yaratish</button>
@@ -1964,10 +612,119 @@ body.dark .reaction-item { background: var(--bg-2); }
             <button class="search-tab active" id="search-tab-user" onclick="switchSearchTab('user')">👤 Foydalanuvchi</button>
             <button class="search-tab" id="search-tab-group" onclick="switchSearchTab('group')">👥 Guruh</button>
         </div>
-        <input type="text" id="search-input" placeholder="@username yozing..."
-               autocomplete="off" onkeypress="if(event.key==='Enter') doSearch()">
+        <input type="text" id="search-input" placeholder="@username yozing..." autocomplete="off" onkeypress="if(event.key==='Enter') doSearch()">
         <div id="search-result"></div>
-        <button style="width:100%; padding:14px; margin-top:10px; border:none; border-radius:12px; background:var(--bg-2); color:var(--text); cursor:pointer; font-family:inherit; font-weight:600;" onclick="closeSearch()">Yopish</button>
+        <button style="width:100%;padding:14px;margin-top:10px;border:none;border-radius:12px;background:var(--bg-2);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;" onclick="closeSearch()">Yopish</button>
+    </div>
+</div>
+
+<!-- ⚡ ADMIN PANEL MODAL -->
+<div id="admin-panel-modal" class="modal">
+    <div class="modal-box" style="max-width:600px;">
+        <div class="icon"><svg style="color:var(--warning);"><use href="#icon-shield"/></svg></div>
+        <h3>👑 Admin Panel</h3>
+        <div class="subtitle">Foydalanuvchilar va statistika</div>
+        
+        <div class="admin-stats" id="admin-stats"></div>
+        
+        <label>Qidiruv</label>
+        <input type="text" id="admin-search" placeholder="Ism yoki @username" oninput="filterAdminUsers()">
+        
+        <div id="admin-users-list" style="max-height:400px;overflow-y:auto;margin-top:8px;"></div>
+        
+        <div class="modal-buttons" style="margin-top:16px;">
+            <button class="btn-cancel" onclick="closeAdminPanel()">Yopish</button>
+            <button class="btn-primary" onclick="openBroadcast()">📢 Xabar yuborish</button>
+        </div>
+    </div>
+</div>
+
+<!-- ⚡ BROADCAST MODAL -->
+<div id="broadcast-modal" class="modal">
+    <div class="modal-box">
+        <div class="icon"><svg><use href="#icon-megaphone"/></svg></div>
+        <h3>📢 Xabar yuborish</h3>
+        <div class="subtitle">Barcha foydalanuvchilarga</div>
+        <textarea id="broadcast-text" placeholder="Xabar matni..." rows="4"></textarea>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeBroadcast()">Bekor qilish</button>
+            <button class="btn-primary" onclick="sendBroadcast()">Yuborish</button>
+        </div>
+    </div>
+</div>
+
+<!-- ⚡ ADMIN USER DETAIL MODAL -->
+<div id="admin-user-modal" class="modal">
+    <div class="modal-box" style="max-width:500px;">
+        <div class="icon"><svg><use href="#icon-user"/></svg></div>
+        <h3>Foydalanuvchi</h3>
+        <div id="admin-user-detail" style="text-align:left;"></div>
+        <div class="modal-buttons" style="margin-top:16px;">
+            <button class="btn-cancel" onclick="closeAdminUser()">Yopish</button>
+            <button class="btn-danger" onclick="adminResetParol()">🔑 Parolni o'chirish</button>
+        </div>
+    </div>
+</div>
+
+<!-- ⚡ NASTROYKA MODAL -->
+<div id="settings-modal" class="modal">
+    <div class="modal-box" style="max-width:500px;">
+        <div class="icon"><svg><use href="#icon-settings"/></svg></div>
+        <h3>⚙️ Nastroyka</h3>
+        <div class="subtitle">Ilova sozlamalari</div>
+        
+        <div class="settings-group">
+            <div class="settings-item" onclick="toggleThemeFromSettings()">
+                <div class="icon-wrap" style="background:#8b5cf6;"><svg><use href="#icon-moon"/></svg></div>
+                <div class="info">
+                    <div class="title">Tungi rejim</div>
+                    <div class="desc">Qorong'i fon</div>
+                </div>
+                <div class="toggle" id="settings-theme-toggle"></div>
+            </div>
+            
+            <div class="settings-item" onclick="openProfileEdit(); closeSettings();">
+                <div class="icon-wrap" style="background:#3b82f6;"><svg><use href="#icon-user"/></svg></div>
+                <div class="info">
+                    <div class="title">Shaxsiylik</div>
+                    <div class="desc">Ism, familya, bio</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            
+            <div class="settings-item" onclick="changeProfilePhoto(); closeSettings();">
+                <div class="icon-wrap" style="background:#10b981;"><svg><use href="#icon-camera"/></svg></div>
+                <div class="info">
+                    <div class="title">Profil rasmi</div>
+                    <div class="desc">Rasm o'zgartirish</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <div class="settings-item" onclick="showMyId();">
+                <div class="icon-wrap" style="background:#f59e0b;"><svg><use href="#icon-info"/></svg></div>
+                <div class="info">
+                    <div class="title">Mening ID</div>
+                    <div class="desc">Chat ID va username</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            
+            <div class="settings-item" onclick="toast('Versiya: 2.0.0');">
+                <div class="icon-wrap" style="background:#6366f1;"><svg><use href="#icon-help"/></svg></div>
+                <div class="info">
+                    <div class="title">Versiya</div>
+                    <div class="desc">2.0.0</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+        </div>
+        
+        <div class="modal-buttons" style="margin-top:16px;">
+            <button class="btn-cancel" onclick="closeSettings()">Yopish</button>
+        </div>
     </div>
 </div>
 
@@ -1997,7 +754,6 @@ body.dark .reaction-item { background: var(--bg-2); }
             <div id="empty-chats" class="empty-state" style="display:none;">
                 <div class="icon"><svg><use href="#icon-chat-empty"/></svg></div>
                 <div class="title">Chatlar yo'q</div>
-                <div class="desc">Qidiruv yoki guruh yarating</div>
             </div>
         </div>
 
@@ -2023,6 +779,29 @@ body.dark .reaction-item { background: var(--bg-2); }
                     <span class="label"><svg><use href="#icon-user"/></svg> Shaxsiylik</span>
                     <span class="value" id="profile-edit-value">Ism, sana</span>
                 </div>
+                <div class="profile-row" onclick="openCreateGroup()">
+                    <span class="label"><svg><use href="#icon-users"/></svg> Guruh yaratish</span>
+                    <span class="value">→</span>
+                </div>
+                <div class="profile-row" onclick="openJoinGroup()">
+                    <span class="label"><svg><use href="#icon-log-in"/></svg> Guruhga qo'shilish</span>
+                    <span class="value">→</span>
+                </div>
+                <div class="profile-row" onclick="openSettings()">
+                    <span class="label"><svg><use href="#icon-settings"/></svg> Nastroyka</span>
+                    <span class="value">→</span>
+                </div>
+                
+                <!-- ⚡ ADMIN PANEL -->
+                <div id="admin-panel-row" style="display:none;">
+                    <div class="profile-section-title">Admin</div>
+                    <div class="profile-row admin" onclick="openAdminPanel()">
+                        <span class="label"><svg><use href="#icon-shield"/></svg> Admin Panel</span>
+                        <span class="value">→</span>
+                    </div>
+                </div>
+                
+                <div class="profile-section-title">Boshqa</div>
                 <div class="profile-row" onclick="openSearch()">
                     <span class="label"><svg><use href="#icon-search"/></svg> Qidiruv</span>
                     <span class="value">Username</span>
@@ -2031,7 +810,7 @@ body.dark .reaction-item { background: var(--bg-2); }
                     <span class="label"><svg><use href="#icon-moon"/></svg> Tungi rejim</span>
                     <span class="value" id="theme-value">Yo'q</span>
                 </div>
-                <div class="profile-row" onclick="logout()">
+                <div class="profile-row danger" onclick="logout()">
                     <span class="label"><svg><use href="#icon-logout"/></svg> Chiqish</span>
                     <span class="value">→</span>
                 </div>
@@ -2059,9 +838,7 @@ body.dark .reaction-item { background: var(--bg-2); }
 <!-- ==================== CHAT WINDOW ==================== -->
 <div id="chat-window">
     <header class="chat-header">
-        <button class="icon-btn" onclick="closeChat()">
-            <svg class="svg-icon"><use href="#icon-arrow-left"/></svg>
-        </button>
+        <button class="icon-btn" onclick="closeChat()"><svg class="svg-icon"><use href="#icon-arrow-left"/></svg></button>
         <div class="avatar-wrap" onclick="openChatPartnerProfile()">
             <div class="avatar" id="chat-avatar" style="width:40px;height:40px;font-size:16px;cursor:pointer;">U</div>
             <div class="online-dot" id="chat-online-dot"></div>
@@ -2070,9 +847,7 @@ body.dark .reaction-item { background: var(--bg-2); }
             <div class="name" id="chat-name"></div>
             <div class="status" id="chat-status">oxirgi faollik yaqinda</div>
         </div>
-        <button class="icon-btn" onclick="showChatMenu()">
-            <svg class="svg-icon"><use href="#icon-more-vertical"/></svg>
-        </button>
+        <button class="icon-btn" onclick="showChatMenu()"><svg class="svg-icon"><use href="#icon-more-vertical"/></svg></button>
     </header>
 
     <div class="pinned-banner" id="pinned-banner" onclick="scrollToPinned()">
@@ -2090,33 +865,14 @@ body.dark .reaction-item { background: var(--bg-2); }
             <div style="font-size:12px;color:var(--primary);font-weight:600;" id="reply-name"></div>
             <div class="text" id="reply-text"></div>
         </div>
-        <button class="icon-btn" onclick="cancelReply()" style="width:30px;height:30px;">
-            <svg class="svg-icon-sm"><use href="#icon-x"/></svg>
-        </button>
-    </div>
-
-    <div class="recording-indicator" id="recording-indicator">
-        <div class="dot"></div>
-        <span>Yozilmoqda...</span>
-        <span class="time" id="recording-time">0:00</span>
-        <button class="icon-btn" onclick="cancelRecording()" style="color:var(--danger);width:30px;height:30px;">
-            <svg class="svg-icon-sm"><use href="#icon-x"/></svg>
-        </button>
+        <button class="icon-btn" onclick="cancelReply()" style="width:30px;height:30px;"><svg class="svg-icon-sm"><use href="#icon-x"/></svg></button>
     </div>
 
     <div class="chat-input" id="chat-input-row">
-        <button class="attach-btn" onclick="toggleAttachMenu()" title="Fayl">
-            <svg><use href="#icon-paperclip"/></svg>
-        </button>
-        <input type="text" id="message-input" placeholder="Xabar yozing..."
-               onkeypress="if(event.key==='Enter') sendMessage()"
-               oninput="onTyping()">
-        <button class="send-btn" id="send-btn" onclick="sendMessage()" style="display:none;">
-            <svg><use href="#icon-send"/></svg>
-        </button>
-        <button class="mic-btn" id="mic-btn" onclick="toggleRecording()">
-            <svg><use href="#icon-mic"/></svg>
-        </button>
+        <button class="attach-btn" onclick="toggleAttachMenu()" title="Fayl"><svg><use href="#icon-paperclip"/></svg></button>
+        <input type="text" id="message-input" placeholder="Xabar yozing..." onkeypress="if(event.key==='Enter') sendMessage()" oninput="onTyping()">
+        <button class="send-btn" id="send-btn" onclick="sendMessage()" style="display:none;"><svg><use href="#icon-send"/></svg></button>
+        <button class="mic-btn" id="mic-btn"><svg><use href="#icon-mic"/></svg></button>
     </div>
 
     <div id="attach-menu">
@@ -2133,6 +889,13 @@ body.dark .reaction-item { background: var(--bg-2); }
             <span>Fayl</span>
         </div>
     </div>
+</div>
+
+<!-- ==================== YOZISH VAQT BADGE ==================== -->
+<div class="recording-time-badge" id="recording-time-badge">
+    <div class="dot"></div>
+    <span id="recording-time-badge-text">0:00</span>
+    <span style="font-size:11px;opacity:0.8;font-weight:400;">(qo'yib yuboring)</span>
 </div>
 
 <!-- ==================== EMOJI PICKER ==================== -->
@@ -2160,28 +923,16 @@ body.dark .reaction-item { background: var(--bg-2); }
 <!-- ==================== MESSAGE ACTIONS ==================== -->
 <div class="msg-actions" id="msg-actions">
     <div class="emoji-row" id="msg-actions-emojis"></div>
-    <div class="action-btn" onclick="actionReply()">
-        <svg><use href="#icon-reply"/></svg><span>Javob berish</span>
-    </div>
-    <div class="action-btn" onclick="actionCopy()">
-        <svg><use href="#icon-copy"/></svg><span>Nusxalash</span>
-    </div>
-    <div class="action-btn" onclick="actionPin()">
-        <svg><use href="#icon-pin"/></svg><span>Mahkamlash</span>
-    </div>
-    <div class="action-btn" id="action-edit-btn" onclick="actionEdit()" style="display:none;">
-        <svg><use href="#icon-edit"/></svg><span>Tahrirlash</span>
-    </div>
-    <div class="action-btn danger" id="action-delete-btn" onclick="actionDelete()" style="display:none;">
-        <svg><use href="#icon-trash"/></svg><span>O'chirish</span>
-    </div>
+    <div class="action-btn" onclick="actionReply()"><svg><use href="#icon-reply"/></svg><span>Javob berish</span></div>
+    <div class="action-btn" onclick="actionCopy()"><svg><use href="#icon-copy"/></svg><span>Nusxalash</span></div>
+    <div class="action-btn" onclick="actionPin()"><svg><use href="#icon-pin"/></svg><span>Mahkamlash</span></div>
+    <div class="action-btn" id="action-edit-btn" onclick="actionEdit()" style="display:none;"><svg><use href="#icon-edit"/></svg><span>Tahrirlash</span></div>
+    <div class="action-btn danger" id="action-delete-btn" onclick="actionDelete()" style="display:none;"><svg><use href="#icon-trash"/></svg><span>O'chirish</span></div>
 </div>
 
 <!-- ==================== IMAGE VIEWER ==================== -->
 <div id="image-viewer" onclick="if(event.target===this) closeImageViewer()">
-    <button class="close-viewer" onclick="closeImageViewer()">
-        <svg class="svg-icon"><use href="#icon-x"/></svg>
-    </button>
+    <button class="close-viewer" onclick="closeImageViewer()"><svg class="svg-icon"><use href="#icon-x"/></svg></button>
     <div id="image-viewer-content"></div>
 </div>
 
@@ -2202,18 +953,23 @@ let CURRENT_GROUP = null;
 let IS_GROUP = false;
 let WS = null;
 let USER = null;
+let IS_ADMIN = false;
 let CHATS = [];
 let CURRENT_MESSAGE = null;
 let REPLY_TO = null;
 let MEDIA_RECORDER = null;
 let AUDIO_CHUNKS = [];
 let RECORDING_START = 0;
-let RECORDING_TIMER = null;
 let TYPING_TIMEOUT = null;
 let GROUP_SELECTED_USERS = [];
 let _pendingAction = null;
 let IS_RECORDING = false;
 let SEARCH_TAB = 'user';
+let VOICE_BLOB = null;
+let VOICE_DURATION = 0;
+let RECORDING_TIMER_BADGE = null;
+let ADMIN_USERS = [];
+let CURRENT_ADMIN_USER = null;
 
 // ==================== TELEGRAM ====================
 function getTelegramUser() {
@@ -2269,18 +1025,14 @@ function calcNum(n) {
             calcIfoda += '0.'; calcNatija = calcIfoda; updateCalcDisplay(); return;
         }
     }
-    calcIfoda += n;
-    calcNatija = calcIfoda;
-    updateCalcDisplay();
+    calcIfoda += n; calcNatija = calcIfoda; updateCalcDisplay();
 }
 
 function calcOp(op) {
     if (oxirgiTeng) oxirgiTeng = false;
     const ops = ['+', '-', '*', '/', '%'];
     if (ops.includes(calcIfoda.slice(-1))) calcIfoda = calcIfoda.slice(0, -1);
-    calcIfoda += op;
-    calcNatija = calcIfoda;
-    updateCalcDisplay();
+    calcIfoda += op; calcNatija = calcIfoda; updateCalcDisplay();
 }
 
 function calcClear() { calcIfoda = ''; calcNatija = '0'; oxirgiTeng = false; updateCalcDisplay(); }
@@ -2303,96 +1055,65 @@ function calcEqual() {
         if (!isFinite(natija)) throw new Error('Xato');
         let natijaStr = String(natija);
         if (natijaStr.length > 15) natijaStr = parseFloat(natija).toExponential(6);
-        calcNatija = natijaStr;
-        oxirgiTeng = true;
-        updateCalcDisplay();
+        calcNatija = natijaStr; oxirgiTeng = true; updateCalcDisplay();
     } catch (e) {
-        calcNatija = 'Xato';
-        updateCalcDisplay();
+        calcNatija = 'Xato'; updateCalcDisplay();
         setTimeout(() => { calcIfoda = ''; calcNatija = '0'; updateCalcDisplay(); }, 900);
     }
 }
 
 // ==================== ILMIY KALKULYATOR ====================
-let sciIfoda = '';
-let sciMode = 'rad';
-let sci2nd = false;
-let sciMemoryVal = 0;
+let sciIfoda = ''; let sciMode = 'rad'; let sci2nd = false; let sciMemoryVal = 0;
 
 function openScientific() {
     document.getElementById('calc-view').style.display = 'none';
     document.getElementById('scientific-view').classList.add('active');
-    sciIfoda = calcIfoda;
-    updateSciDisplay();
+    sciIfoda = calcIfoda; updateSciDisplay();
 }
-
 function closeScientific() {
     document.getElementById('scientific-view').classList.remove('active');
     document.getElementById('calc-view').style.display = 'flex';
-    calcIfoda = sciIfoda;
-    calcNatija = sciIfoda || '0';
-    updateCalcDisplay();
+    calcIfoda = sciIfoda; calcNatija = sciIfoda || '0'; updateCalcDisplay();
 }
-
 function sciToggleDeg() {
     sciMode = sciMode === 'rad' ? 'deg' : 'rad';
     document.getElementById('sci-mode').textContent = sciMode === 'rad' ? 'Rad' : 'Deg';
 }
-
 function sciToggle2nd() {
     sci2nd = !sci2nd;
     document.getElementById('sci-2nd').classList.toggle('active', sci2nd);
 }
-
 function sciInsert(val) {
     if (sci2nd) {
-        const mapping = {
-            'sin(': 'asin(', 'cos(': 'acos(', 'tan(': 'atan(',
-            'log10(': '10^', 'log(': 'exp(',
-        };
+        const mapping = {'sin(': 'asin(', 'cos(': 'acos(', 'tan(': 'atan(', 'log10(': '10^', 'log(': 'exp('};
         if (mapping[val]) val = mapping[val];
-        sci2nd = false;
-        document.getElementById('sci-2nd').classList.remove('active');
+        sci2nd = false; document.getElementById('sci-2nd').classList.remove('active');
     }
-    sciIfoda += val;
-    updateSciDisplay();
+    sciIfoda += val; updateSciDisplay();
 }
-
 function sciClear() { sciIfoda = ''; updateSciDisplay(); }
 function sciBack() { sciIfoda = sciIfoda.slice(0, -1); updateSciDisplay(); }
-
 function sciMemory(op) {
     const val = parseFloat(sciIfoda) || 0;
     if (op === 'mc') { sciMemoryVal = 0; toast('Xotira tozalandi'); }
     else if (op === 'm+') { sciMemoryVal += val; toast('Xotira: ' + sciMemoryVal); }
     else if (op === 'mr') { sciIfoda += sciMemoryVal.toString(); updateSciDisplay(); }
 }
-
-function updateSciDisplay() {
-    document.getElementById('sci-display').textContent = sciIfoda || '0';
-}
-
+function updateSciDisplay() { document.getElementById('sci-display').textContent = sciIfoda || '0'; }
 function sciEqual() {
     if (!sciIfoda) return;
     if (sciIfoda.replace(/\s/g, '') === '00000') {
-        sciIfoda = ''; updateSciDisplay();
-        setTimeout(() => showVerifyModal(), 200);
-        return;
+        sciIfoda = ''; updateSciDisplay(); setTimeout(() => showVerifyModal(), 200); return;
     }
     try {
         let expr = sciIfoda;
         if (sciMode === 'deg') {
-            expr = expr.replace(/(sin|cos|tan)\(([^)]+)\)/g, (m, fn, arg) => {
-                return `${fn}((${arg}) * pi / 180)`;
-            });
+            expr = expr.replace(/(sin|cos|tan)\(([^)]+)\)/g, (m, fn, arg) => `${fn}((${arg}) * pi / 180)`);
         }
         const natija = math.evaluate(expr);
         let natijaStr = typeof natija === 'number' ? String(natija) : natija.toString();
-        if (natijaStr.length > 15 && typeof natija === 'number') {
-            natijaStr = natija.toExponential(6);
-        }
-        sciIfoda = natijaStr;
-        updateSciDisplay();
+        if (natijaStr.length > 15 && typeof natija === 'number') natijaStr = natija.toExponential(6);
+        sciIfoda = natijaStr; updateSciDisplay();
     } catch (e) {
         document.getElementById('sci-display').textContent = 'Xato';
         setTimeout(() => { sciIfoda = ''; updateSciDisplay(); }, 1000);
@@ -2401,33 +1122,26 @@ function sciEqual() {
 
 // ==================== EMOJI PICKER ====================
 let currentEmojiTab = 'smileys';
-function openEmojiPicker() {
-    renderEmojis(currentEmojiTab);
-    document.getElementById('emoji-picker').classList.add('active');
-}
+function openEmojiPicker() { renderEmojis(currentEmojiTab); document.getElementById('emoji-picker').classList.add('active'); }
 function closeEmojiPicker() { document.getElementById('emoji-picker').classList.remove('active'); }
 function switchEmojiTab(tab, btn) {
     currentEmojiTab = tab;
     document.querySelectorAll('.emoji-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderEmojis(tab);
+    btn.classList.add('active'); renderEmojis(tab);
 }
 function renderEmojis(tab) {
     const grid = document.getElementById('emoji-grid');
     grid.innerHTML = '';
     (EMOJI_DATA[tab] || []).forEach(emoji => {
         const btn = document.createElement('button');
-        btn.className = 'emoji-item';
-        btn.textContent = emoji;
+        btn.className = 'emoji-item'; btn.textContent = emoji;
         btn.onclick = () => insertEmoji(emoji);
         grid.appendChild(btn);
     });
 }
 function insertEmoji(emoji) {
     const input = document.getElementById('message-input');
-    input.value += emoji;
-    input.focus();
-    updateSendButton();
+    input.value += emoji; input.focus(); updateSendButton();
 }
 
 // ==================== VERIFY ====================
@@ -2436,38 +1150,20 @@ function showVerifyModal() {
     document.getElementById('verify-modal').classList.add('active');
     setTimeout(() => document.getElementById('verify-input').focus(), 300);
 }
-
 function verifyCancel() {
     document.getElementById('verify-modal').classList.remove('active');
-    calcIfoda = ''; calcNatija = '0'; oxirgiTeng = false;
-    sciIfoda = '';
-    updateCalcDisplay();
-    updateSciDisplay();
+    calcIfoda = ''; calcNatija = '0'; oxirgiTeng = false; sciIfoda = '';
+    updateCalcDisplay(); updateSciDisplay();
 }
-
 async function verifySubmit() {
     const parol = document.getElementById('verify-input').value.trim();
-    if (!parol || parol.length !== 5 || !/^\d+$/.test(parol)) {
-        toast('5 xonalik son kiriting');
-        return;
-    }
-
+    if (!parol || parol.length !== 5 || !/^\d+$/.test(parol)) { toast('5 xonalik son kiriting'); return; }
     const tgUser = getTelegramUser();
-    if (!tgUser || !tgUser.id) {
-        toast('Telegram orqali oching');
-        return;
-    }
-
+    if (!tgUser || !tgUser.id) { toast('Telegram orqali oching'); return; }
     try {
         const res = await fetch(API_URL + '/api/auth/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                misol: '',
-                javob: '0.' + parol,
-                telegram_id: tgUser.id,
-                init_data: getInitData()
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ misol: '', javob: '0.' + parol, telegram_id: tgUser.id, init_data: getInitData() })
         });
         const data = await res.json();
         if (data.success) {
@@ -2493,7 +1189,6 @@ function openProfileEdit() {
     document.getElementById('profile-edit-modal').classList.add('active');
 }
 function closeProfileEdit() { document.getElementById('profile-edit-modal').classList.remove('active'); }
-
 async function saveProfile() {
     const ism = document.getElementById('edit-ism').value.trim();
     const familya = document.getElementById('edit-familya').value.trim();
@@ -2507,11 +1202,8 @@ async function saveProfile() {
         USER.ism = ism; USER.familya = familya; USER.tugilgan_kun = tugilgan_kun; USER.bio = bio;
         document.getElementById('header-name').textContent = `${ism} ${familya}`.trim() || 'Foydalanuvchi';
         document.getElementById('profile-name').textContent = `${ism} ${familya}`.trim();
-        closeProfileEdit();
-        toast('Profil yangilandi ✅');
-    } else {
-        toast(res?.xato || 'Xato');
-    }
+        closeProfileEdit(); toast('Profil yangilandi ✅');
+    } else { toast(res?.xato || 'Xato'); }
 }
 
 // ==================== EDIT MESSAGE ====================
@@ -2524,9 +1216,7 @@ function closeEditMsgModal() { document.getElementById('edit-msg-modal').classLi
 function saveEditMsgModal() {
     const yangi = document.getElementById('edit-msg-textarea').value.trim();
     if (!yangi || !CURRENT_MESSAGE) { closeEditMsgModal(); return; }
-    if (yangi !== CURRENT_MESSAGE.matn) {
-        editMessage(CURRENT_MESSAGE.id, yangi);
-    }
+    if (yangi !== CURRENT_MESSAGE.matn) editMessage(CURRENT_MESSAGE.id, yangi);
     closeEditMsgModal();
 }
 
@@ -2543,28 +1233,50 @@ function closeConfirmModal() {
     _pendingAction = null;
 }
 function confirmAction() {
-    const action = _pendingAction;
-    closeConfirmModal();
-    if (action) action();
+    const action = _pendingAction; closeConfirmModal(); if (action) action();
+}
+
+// ==================== VOICE CONFIRM ====================
+function showVoiceConfirm() {
+    if (!VOICE_BLOB) return;
+    const modal = document.getElementById('voice-confirm-modal');
+    const audio = document.getElementById('voice-preview-audio');
+    const durationText = document.getElementById('voice-duration-text');
+    const url = URL.createObjectURL(VOICE_BLOB);
+    audio.src = url; audio.load();
+    durationText.textContent = `Davomiyligi: ${formatDuration(VOICE_DURATION)}`;
+    modal.classList.add('active');
+}
+function cancelVoiceSend() {
+    VOICE_BLOB = null; VOICE_DURATION = 0;
+    const audio = document.getElementById('voice-preview-audio');
+    if (audio) { audio.pause(); audio.src = ''; }
+    document.getElementById('voice-confirm-modal').classList.remove('active');
+    toast('Ovoz o\'chirildi');
+}
+async function confirmVoiceSend() {
+    if (!VOICE_BLOB) return;
+    const blob = VOICE_BLOB; const duration = VOICE_DURATION;
+    VOICE_BLOB = null; VOICE_DURATION = 0;
+    const audio = document.getElementById('voice-preview-audio');
+    if (audio) { audio.pause(); audio.src = ''; }
+    document.getElementById('voice-confirm-modal').classList.remove('active');
+    await sendVoice(blob, duration);
 }
 
 // ==================== USER PROFILE ====================
 let _profileUser = null;
-
 async function openUserProfile(userId) {
     if (!userId) return;
     const res = await apiFetch(`/api/user/${userId}`);
     if (!res || !res.success) { toast(res?.xato || 'Xato'); return; }
     _profileUser = res.user;
-
     const u = res.user;
     const avatar = document.getElementById('user-profile-avatar');
     if (u.profil_rasm) avatar.innerHTML = `<img src="${API_URL}${u.profil_rasm}">`;
     else avatar.textContent = (u.ism || 'U')[0].toUpperCase();
-
     document.getElementById('user-profile-name').textContent = `${u.ism || ''} ${u.familya || ''}`.trim();
     document.getElementById('user-profile-username').textContent = '@' + (u.username || 'yoq');
-
     let infoHtml = '';
     if (u.bio) infoHtml += `<div class="row"><span class="label">Bio:</span><span class="value">${escapeHtml(u.bio)}</span></div>`;
     if (u.tugilgan_kun) infoHtml += `<div class="row"><span class="label">Tug'ilgan:</span><span class="value">${u.tugilgan_kun}</span></div>`;
@@ -2573,25 +1285,17 @@ async function openUserProfile(userId) {
         infoHtml += `<div class="row"><span class="label">Holat:</span><span class="value">${lastSeen}</span></div>`;
     }
     document.getElementById('user-profile-info').innerHTML = infoHtml;
-
     document.getElementById('user-profile-modal').classList.add('active');
 }
-
 function closeUserProfile() {
     document.getElementById('user-profile-modal').classList.remove('active');
     _profileUser = null;
 }
-
 function startChatFromProfile() {
     if (!_profileUser) return;
-    const u = _profileUser;
-    closeUserProfile();
-    openChat({
-        chat_id: u.chat_id, ism: u.ism, familya: u.familya, username: u.username,
-        profil_rasm: u.profil_rasm, online: u.online, oxirgi_faollik: u.oxirgi_faollik
-    });
+    const u = _profileUser; closeUserProfile();
+    openChat({ chat_id: u.chat_id, ism: u.ism, familya: u.familya, username: u.username, profil_rasm: u.profil_rasm, online: u.online, oxirgi_faollik: u.oxirgi_faollik });
 }
-
 function openChatPartnerProfile() {
     if (IS_GROUP) return;
     if (!CURRENT_CHAT) return;
@@ -2610,49 +1314,21 @@ function openCreateGroup() {
     document.getElementById('create-group-modal').classList.add('active');
 }
 function closeCreateGroup() { document.getElementById('create-group-modal').classList.remove('active'); }
-
 let _usernameCheckTimer = null;
 function checkGroupUsername() {
     const username = document.getElementById('group-username').value.trim().toLowerCase();
     const status = document.getElementById('group-username-status');
-    
-    if (!username) {
-        status.textContent = '';
-        status.className = 'username-status';
-        return;
-    }
-    
-    if (username.length < 3) {
-        status.textContent = '❌ Kamida 3 ta belgi';
-        status.className = 'username-status err';
-        return;
-    }
-    
-    if (!/^[a-z0-9_]+$/.test(username)) {
-        status.textContent = '❌ Faqat harf, son va _';
-        status.className = 'username-status err';
-        return;
-    }
-    
-    status.textContent = '⏳ Tekshirilmoqda...';
-    status.className = 'username-status';
-    
+    if (!username) { status.textContent = ''; status.className = 'username-status'; return; }
+    if (username.length < 3) { status.textContent = '❌ Kamida 3 ta belgi'; status.className = 'username-status err'; return; }
+    if (!/^[a-z0-9_]+$/.test(username)) { status.textContent = '❌ Faqat harf, son va _'; status.className = 'username-status err'; return; }
+    status.textContent = '⏳ Tekshirilmoqda...'; status.className = 'username-status';
     clearTimeout(_usernameCheckTimer);
     _usernameCheckTimer = setTimeout(async () => {
-        const res = await apiFetch('/api/groups/check-username', {
-            method: 'POST',
-            body: JSON.stringify({ username })
-        });
-        if (res && res.success) {
-            status.textContent = `✅ @${username} bo'sh`;
-            status.className = 'username-status ok';
-        } else {
-            status.textContent = `❌ ${res?.xato || 'Band'}`;
-            status.className = 'username-status err';
-        }
+        const res = await apiFetch('/api/groups/check-username', { method: 'POST', body: JSON.stringify({ username }) });
+        if (res && res.success) { status.textContent = `✅ @${username} bo'sh`; status.className = 'username-status ok'; }
+        else { status.textContent = `❌ ${res?.xato || 'Band'}`; status.className = 'username-status err'; }
     }, 500);
 }
-
 async function searchUsersForGroup() {
     const q = document.getElementById('group-search').value.trim();
     const list = document.getElementById('group-members-list');
@@ -2661,56 +1337,31 @@ async function searchUsersForGroup() {
     if (!res || !res.success) { list.innerHTML = '<div style="padding:10px;font-size:13px;color:var(--text-2);">Topilmadi</div>'; return; }
     const u = res.user;
     const selected = GROUP_SELECTED_USERS.includes(u.chat_id);
-    list.innerHTML = `
-        <div class="group-member-item ${selected ? 'selected' : ''}" onclick="toggleGroupUser(${u.chat_id}, this)">
-            <div class="avatar">${u.profil_rasm ? `<img src="${API_URL}${u.profil_rasm}">` : (u.ism || 'U')[0].toUpperCase()}</div>
-            <div>
-                <div style="font-weight:600;font-size:14px;">${escapeHtml(u.ism)} ${escapeHtml(u.familya || '')}</div>
-                <div style="color:var(--text-2);font-size:12px;">@${escapeHtml(u.username)}</div>
-            </div>
-            <svg class="svg-icon check"><use href="#icon-check"/></svg>
-        </div>
-    `;
+    list.innerHTML = `<div class="group-member-item ${selected ? 'selected' : ''}" onclick="toggleGroupUser(${u.chat_id}, this)">
+        <div class="avatar">${u.profil_rasm ? `<img src="${API_URL}${u.profil_rasm}">` : (u.ism || 'U')[0].toUpperCase()}</div>
+        <div><div style="font-weight:600;font-size:14px;">${escapeHtml(u.ism)} ${escapeHtml(u.familya || '')}</div>
+        <div style="color:var(--text-2);font-size:12px;">@${escapeHtml(u.username)}</div></div>
+        <svg class="svg-icon check"><use href="#icon-check"/></svg></div>`;
 }
-
 function toggleGroupUser(chatId, el) {
     const idx = GROUP_SELECTED_USERS.indexOf(chatId);
-    if (idx >= 0) {
-        GROUP_SELECTED_USERS.splice(idx, 1);
-        el.classList.remove('selected');
-    } else {
-        GROUP_SELECTED_USERS.push(chatId);
-        el.classList.add('selected');
-    }
+    if (idx >= 0) { GROUP_SELECTED_USERS.splice(idx, 1); el.classList.remove('selected'); }
+    else { GROUP_SELECTED_USERS.push(chatId); el.classList.add('selected'); }
 }
-
 async function createGroup() {
     const nom = document.getElementById('group-nom').value.trim();
     const username = document.getElementById('group-username').value.trim().toLowerCase();
-    
     if (!nom) { toast('Guruh nomini kiriting'); return; }
-    
     if (username) {
         if (username.length < 3) { toast('Username kamida 3 ta belgi'); return; }
         if (!/^[a-z0-9_]+$/.test(username)) { toast('Username: faqat harf, son va _'); return; }
     }
-    
     const res = await apiFetch('/api/groups/create', {
         method: 'POST',
-        body: JSON.stringify({ 
-            nom: nom, 
-            username: username || null,
-            azo_ids: GROUP_SELECTED_USERS 
-        })
+        body: JSON.stringify({ nom: nom, username: username || null, azo_ids: GROUP_SELECTED_USERS })
     });
-    
-    if (res && res.success) {
-        closeCreateGroup();
-        toast('Guruh yaratildi ✅');
-        await loadChats();
-    } else {
-        toast(res?.xato || 'Xato');
-    }
+    if (res && res.success) { closeCreateGroup(); toast('Guruh yaratildi ✅'); await loadChats(); }
+    else { toast(res?.xato || 'Xato'); }
 }
 
 // ==================== JOIN GROUP ====================
@@ -2720,25 +1371,137 @@ function openJoinGroup() {
     setTimeout(() => document.getElementById('join-group-username').focus(), 200);
 }
 function closeJoinGroup() { document.getElementById('join-group-modal').classList.remove('active'); }
-
 async function joinGroup() {
     const username = document.getElementById('join-group-username').value.trim().lstrip('@').toLowerCase();
     if (!username) { toast('Username kiriting'); return; }
-    
     const res = await apiFetch(`/api/groups/join/${username}`, { method: 'POST' });
-    if (res && res.success) {
-        closeJoinGroup();
-        toast(`"${res.nom}" ga qo'shildingiz ✅`);
-        await loadChats();
-    } else {
-        toast(res?.xato || 'Xato');
-    }
+    if (res && res.success) { closeJoinGroup(); toast(`"${res.nom}" ga qo'shildingiz ✅`); await loadChats(); }
+    else { toast(res?.xato || 'Xato'); }
 }
 
-// ==================== CHAT FON (olib tashlandi) ====================
-async function loadChatFon(otherChat) {
-    // ⚡ FON RASMI OLIB TASHLANDI
-    document.getElementById('chat-bg').style.backgroundImage = '';
+// ==================== SETTINGS ====================
+function openSettings() {
+    const isDark = document.body.classList.contains('dark');
+    document.getElementById('settings-theme-toggle').classList.toggle('on', isDark);
+    document.getElementById('settings-modal').classList.add('active');
+}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+function toggleThemeFromSettings() {
+    toggleTheme();
+    setTimeout(() => {
+        const isDark = document.body.classList.contains('dark');
+        document.getElementById('settings-theme-toggle').classList.toggle('on', isDark);
+    }, 100);
+}
+function showMyId() {
+    if (!USER) return;
+    showConfirmModal(
+        '📋 Mening ma\'lumotlarim',
+        `Chat ID: ${USER.chat_id}\nUsername: @${USER.username || 'yoq'}\nIsm: ${USER.ism || ''} ${USER.familya || ''}`,
+        'Yopish',
+        null
+    );
+}
+
+// ==================== ADMIN PANEL ====================
+async function openAdminPanel() {
+    document.getElementById('admin-panel-modal').classList.add('active');
+    document.getElementById('admin-stats').innerHTML = '<div style="grid-column:span 2;text-align:center;padding:20px;">⏳ Yuklanmoqda...</div>';
+    document.getElementById('admin-users-list').innerHTML = '';
+    
+    const statsRes = await apiFetch('/api/admin/stats');
+    const usersRes = await apiFetch('/api/admin/users');
+    
+    if (statsRes && statsRes.success) {
+        document.getElementById('admin-stats').innerHTML = `
+            <div class="admin-stat-card"><div class="num">${statsRes.users}</div><div class="label">👥 Foydalanuvchilar</div></div>
+            <div class="admin-stat-card"><div class="num">${statsRes.online}</div><div class="label">🟢 Online</div></div>
+            <div class="admin-stat-card"><div class="num">${statsRes.messages}</div><div class="label">💬 Xabarlar</div></div>
+            <div class="admin-stat-card"><div class="num">${statsRes.groups}</div><div class="label">👥 Guruhlar</div></div>
+        `;
+    }
+    
+    if (usersRes && usersRes.success) {
+        ADMIN_USERS = usersRes.users;
+        renderAdminUsers(ADMIN_USERS);
+    }
+}
+function closeAdminPanel() { document.getElementById('admin-panel-modal').classList.remove('active'); }
+function renderAdminUsers(users) {
+    const list = document.getElementById('admin-users-list');
+    if (!users.length) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-2);">Foydalanuvchi yo\'q</div>'; return; }
+    list.innerHTML = users.map(u => {
+        const avatar = u.profil_rasm ? `<img src="${API_URL}${u.profil_rasm}">` : (u.ism || 'U')[0].toUpperCase();
+        const isMe = u.chat_id === USER.chat_id;
+        const parolBadge = u.parol_bormi ? '<span class="admin-badge parol">🔐 Parol</span>' : '<span class="admin-badge noparol">🔓 Parolsiz</span>';
+        const onlineBadge = u.online ? '<span class="admin-badge online">🟢 Online</span>' : '';
+        return `<div class="admin-user-item" onclick="openAdminUser(${u.chat_id})">
+            <div class="avatar">${avatar}</div>
+            <div class="info">
+                <div class="name">${escapeHtml(u.ism || '')} ${escapeHtml(u.familya || '')} ${isMe ? '(siz)' : ''}</div>
+                <div class="meta">
+                    ${u.username ? '@' + escapeHtml(u.username) : 'no username'}
+                    ${parolBadge} ${onlineBadge}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+function filterAdminUsers() {
+    const q = document.getElementById('admin-search').value.trim().toLowerCase();
+    if (!q) { renderAdminUsers(ADMIN_USERS); return; }
+    const filtered = ADMIN_USERS.filter(u =>
+        (u.ism || '').toLowerCase().includes(q) ||
+        (u.familya || '').toLowerCase().includes(q) ||
+        (u.username || '').toLowerCase().includes(q) ||
+        String(u.chat_id).includes(q)
+    );
+    renderAdminUsers(filtered);
+}
+async function openAdminUser(chatId) {
+    CURRENT_ADMIN_USER = ADMIN_USERS.find(u => u.chat_id === chatId);
+    if (!CURRENT_ADMIN_USER) return;
+    const u = CURRENT_ADMIN_USER;
+    const avatar = u.profil_rasm ? `<img src="${API_URL}${u.profil_rasm}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto 12px;display:block;">` : `<div style="width:80px;height:80px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;margin:0 auto 12px;">${(u.ism || 'U')[0].toUpperCase()}</div>`;
+    document.getElementById('admin-user-detail').innerHTML = `
+        ${avatar}
+        <div style="text-align:center;font-weight:700;font-size:18px;margin-bottom:4px;">${escapeHtml(u.ism || '')} ${escapeHtml(u.familya || '')}</div>
+        <div style="text-align:center;color:var(--text-2);margin-bottom:16px;">@${escapeHtml(u.username || 'yoq')}</div>
+        <div class="user-profile-info">
+            <div class="row"><span class="label">Chat ID:</span><span class="value">${u.chat_id}</span></div>
+            <div class="row"><span class="label">Telefon:</span><span class="value">${escapeHtml(u.telefon || 'yoq')}</span></div>
+            <div class="row"><span class="label">Parol:</span><span class="value">${u.parol_bormi ? '✅ Bor' : '❌ Yo\'q'}</span></div>
+            ${u.parol_hash ? `<div class="row"><span class="label">Hash:</span><span class="value" style="font-size:11px;">${escapeHtml(u.parol_hash)}</span></div>` : ''}
+            <div class="row"><span class="label">Online:</span><span class="value">${u.online ? '🟢 Ha' : '⚪ Yo\'q'}</span></div>
+            <div class="row"><span class="label">Ro'yxat:</span><span class="value">${u.sana ? new Date(u.sana).toLocaleString('uz') : 'yoq'}</span></div>
+            <div class="row"><span class="label">Bio:</span><span class="value">${escapeHtml(u.bio || 'yoq')}</span></div>
+            <div class="row"><span class="label">Tug'ilgan:</span><span class="value">${u.tugilgan_kun || 'yoq'}</span></div>
+        </div>
+    `;
+    document.getElementById('admin-user-modal').classList.add('active');
+}
+function closeAdminUser() {
+    document.getElementById('admin-user-modal').classList.remove('active');
+    CURRENT_ADMIN_USER = null;
+}
+async function adminResetParol() {
+    if (!CURRENT_ADMIN_USER) return;
+    const id = CURRENT_ADMIN_USER.chat_id;
+    const res = await apiFetch(`/api/admin/reset-parol/${id}`, { method: 'POST' });
+    if (res && res.success) { toast('Parol o\'chirildi ✅'); closeAdminUser(); openAdminPanel(); }
+    else { toast(res?.xato || 'Xato'); }
+}
+function openBroadcast() {
+    document.getElementById('broadcast-text').value = '';
+    document.getElementById('broadcast-modal').classList.add('active');
+}
+function closeBroadcast() { document.getElementById('broadcast-modal').classList.remove('active'); }
+async function sendBroadcast() {
+    const matn = document.getElementById('broadcast-text').value.trim();
+    if (!matn) { toast('Matn kiriting'); return; }
+    const res = await apiFetch('/api/admin/broadcast', { method: 'POST', body: JSON.stringify({ matn: matn }) });
+    if (res && res.success) { closeBroadcast(); toast(`${res.yuborildi} ta foydalanuvchiga yuborildi ✅`); }
+    else { toast(res?.xato || 'Xato'); }
 }
 
 // ==================== API ====================
@@ -2755,10 +1518,7 @@ async function apiFetch(path, options = {}) {
         });
         if (res.status === 401) { logout(); return null; }
         return await res.json();
-    } catch (e) {
-        toast('Server xatosi');
-        return null;
-    }
+    } catch (e) { toast('Server xatosi'); return null; }
 }
 
 // ==================== APP OCHISH ====================
@@ -2766,35 +1526,35 @@ async function openApp() {
     const res = await apiFetch('/api/profile');
     if (!res) return;
     USER = res;
-
     document.getElementById('header-name').textContent = `${res.ism || ''} ${res.familya || ''}`.trim() || 'Foydalanuvchi';
     document.getElementById('profile-name').textContent = `${res.ism || ''} ${res.familya || ''}`.trim();
     document.getElementById('profile-username').textContent = '@' + (res.username || 'yoq');
     if (res.tugilgan_kun) document.getElementById('profile-edit-value').textContent = res.tugilgan_kun;
-
     updateAvatar('header-avatar', res.profil_rasm, res.ism);
     updateAvatar('profile-avatar', res.profil_rasm, res.ism);
-
     const isDark = localStorage.getItem('dark') === '1' || res.tungi_rejim;
     if (isDark) {
         document.body.classList.add('dark');
         document.getElementById('theme-icon').setAttribute('href', '#icon-sun');
         document.getElementById('theme-value').textContent = 'Ha';
-    } else {
-        document.getElementById('theme-value').textContent = "Yo'q";
-    }
-
+    } else { document.getElementById('theme-value').textContent = "Yo'q"; }
     renderSavedMessages();
+    await checkAdmin();
     await loadChats();
     await loadPhotos();
     connectWS();
     setOnline();
-
     document.getElementById('calc-view').style.display = 'none';
     document.getElementById('scientific-view').classList.remove('active');
     document.getElementById('app-view').classList.add('active');
 }
-
+async function checkAdmin() {
+    const res = await apiFetch('/api/admin/check');
+    if (res && res.success && res.is_admin) {
+        IS_ADMIN = true;
+        document.getElementById('admin-panel-row').style.display = 'block';
+    } else { IS_ADMIN = false; document.getElementById('admin-panel-row').style.display = 'none'; }
+}
 function updateAvatar(id, url, ism) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -2805,42 +1565,29 @@ function updateAvatar(id, url, ism) {
 // ==================== SAVED ====================
 function renderSavedMessages() {
     const wrap = document.getElementById('saved-messages-wrap');
-    wrap.innerHTML = `
-        <div class="saved-item chat-item" onclick="openSavedMessages()">
-            <div class="avatar-wrap">
-                <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
-                    <svg style="width:24px;height:24px;stroke:white;fill:none;stroke-width:2;"><use href="#icon-bookmark"/></svg>
-                </div>
-            </div>
-            <div class="chat-info">
-                <div class="name">Saqlangan xabarlar</div>
-                <div class="last">O'zingizga yuborgan xabarlar</div>
+    wrap.innerHTML = `<div class="saved-item chat-item" onclick="openSavedMessages()">
+        <div class="avatar-wrap">
+            <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                <svg style="width:24px;height:24px;stroke:white;fill:none;stroke-width:2;"><use href="#icon-bookmark"/></svg>
             </div>
         </div>
-    `;
+        <div class="chat-info"><div class="name">Saqlangan xabarlar</div><div class="last">O'zingizga yuborgan xabarlar</div></div>
+    </div>`;
 }
-
 function openSavedMessages() {
-    openChat({
-        chat_id: USER.chat_id, ism: 'Saqlangan', familya: 'xabarlar',
-        username: 'me', profil_rasm: USER.profil_rasm, is_saved: true, online: true
-    });
+    openChat({ chat_id: USER.chat_id, ism: 'Saqlangan', familya: 'xabarlar', username: 'me', profil_rasm: USER.profil_rasm, is_saved: true, online: true });
 }
 
 // ==================== ONLINE ====================
 async function setOnline() { await apiFetch('/api/profile/online', { method: 'POST' }); }
-
 window.addEventListener('beforeunload', () => {
-    if (TOKEN) {
-        navigator.sendBeacon(API_URL + '/api/profile/offline?token=' + encodeURIComponent(TOKEN));
-    }
+    if (TOKEN) navigator.sendBeacon(API_URL + '/api/profile/offline?token=' + encodeURIComponent(TOKEN));
 });
 
 // ==================== FORMAT ====================
 function formatTime(isoStr) {
     if (!isoStr) return '';
-    const d = new Date(isoStr);
-    const now = new Date();
+    const d = new Date(isoStr); const now = new Date();
     const diffSec = Math.floor((now - d) / 1000);
     const diffMin = Math.floor(diffSec / 60);
     const diffHour = Math.floor(diffMin / 60);
@@ -2851,12 +1598,10 @@ function formatTime(isoStr) {
     if (diffDay < 7) return d.toLocaleDateString('uz', {weekday:'short'});
     return d.toLocaleDateString('uz', {day:'2-digit', month:'2-digit'});
 }
-
 function formatLastSeen(isoStr, online) {
     if (online) return 'online';
     if (!isoStr) return 'oxirgi faollik yaqinda';
-    const d = new Date(isoStr);
-    const now = new Date();
+    const d = new Date(isoStr); const now = new Date();
     const diffMin = Math.floor((now - d) / 60000);
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
@@ -2866,17 +1611,14 @@ function formatLastSeen(isoStr, online) {
     if (diffDay < 7) return `oxirgi faollik ${diffDay} kun oldin`;
     return `oxirgi faollik ${d.toLocaleDateString('uz')}`;
 }
-
 function formatFileSize(bytes) {
     if (!bytes) return '';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
     return (bytes/1024/1024).toFixed(1) + ' MB';
 }
-
 function formatDuration(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
+    const m = Math.floor(sec / 60); const s = sec % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
@@ -2887,48 +1629,28 @@ async function loadChats() {
     CHATS = res.chats || [];
     const list = document.getElementById('chat-list');
     list.innerHTML = '';
-
     let totalUnread = 0;
     CHATS.forEach(c => totalUnread += (c.unread_count || 0));
     updateNavBadge(totalUnread);
-
-    if (!CHATS.length) {
-        document.getElementById('empty-chats').style.display = 'block';
-        return;
-    }
+    if (!CHATS.length) { document.getElementById('empty-chats').style.display = 'block'; return; }
     document.getElementById('empty-chats').style.display = 'none';
-
     CHATS.forEach(chat => {
         const div = document.createElement('div');
         div.className = 'chat-item';
         div.onclick = () => chat.type === 'group' ? openGroupChat(chat) : openChat(chat);
-
-        const avatar = chat.profil_rasm
-            ? `<img src="${API_URL}${chat.profil_rasm}">`
-            : (chat.ism || 'U')[0].toUpperCase();
-
+        const avatar = chat.profil_rasm ? `<img src="${API_URL}${chat.profil_rasm}">` : (chat.ism || 'U')[0].toUpperCase();
         const unread = chat.unread_count || 0;
         const lastText = getLastMessageText(chat);
         const groupIcon = chat.type === 'group' ? '<svg class="svg-icon-sm group-icon" style="display:inline-block;width:14px;height:14px;"><use href="#icon-users"/></svg>' : '';
-
-        div.innerHTML = `
-            <div class="avatar-wrap">
-                <div class="avatar">${avatar}</div>
-                <div class="online-dot ${chat.online ? 'active' : ''}"></div>
-            </div>
-            <div class="chat-info">
-                <div class="name">${groupIcon}${escapeHtml(chat.ism || '')} ${escapeHtml(chat.familya || '')}</div>
-                <div class="last ${unread > 0 ? 'unread' : ''}">${lastText}</div>
-            </div>
-            <div class="chat-meta">
-                <div class="chat-time">${formatTime(chat.oxirgi_vaqt)}</div>
-                ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
-            </div>
-        `;
+        div.innerHTML = `<div class="avatar-wrap"><div class="avatar">${avatar}</div>
+            <div class="online-dot ${chat.online ? 'active' : ''}"></div></div>
+            <div class="chat-info"><div class="name">${groupIcon}${escapeHtml(chat.ism || '')} ${escapeHtml(chat.familya || '')}</div>
+            <div class="last ${unread > 0 ? 'unread' : ''}">${lastText}</div></div>
+            <div class="chat-meta"><div class="chat-time">${formatTime(chat.oxirgi_vaqt)}</div>
+            ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}</div>`;
         list.appendChild(div);
     });
 }
-
 function getLastMessageText(chat) {
     if (!chat.oxirgi_xabar) return "Xabar yo'q";
     if (chat.oxirgi_xabar_turi === 'voice') return '🎤 Ovozli xabar';
@@ -2937,107 +1659,68 @@ function getLastMessageText(chat) {
     if (chat.oxirgi_xabar_turi === 'file') return '📎 Fayl';
     return escapeHtml(chat.oxirgi_xabar);
 }
-
 function updateNavBadge(count) {
     const badge = document.getElementById('nav-badge-chats');
-    if (count > 0) {
-        badge.textContent = count > 99 ? '99+' : count;
-        badge.style.display = 'block';
-    } else {
-        badge.style.display = 'none';
-    }
+    if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.style.display = 'block'; }
+    else { badge.style.display = 'none'; }
 }
 
 // ==================== CHAT OCHISH ====================
 async function openChat(chat) {
-    CURRENT_CHAT = chat;
-    CURRENT_GROUP = null;
-    IS_GROUP = false;
-    REPLY_TO = null;
-    cancelReply();
-
+    CURRENT_CHAT = chat; CURRENT_GROUP = null; IS_GROUP = false; REPLY_TO = null; cancelReply();
     const nameEl = document.getElementById('chat-name');
     nameEl.textContent = chat.is_saved ? 'Saqlangan xabarlar' : `${chat.ism || ''} ${chat.familya || ''}`;
-    
     updateAvatar('chat-avatar', chat.profil_rasm, chat.ism);
-    updateOnlineDot(chat.online);
-    updateChatStatus(chat);
-
+    updateOnlineDot(chat.online); updateChatStatus(chat);
     document.getElementById('chat-window').classList.add('active');
     closeEmojiPicker();
-
-    await loadMessages(false);
-    markAsRead();
+    await loadMessages(false); markAsRead();
     setTimeout(() => document.getElementById('message-input').focus(), 200);
     updateSendButton();
 }
-
 async function openGroupChat(group) {
     const res = await apiFetch(`/api/groups/${group.group_id}`);
     if (!res || !res.success) { toast(res?.xato || 'Xato'); return; }
-
     CURRENT_GROUP = res.group;
     CURRENT_CHAT = { ...group, is_group: true, members: res.members };
-    IS_GROUP = true;
-    REPLY_TO = null;
-    cancelReply();
-
+    IS_GROUP = true; REPLY_TO = null; cancelReply();
     const nameEl = document.getElementById('chat-name');
-    if (res.group.username) {
-        nameEl.innerHTML = `${escapeHtml(res.group.nom)} <span class="group-username">@${escapeHtml(res.group.username)}</span>`;
-    } else {
-        nameEl.textContent = res.group.nom;
-    }
-    
+    if (res.group.username) nameEl.innerHTML = `${escapeHtml(res.group.nom)} <span class="group-username">@${escapeHtml(res.group.username)}</span>`;
+    else nameEl.textContent = res.group.nom;
     updateAvatar('chat-avatar', res.group.rasm, res.group.nom);
     updateOnlineDot(false);
     document.getElementById('chat-status').textContent = `${res.members.length} a'zo`;
     document.getElementById('chat-status').className = 'status';
-
     document.getElementById('chat-window').classList.add('active');
     closeEmojiPicker();
-
     await loadMessages(true);
     setTimeout(() => document.getElementById('message-input').focus(), 200);
     updateSendButton();
 }
-
 function updateOnlineDot(online) {
     const dot = document.getElementById('chat-online-dot');
-    if (online) dot.classList.add('active');
-    else dot.classList.remove('active');
+    if (online) dot.classList.add('active'); else dot.classList.remove('active');
 }
-
 function updateChatStatus(chat) {
     if (IS_GROUP) return;
     const statusEl = document.getElementById('chat-status');
-    if (chat.is_saved) {
-        statusEl.textContent = "O'zingizga yozing";
-        statusEl.className = 'status';
-        return;
-    }
+    if (chat.is_saved) { statusEl.textContent = "O'zingizga yozing"; statusEl.className = 'status'; return; }
     const status = formatLastSeen(chat.oxirgi_faollik, chat.online);
     statusEl.textContent = status;
     statusEl.className = 'status' + (chat.online ? ' online' : '');
 }
-
 async function loadMessages(isGroup = false) {
     if (!CURRENT_CHAT && !CURRENT_GROUP) return;
     const chatId = isGroup ? CURRENT_GROUP.id : CURRENT_CHAT.chat_id;
     const url = isGroup ? `/api/messages/${chatId}?is_group=true` : `/api/messages/${chatId}`;
     const res = await apiFetch(url);
     if (!res) return;
-
     const box = document.getElementById('messages');
     box.innerHTML = '';
-
-    if (res.pinned) showPinnedBanner(res.pinned);
-    else hidePinnedBanner();
-
+    if (res.pinned) showPinnedBanner(res.pinned); else hidePinnedBanner();
     (res.messages || []).reverse().forEach(m => addMessageToDOM(m, false));
     box.scrollTop = box.scrollHeight;
 }
-
 function showPinnedBanner(pinned) {
     const banner = document.getElementById('pinned-banner');
     let text = pinned.matn || '';
@@ -3046,12 +1729,9 @@ function showPinnedBanner(pinned) {
     if (pinned.xabar_turi === 'video') text = '🎥 Video';
     if (pinned.xabar_turi === 'file') text = '📎 Fayl';
     document.getElementById('pin-text').textContent = text;
-    banner.classList.add('active');
-    banner.dataset.pinId = pinned.id;
+    banner.classList.add('active'); banner.dataset.pinId = pinned.id;
 }
-function hidePinnedBanner() {
-    document.getElementById('pinned-banner').classList.remove('active');
-}
+function hidePinnedBanner() { document.getElementById('pinned-banner').classList.remove('active'); }
 function scrollToPinned() {
     const pinId = document.getElementById('pinned-banner').dataset.pinId;
     if (!pinId) return;
@@ -3059,13 +1739,9 @@ function scrollToPinned() {
     if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         const msg = el.querySelector('.message');
-        if (msg) {
-            msg.style.boxShadow = '0 0 0 3px var(--primary)';
-            setTimeout(() => { msg.style.boxShadow = ''; }, 1500);
-        }
+        if (msg) { msg.style.boxShadow = '0 0 0 3px var(--primary)'; setTimeout(() => { msg.style.boxShadow = ''; }, 1500); }
     }
 }
-
 async function unpinCurrentMessage() {
     const pinId = document.getElementById('pinned-banner').dataset.pinId;
     if (!pinId) return;
@@ -3078,24 +1754,18 @@ function linkifyText(text) {
     if (!text) return '';
     const escaped = escapeHtml(text);
     const urlRegex = /(https?:\/\/[^\s<]+)/g;
-    return escaped.replace(urlRegex, (url) => {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="msg-link" onclick="event.stopPropagation()">${url}</a>`;
-    });
+    return escaped.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="msg-link" onclick="event.stopPropagation()">${url}</a>`);
 }
-
 function isEmojiOnly(text) {
     const emojiRegex = /^[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{FE0F}\u{200D}\u{20E3}\s]+$/u;
     return emojiRegex.test(text.trim());
 }
-
 function addMessageToDOM(m, scroll = true) {
     if (document.querySelector(`.msg-wrap[data-id="${m.id}"]`)) return;
-
     const box = document.getElementById('messages');
     const wrap = document.createElement('div');
     wrap.className = 'msg-wrap ' + (m.ozimniki ? 'out' : 'in');
     wrap.dataset.id = m.id;
-
     if (IS_GROUP && !m.ozimniki && m.sender) {
         const sender = document.createElement('div');
         sender.className = 'msg-sender';
@@ -3103,71 +1773,38 @@ function addMessageToDOM(m, scroll = true) {
         sender.onclick = () => openUserProfile(m.sender.chat_id);
         wrap.appendChild(sender);
     }
-
     const msg = document.createElement('div');
     msg.className = 'message';
-
     let content = '';
-
     if (m.reply_to && m.reply_to.id) {
-        content += `
-            <div class="reply-quote">
-                <div class="name">${m.reply_to.ozimniki ? 'Siz' : (CURRENT_CHAT?.ism || 'Foydalanuvchi')}</div>
-                <div class="text">${escapeHtml(m.reply_to.text || '')}</div>
-            </div>
-        `;
+        content += `<div class="reply-quote"><div class="name">${m.reply_to.ozimniki ? 'Siz' : (CURRENT_CHAT?.ism || 'Foydalanuvchi')}</div>
+            <div class="text">${escapeHtml(m.reply_to.text || '')}</div></div>`;
     }
-
-    if (m.xabar_turi === 'photo' && m.rasm_url) {
-        content += `<img class="msg-img" src="${API_URL}${m.rasm_url}" onclick="event.stopPropagation(); openImageViewer('${API_URL}${m.rasm_url}', 'image')">`;
-    }
-
-    if (m.xabar_turi === 'video' && m.video_url) {
-        content += `<video class="msg-video" controls src="${API_URL}${m.video_url}"></video>`;
-    }
-
-    if (m.xabar_turi === 'voice' && m.ovoz_url) {
-        content += renderVoicePlayer(m);
-    }
-
+    if (m.xabar_turi === 'photo' && m.rasm_url) content += `<img class="msg-img" src="${API_URL}${m.rasm_url}" onclick="event.stopPropagation(); openImageViewer('${API_URL}${m.rasm_url}', 'image')">`;
+    if (m.xabar_turi === 'video' && m.video_url) content += `<video class="msg-video" controls src="${API_URL}${m.video_url}"></video>`;
+    if (m.xabar_turi === 'voice' && m.ovoz_url) content += renderVoicePlayer(m);
     if (m.xabar_turi === 'file' && m.fayl_url) {
         const ext = (m.fayl_nom || '').split('.').pop().toUpperCase().slice(0, 4) || 'FILE';
-        content += `
-            <a class="file-attach" href="${API_URL}${m.fayl_url}" target="_blank" download onclick="event.stopPropagation()">
-                <div class="file-icon">${ext}</div>
-                <div class="file-info">
-                    <div class="file-name">${escapeHtml(m.fayl_nom || 'Fayl')}</div>
-                    <div class="file-size">${formatFileSize(m.fayl_hajm)}</div>
-                </div>
-            </a>
-        `;
+        content += `<a class="file-attach" href="${API_URL}${m.fayl_url}" target="_blank" download onclick="event.stopPropagation()">
+            <div class="file-icon">${ext}</div>
+            <div class="file-info"><div class="file-name">${escapeHtml(m.fayl_nom || 'Fayl')}</div>
+            <div class="file-size">${formatFileSize(m.fayl_hajm)}</div></div></a>`;
     }
-
     if (m.matn) {
-        if (isEmojiOnly(m.matn)) {
-            msg.classList.add('emoji-only');
-            content += m.matn;
-        } else {
-            content += linkifyText(m.matn);
-        }
+        if (isEmojiOnly(m.matn)) { msg.classList.add('emoji-only'); content += m.matn; }
+        else content += linkifyText(m.matn);
     }
-
     const vaqt = new Date(m.vaqt).toLocaleTimeString('uz', {hour:'2-digit', minute:'2-digit'});
     let checkHtml = '';
     if (m.ozimniki && !msg.classList.contains('emoji-only')) {
         const isRead = m.kurilgan;
         checkHtml = `<span class="check ${isRead ? 'read' : ''}"><svg><use href="#icon-${isRead ? 'check-double' : 'check'}"/></svg></span>`;
     }
-    if (!msg.classList.contains('emoji-only')) {
-        content += `<span class="msg-time">${vaqt}${m.tahrirlangan ? ' ✏️' : ''} ${checkHtml}</span>`;
-    }
-
+    if (!msg.classList.contains('emoji-only')) content += `<span class="msg-time">${vaqt}${m.tahrirlangan ? ' ✏️' : ''} ${checkHtml}</span>`;
     msg.innerHTML = content;
-
     let pressTimer = null;
     const startPress = () => { pressTimer = setTimeout(() => showMessageActions(m, wrap), 500); };
     const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
-
     msg.addEventListener('touchstart', startPress, { passive: true });
     msg.addEventListener('touchend', cancelPress);
     msg.addEventListener('touchmove', cancelPress);
@@ -3175,9 +1812,7 @@ function addMessageToDOM(m, scroll = true) {
     msg.addEventListener('mouseup', cancelPress);
     msg.addEventListener('mouseleave', cancelPress);
     msg.addEventListener('contextmenu', (e) => { e.preventDefault(); showMessageActions(m, wrap); });
-
     wrap.appendChild(msg);
-
     if (m.reactions && m.reactions.length > 0) {
         const reactionsDiv = document.createElement('div');
         reactionsDiv.className = 'reactions';
@@ -3190,25 +1825,17 @@ function addMessageToDOM(m, scroll = true) {
         });
         wrap.appendChild(reactionsDiv);
     }
-
     box.appendChild(wrap);
     if (scroll) box.scrollTop = box.scrollHeight;
 }
-
 function renderVoicePlayer(m) {
     const dur = m.ovoz_davomiyligi || 0;
     const bars = Array.from({length: 30}, () => Math.floor(Math.random() * 20) + 4);
-    return `
-        <div class="voice-player" onclick="event.stopPropagation();">
-            <button class="voice-play-btn" onclick="playVoice(this, '${API_URL}${m.ovoz_url}')">
-                <svg><use href="#icon-play"/></svg>
-            </button>
-            <div class="voice-wave">${bars.map(h => `<span style="height:${h}px"></span>`).join('')}</div>
-            <div class="voice-duration">${formatDuration(dur)}</div>
-        </div>
-    `;
+    return `<div class="voice-player" onclick="event.stopPropagation();">
+        <button class="voice-play-btn" onclick="playVoice(this, '${API_URL}${m.ovoz_url}')"><svg><use href="#icon-play"/></svg></button>
+        <div class="voice-wave">${bars.map(h => `<span style="height:${h}px"></span>`).join('')}</div>
+        <div class="voice-duration">${formatDuration(dur)}</div></div>`;
 }
-
 let currentAudio = null;
 function playVoice(btn, url) {
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
@@ -3229,38 +1856,30 @@ function playVoice(btn, url) {
 function showMessageActions(m, wrap) {
     CURRENT_MESSAGE = m;
     const actions = document.getElementById('msg-actions');
-
     const emojiRow = document.getElementById('msg-actions-emojis');
     emojiRow.innerHTML = '';
     QUICK_REACTIONS.forEach(emoji => {
         const btn = document.createElement('button');
-        btn.className = 'emoji-btn';
-        btn.textContent = emoji;
+        btn.className = 'emoji-btn'; btn.textContent = emoji;
         btn.onclick = (e) => { e.stopPropagation(); toggleReaction(m.id, emoji); hideMessageActions(); };
         emojiRow.appendChild(btn);
     });
-
     document.getElementById('action-edit-btn').style.display = m.ozimniki && m.matn ? 'flex' : 'none';
     document.getElementById('action-delete-btn').style.display = m.ozimniki ? 'flex' : 'none';
-
     const rect = wrap.getBoundingClientRect();
     const actionsWidth = 220;
-    let left = rect.left;
-    let top = rect.bottom + 8;
+    let left = rect.left; let top = rect.bottom + 8;
     if (left + actionsWidth > window.innerWidth - 20) left = window.innerWidth - actionsWidth - 20;
     if (top + 350 > window.innerHeight) top = rect.top - 350;
     if (top < 20) top = 20;
-
     actions.style.left = left + 'px';
     actions.style.top = top + 'px';
     actions.classList.add('active');
 }
-
 function hideMessageActions() {
     document.getElementById('msg-actions').classList.remove('active');
     CURRENT_MESSAGE = null;
 }
-
 function actionReply() {
     if (!CURRENT_MESSAGE) return;
     REPLY_TO = CURRENT_MESSAGE;
@@ -3270,19 +1889,12 @@ function actionReply() {
     document.getElementById('message-input').focus();
     hideMessageActions();
 }
-
-function cancelReply() {
-    REPLY_TO = null;
-    document.getElementById('reply-preview').classList.remove('active');
-}
-
+function cancelReply() { REPLY_TO = null; document.getElementById('reply-preview').classList.remove('active'); }
 function actionCopy() {
     if (!CURRENT_MESSAGE || !CURRENT_MESSAGE.matn) return;
     navigator.clipboard.writeText(CURRENT_MESSAGE.matn);
-    toast('Nusxalandi ✅');
-    hideMessageActions();
+    toast('Nusxalandi ✅'); hideMessageActions();
 }
-
 function actionPin() {
     if (!CURRENT_MESSAGE) return;
     const msgId = CURRENT_MESSAGE.id;
@@ -3291,13 +1903,11 @@ function actionPin() {
         if (res && res.success) toast('Mahkamlandi 📌');
     });
 }
-
 function actionEdit() {
     if (!CURRENT_MESSAGE) return;
     openEditMsgModal(CURRENT_MESSAGE.matn);
     hideMessageActions();
 }
-
 function actionDelete() {
     if (!CURRENT_MESSAGE) return;
     const msgId = CURRENT_MESSAGE.id;
@@ -3311,7 +1921,6 @@ function actionDelete() {
         }
     });
 }
-
 document.addEventListener('click', (e) => {
     const actions = document.getElementById('msg-actions');
     if (actions.classList.contains('active') && !actions.contains(e.target)) hideMessageActions();
@@ -3326,23 +1935,15 @@ async function toggleReaction(msgId, emoji) {
     const el = document.querySelector(`.msg-wrap[data-id="${msgId}"] .reaction-item.mine`);
     const mineEmoji = el ? el.textContent.trim().charAt(0) : null;
     let res;
-    if (mineEmoji === emoji) {
-        res = await apiFetch(`/api/messages/react?msg_id=${msgId}&emoji=${encodeURIComponent(emoji)}`, { method: 'DELETE' });
-    } else {
-        res = await apiFetch('/api/messages/react', { method: 'POST', body: JSON.stringify({ msg_id: msgId, emoji: emoji }) });
-    }
+    if (mineEmoji === emoji) res = await apiFetch(`/api/messages/react?msg_id=${msgId}&emoji=${encodeURIComponent(emoji)}`, { method: 'DELETE' });
+    else res = await apiFetch('/api/messages/react', { method: 'POST', body: JSON.stringify({ msg_id: msgId, emoji: emoji }) });
     if (res && res.success) updateMessageReactions(msgId, res.reactions);
 }
-
 function updateMessageReactions(msgId, reactions) {
     const wrap = document.querySelector(`.msg-wrap[data-id="${msgId}"]`);
     if (!wrap) return;
     let reactionsDiv = wrap.querySelector('.reactions');
-    if (!reactionsDiv) {
-        reactionsDiv = document.createElement('div');
-        reactionsDiv.className = 'reactions';
-        wrap.appendChild(reactionsDiv);
-    }
+    if (!reactionsDiv) { reactionsDiv = document.createElement('div'); reactionsDiv.className = 'reactions'; wrap.appendChild(reactionsDiv); }
     reactionsDiv.innerHTML = '';
     reactions.forEach(r => {
         const item = document.createElement('div');
@@ -3358,58 +1959,30 @@ function updateSendButton() {
     const input = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
     const micBtn = document.getElementById('mic-btn');
-    if (input.value.trim()) {
-        sendBtn.style.display = 'flex';
-        micBtn.style.display = 'none';
-    } else {
-        sendBtn.style.display = 'none';
-        micBtn.style.display = 'flex';
-    }
+    if (input.value.trim()) { sendBtn.style.display = 'flex'; micBtn.style.display = 'none'; }
+    else { sendBtn.style.display = 'none'; micBtn.style.display = 'flex'; }
 }
-
 async function sendMessage() {
     const input = document.getElementById('message-input');
     const matn = input.value.trim();
     if (!matn || (!CURRENT_CHAT && !CURRENT_GROUP)) return;
-
-    input.value = '';
-    closeEmojiPicker();
-    updateSendButton();
-
+    input.value = ''; closeEmojiPicker(); updateSendButton();
     const payload = { matn: matn, xabar_turi: 'text' };
     if (IS_GROUP) payload.group_id = CURRENT_GROUP.id;
     else payload.to_chat = CURRENT_CHAT.chat_id;
-
     if (REPLY_TO) payload.reply_to_id = REPLY_TO.id;
-
     const res = await apiFetch('/api/messages/send', { method: 'POST', body: JSON.stringify(payload) });
     if (res && res.success) {
-        const msgData = {
-            id: res.id,
-            from_chat: USER.chat_id,
-            to_chat: IS_GROUP ? null : CURRENT_CHAT.chat_id,
-            group_id: IS_GROUP ? CURRENT_GROUP.id : null,
-            matn: matn,
-            vaqt: new Date().toISOString(),
-            ozimniki: true,
-            xabar_turi: 'text',
-            kurilgan: false,
-            reactions: [],
-            sender: IS_GROUP ? { chat_id: USER.chat_id, ism: USER.ism, familya: USER.familya } : null
-        };
-        if (REPLY_TO) {
-            msgData.reply_to = {
-                id: REPLY_TO.id,
-                name: REPLY_TO.ozimniki ? 'Siz' : (CURRENT_CHAT?.ism || ''),
-                text: REPLY_TO.matn || ''
-            };
-        }
+        const msgData = { id: res.id, from_chat: USER.chat_id, to_chat: IS_GROUP ? null : CURRENT_CHAT.chat_id,
+            group_id: IS_GROUP ? CURRENT_GROUP.id : null, matn: matn, vaqt: new Date().toISOString(),
+            ozimniki: true, xabar_turi: 'text', kurilgan: false, reactions: [],
+            sender: IS_GROUP ? { chat_id: USER.chat_id, ism: USER.ism, familya: USER.familya } : null };
+        if (REPLY_TO) msgData.reply_to = { id: REPLY_TO.id, name: REPLY_TO.ozimniki ? 'Siz' : (CURRENT_CHAT?.ism || ''), text: REPLY_TO.matn || '' };
         addMessageToDOM(msgData);
         cancelReply();
         if (!IS_GROUP) markAsRead();
     }
 }
-
 async function editMessage(msgId, yangi) {
     const res = await apiFetch(`/api/messages/${msgId}`, { method: 'PUT', body: JSON.stringify({ msg_id: msgId, yangi_matn: yangi }) });
     if (res && res.success) loadMessages(IS_GROUP);
@@ -3420,220 +1993,160 @@ function onTyping() {
     updateSendButton();
     if (!WS || (!CURRENT_CHAT && !CURRENT_GROUP)) return;
     if (WS.readyState !== WebSocket.OPEN) return;
-
-    if (IS_GROUP) {
-        WS.send(JSON.stringify({ type: 'group_typing', group_id: CURRENT_GROUP.id }));
-    } else {
+    if (IS_GROUP) WS.send(JSON.stringify({ type: 'group_typing', group_id: CURRENT_GROUP.id }));
+    else {
         WS.send(JSON.stringify({ type: 'typing', to_chat: CURRENT_CHAT.chat_id }));
         clearTimeout(TYPING_TIMEOUT);
         TYPING_TIMEOUT = setTimeout(() => {
-            if (WS && WS.readyState === WebSocket.OPEN) {
-                WS.send(JSON.stringify({ type: 'stop_typing', to_chat: CURRENT_CHAT.chat_id }));
-            }
+            if (WS && WS.readyState === WebSocket.OPEN) WS.send(JSON.stringify({ type: 'stop_typing', to_chat: CURRENT_CHAT.chat_id }));
         }, 2000);
     }
 }
-
 function markAsRead() {
     if (!WS || !CURRENT_CHAT || IS_GROUP) return;
     if (WS.readyState !== WebSocket.OPEN) return;
     WS.send(JSON.stringify({ type: 'read', from_chat: CURRENT_CHAT.chat_id }));
 }
 
-// ==================== VOICE ====================
-async function toggleRecording() {
-    if (IS_RECORDING) stopRecording();
-    else await startRecording();
-}
+// ==================== VOICE RECORDING (YANGI) ====================
+document.addEventListener('DOMContentLoaded', () => {
+    const micBtn = document.getElementById('mic-btn');
+    if (!micBtn) return;
+    micBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startRecording(); });
+    micBtn.addEventListener('mouseup', (e) => { e.preventDefault(); stopRecording(); });
+    micBtn.addEventListener('mouseleave', () => { if (IS_RECORDING) stopRecording(); });
+    micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, { passive: false });
+    micBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
+    micBtn.addEventListener('touchcancel', (e) => { cancelRecording(); });
+});
 
 async function startRecording() {
-    if (MEDIA_RECORDER) return;
+    if (MEDIA_RECORDER || IS_RECORDING) return;
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         MEDIA_RECORDER = new MediaRecorder(stream);
         AUDIO_CHUNKS = [];
         RECORDING_START = Date.now();
         IS_RECORDING = true;
-
+        const micBtn = document.getElementById('mic-btn');
+        micBtn.classList.add('recording');
+        const badge = document.getElementById('recording-time-badge');
+        badge.classList.add('active');
         MEDIA_RECORDER.ondataavailable = (e) => { if (e.data.size > 0) AUDIO_CHUNKS.push(e.data); };
-        MEDIA_RECORDER.onstop = async () => {
+        MEDIA_RECORDER.onstop = () => {
             const blob = new Blob(AUDIO_CHUNKS, { type: 'audio/webm' });
-            const duration = Math.round((Date.now() - RECORDING_START) / 1000);
+            const duration = Math.max(1, Math.round((Date.now() - RECORDING_START) / 1000));
             stream.getTracks().forEach(t => t.stop());
-            resetRecordingUI();
-            if (duration < 1) { toast('Juda qisqa'); return; }
-            await sendVoice(blob, duration);
+            VOICE_BLOB = blob; VOICE_DURATION = duration;
+            resetRecordingUI(); showVoiceConfirm();
         };
-
         MEDIA_RECORDER.start();
-        document.getElementById('recording-indicator').classList.add('active');
-        document.getElementById('chat-input-row').style.display = 'none';
-
-        RECORDING_TIMER = setInterval(() => {
+        RECORDING_TIMER_BADGE = setInterval(() => {
             const sec = Math.round((Date.now() - RECORDING_START) / 1000);
-            document.getElementById('recording-time').textContent = formatDuration(sec);
+            document.getElementById('recording-time-badge-text').textContent = formatDuration(sec);
         }, 100);
-    } catch (e) { toast('Mikrofonga ruxsat kerak'); IS_RECORDING = false; }
+    } catch (e) {
+        toast('Mikrofonga ruxsat kerak');
+        IS_RECORDING = false; resetRecordingUI();
+    }
 }
-
 function stopRecording() {
-    if (MEDIA_RECORDER && MEDIA_RECORDER.state === 'recording') MEDIA_RECORDER.stop();
-    IS_RECORDING = false;
+    if (MEDIA_RECORDER && MEDIA_RECORDER.state === 'recording') { MEDIA_RECORDER.stop(); IS_RECORDING = false; }
 }
-
 function cancelRecording() {
     if (MEDIA_RECORDER && MEDIA_RECORDER.state === 'recording') {
         MEDIA_RECORDER.onstop = () => { MEDIA_RECORDER.stream.getTracks().forEach(t => t.stop()); };
         MEDIA_RECORDER.stop();
     }
-    IS_RECORDING = false;
-    resetRecordingUI();
+    IS_RECORDING = false; VOICE_BLOB = null; resetRecordingUI(); toast('Bekor qilindi');
 }
-
 function resetRecordingUI() {
-    document.getElementById('recording-indicator').classList.remove('active');
-    document.getElementById('chat-input-row').style.display = 'flex';
-    clearInterval(RECORDING_TIMER);
-    document.getElementById('recording-time').textContent = '0:00';
-    MEDIA_RECORDER = null;
-    AUDIO_CHUNKS = [];
+    const micBtn = document.getElementById('mic-btn');
+    if (micBtn) micBtn.classList.remove('recording');
+    const badge = document.getElementById('recording-time-badge');
+    if (badge) badge.classList.remove('active');
+    clearInterval(RECORDING_TIMER_BADGE); RECORDING_TIMER_BADGE = null;
+    const timeEl = document.getElementById('recording-time-badge-text');
+    if (timeEl) timeEl.textContent = '0:00';
+    MEDIA_RECORDER = null; AUDIO_CHUNKS = [];
 }
-
 async function sendVoice(blob, duration) {
     const fd = new FormData();
-    fd.append('file', blob, 'voice.webm');
-    fd.append('turi', 'voice');
+    fd.append('file', blob, 'voice.webm'); fd.append('turi', 'voice');
     try {
+        toast('Yuklanmoqda...');
         const res = await fetch(API_URL + '/api/messages/upload', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + TOKEN },
-            body: fd
+            method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN }, body: fd
         });
         const data = await res.json();
-        if (!data.success) { toast('Xato'); return; }
-
+        if (!data.success) { toast('Yuklashda xato'); return; }
         const payload = { ovoz_url: data.url, ovoz_davomiyligi: duration, xabar_turi: 'voice' };
         if (IS_GROUP) payload.group_id = CURRENT_GROUP.id;
         else payload.to_chat = CURRENT_CHAT.chat_id;
-
         const msgRes = await apiFetch('/api/messages/send', { method: 'POST', body: JSON.stringify(payload) });
         if (msgRes && msgRes.success) {
-            addMessageToDOM({
-                id: msgRes.id,
-                from_chat: USER.chat_id,
-                to_chat: IS_GROUP ? null : CURRENT_CHAT.chat_id,
-                group_id: IS_GROUP ? CURRENT_GROUP.id : null,
-                ovoz_url: data.url,
-                ovoz_davomiyligi: duration,
-                xabar_turi: 'voice',
-                vaqt: new Date().toISOString(),
-                ozimniki: true,
-                kurilgan: false,
-                reactions: [],
-                sender: IS_GROUP ? { chat_id: USER.chat_id, ism: USER.ism } : null
-            });
+            addMessageToDOM({ id: msgRes.id, from_chat: USER.chat_id, to_chat: IS_GROUP ? null : CURRENT_CHAT.chat_id,
+                group_id: IS_GROUP ? CURRENT_GROUP.id : null, ovoz_url: data.url, ovoz_davomiyligi: duration,
+                xabar_turi: 'voice', vaqt: new Date().toISOString(), ozimniki: true, kurilgan: false, reactions: [],
+                sender: IS_GROUP ? { chat_id: USER.chat_id, ism: USER.ism } : null });
+            toast('Yuborildi ✅');
         }
     } catch (e) { toast('Xato'); }
 }
 
 // ==================== ATTACH ====================
-function toggleAttachMenu() {
-    const menu = document.getElementById('attach-menu');
-    menu.classList.toggle('active');
-}
-
+function toggleAttachMenu() { document.getElementById('attach-menu').classList.toggle('active'); }
 function attachFileByType(turi) {
     document.getElementById('attach-menu').classList.remove('active');
     if (turi === 'image') document.getElementById('file-input-image').click();
     else if (turi === 'video') document.getElementById('file-input-video').click();
     else if (turi === 'file') document.getElementById('file-input-file').click();
 }
-
 async function uploadAndSend(file, turi) {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('turi', turi);
-
+    const fd = new FormData(); fd.append('file', file); fd.append('turi', turi);
     try {
         toast('Yuklanmoqda...');
         const res = await fetch(API_URL + '/api/messages/upload', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + TOKEN },
-            body: fd
+            method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN }, body: fd
         });
         const data = await res.json();
         if (!data.success) { toast(data.xato || 'Xato'); return; }
-
         const payload = { xabar_turi: turi === 'image' ? 'photo' : turi };
         if (turi === 'image') payload.rasm_url = data.url;
         else if (turi === 'video') payload.video_url = data.url;
-        else if (turi === 'file') {
-            payload.fayl_url = data.url;
-            payload.fayl_nom = data.nom;
-            payload.fayl_hajm = data.hajm;
-            payload.xabar_turi = 'file';
-        }
-
+        else if (turi === 'file') { payload.fayl_url = data.url; payload.fayl_nom = data.nom; payload.fayl_hajm = data.hajm; payload.xabar_turi = 'file'; }
         if (IS_GROUP) payload.group_id = CURRENT_GROUP.id;
         else payload.to_chat = CURRENT_CHAT.chat_id;
-
         const msgRes = await apiFetch('/api/messages/send', { method: 'POST', body: JSON.stringify(payload) });
         if (msgRes && msgRes.success) {
-            const msgData = {
-                id: msgRes.id,
-                from_chat: USER.chat_id,
-                to_chat: IS_GROUP ? null : CURRENT_CHAT.chat_id,
-                group_id: IS_GROUP ? CURRENT_GROUP.id : null,
-                vaqt: new Date().toISOString(),
-                ozimniki: true,
-                kurilgan: false,
-                reactions: [],
-                sender: IS_GROUP ? { chat_id: USER.chat_id, ism: USER.ism } : null
-            };
+            const msgData = { id: msgRes.id, from_chat: USER.chat_id, to_chat: IS_GROUP ? null : CURRENT_CHAT.chat_id,
+                group_id: IS_GROUP ? CURRENT_GROUP.id : null, vaqt: new Date().toISOString(), ozimniki: true,
+                kurilgan: false, reactions: [], sender: IS_GROUP ? { chat_id: USER.chat_id, ism: USER.ism } : null };
             if (turi === 'image') { msgData.rasm_url = data.url; msgData.xabar_turi = 'photo'; }
             else if (turi === 'video') { msgData.video_url = data.url; msgData.xabar_turi = 'video'; }
-            else if (turi === 'file') {
-                msgData.fayl_url = data.url;
-                msgData.fayl_nom = data.nom;
-                msgData.fayl_hajm = data.hajm;
-                msgData.xabar_turi = 'file';
-            }
+            else if (turi === 'file') { msgData.fayl_url = data.url; msgData.fayl_nom = data.nom; msgData.fayl_hajm = data.hajm; msgData.xabar_turi = 'file'; }
             addMessageToDOM(msgData);
         }
     } catch (e) { toast('Yuklashda xato'); }
 }
-
 document.getElementById('file-input-image').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    await uploadAndSend(file, 'image');
-    e.target.value = '';
+    const file = e.target.files[0]; if (!file) return;
+    await uploadAndSend(file, 'image'); e.target.value = '';
 });
-
 document.getElementById('file-input-video').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    await uploadAndSend(file, 'video');
-    e.target.value = '';
+    const file = e.target.files[0]; if (!file) return;
+    await uploadAndSend(file, 'video'); e.target.value = '';
 });
-
 document.getElementById('file-input-file').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    await uploadAndSend(file, 'file');
-    e.target.value = '';
+    const file = e.target.files[0]; if (!file) return;
+    await uploadAndSend(file, 'file'); e.target.value = '';
 });
-
 document.getElementById('profile-photo-input').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const fd = new FormData();
-    fd.append('file', file);
+    const file = e.target.files[0]; if (!file) return;
+    const fd = new FormData(); fd.append('file', file);
     try {
         const res = await fetch(API_URL + '/api/profile/photo', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + TOKEN },
-            body: fd
+            method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN }, body: fd
         });
         const data = await res.json();
         if (data.success) {
@@ -3651,24 +2164,15 @@ async function loadPhotos() {
     if (!res) return;
     const grid = document.getElementById('photos-grid');
     grid.innerHTML = '';
-
-    if (!res.photos || !res.photos.length) {
-        document.getElementById('empty-photos').style.display = 'block';
-    } else {
-        document.getElementById('empty-photos').style.display = 'none';
-    }
-
+    if (!res.photos || !res.photos.length) document.getElementById('empty-photos').style.display = 'block';
+    else document.getElementById('empty-photos').style.display = 'none';
     (res.photos || []).forEach(p => {
         const div = document.createElement('div');
         div.className = 'photo-item';
-        div.innerHTML = `
-            <img src="${API_URL}${p.url}">
-            <button class="delete" onclick="event.stopPropagation(); deletePhoto(${p.id})">×</button>
-        `;
+        div.innerHTML = `<img src="${API_URL}${p.url}"><button class="delete" onclick="event.stopPropagation(); deletePhoto(${p.id})">×</button>`;
         div.onclick = () => openImageViewer(API_URL + p.url, 'image');
         grid.appendChild(div);
     });
-
     if ((res.photos || []).length < res.limit) {
         const addBtn = document.createElement('div');
         addBtn.className = 'photo-item';
@@ -3678,29 +2182,22 @@ async function loadPhotos() {
         grid.appendChild(addBtn);
     }
 }
-
 function deletePhoto(id) {
     showConfirmModal('Rasmni o\'chirish', 'Bu rasmni o\'chirishni xohlaysizmi?', 'O\'chirish', async () => {
         const res = await apiFetch(`/api/photos/${id}`, { method: 'DELETE' });
         if (res && res.success) { loadPhotos(); toast('O\'chirildi ✅'); }
     });
 }
-
 function openImageViewer(url, turi = 'image') {
     const content = document.getElementById('image-viewer-content');
-    if (turi === 'video') {
-        content.innerHTML = `<video src="${url}" controls autoplay style="max-width:100%;max-height:90vh;border-radius:12px;"></video>`;
-    } else {
-        content.innerHTML = `<img src="${url}">`;
-    }
+    if (turi === 'video') content.innerHTML = `<video src="${url}" controls autoplay style="max-width:100%;max-height:90vh;border-radius:12px;"></video>`;
+    else content.innerHTML = `<img src="${url}">`;
     document.getElementById('image-viewer').classList.add('active');
 }
-
 function closeImageViewer() {
     document.getElementById('image-viewer').classList.remove('active');
     document.getElementById('image-viewer-content').innerHTML = '';
 }
-
 function changeProfilePhoto() { document.getElementById('profile-photo-input').click(); }
 
 // ==================== TUNGI REJIM ====================
@@ -3728,7 +2225,6 @@ function openSearch() {
     document.getElementById('search-modal').classList.add('active');
     setTimeout(() => document.getElementById('search-input')?.focus(), 200);
 }
-
 function switchSearchTab(tab) {
     SEARCH_TAB = tab;
     document.getElementById('search-tab-user').classList.toggle('active', tab === 'user');
@@ -3736,86 +2232,55 @@ function switchSearchTab(tab) {
     document.getElementById('search-input').placeholder = tab === 'user' ? '@username' : '@guruh_username';
     document.getElementById('search-result').innerHTML = '';
 }
-
 async function doSearch() {
     const username = document.getElementById('search-input').value.trim();
     if (!username) return;
-    
     const box = document.getElementById('search-result');
     box.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-2);">⏳ Qidirilmoqda...</div>';
-    
     const endpoint = SEARCH_TAB === 'user' ? '/api/search' : '/api/search/group';
     const res = await apiFetch(endpoint, { method: 'POST', body: JSON.stringify({ username: username }) });
-    
     if (!res || !res.success) {
         box.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-2);">❌ ${escapeHtml(res?.xato || 'Topilmadi')}</div>`;
         return;
     }
-    
     if (SEARCH_TAB === 'user') {
         const u = res.user;
         const avatar = u.profil_rasm ? `<img src="${API_URL}${u.profil_rasm}">` : (u.ism || 'U')[0].toUpperCase();
         const userJson = JSON.stringify(u).replace(/'/g, "&apos;").replace(/"/g, '&quot;');
-        box.innerHTML = `
-            <div class="search-result" onclick='startChatFromJson(this)' data-user='${userJson}'>
-                <div class="avatar">${avatar}</div>
-                <div>
-                    <div style="font-weight:600;">${escapeHtml(u.ism)} ${escapeHtml(u.familya || '')}</div>
-                    <div style="color:var(--text-2);font-size:13px;">@${escapeHtml(u.username)}</div>
-                </div>
-            </div>
-        `;
+        box.innerHTML = `<div class="search-result" onclick='startChatFromJson(this)' data-user='${userJson}'>
+            <div class="avatar">${avatar}</div>
+            <div><div style="font-weight:600;">${escapeHtml(u.ism)} ${escapeHtml(u.familya || '')}</div>
+            <div style="color:var(--text-2);font-size:13px;">@${escapeHtml(u.username)}</div></div></div>`;
     } else {
         const g = res.group;
         const avatar = g.rasm ? `<img src="${API_URL}${g.rasm}">` : '<svg style="width:24px;height:24px;stroke:white;fill:none;stroke-width:2;"><use href="#icon-users"/></svg>';
-        const joinBtn = g.is_member 
-            ? `<div style="padding:8px 12px;font-size:12px;color:var(--success);font-weight:600;">✅ A'zo</div>`
+        const joinBtn = g.is_member ? `<div style="padding:8px 12px;font-size:12px;color:var(--success);font-weight:600;">✅ A'zo</div>`
             : `<button onclick="event.stopPropagation(); joinGroupFromSearch('${g.username}')" style="padding:8px 12px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Qo'shilish</button>`;
-        box.innerHTML = `
-            <div class="search-result">
-                <div class="avatar">${avatar}</div>
-                <div style="flex:1;">
-                    <div style="font-weight:600;">${escapeHtml(g.nom)}</div>
-                    <div style="color:var(--text-2);font-size:13px;">@${escapeHtml(g.username || '')}</div>
-                </div>
-                ${joinBtn}
-            </div>
-        `;
+        box.innerHTML = `<div class="search-result"><div class="avatar">${avatar}</div>
+            <div style="flex:1;"><div style="font-weight:600;">${escapeHtml(g.nom)}</div>
+            <div style="color:var(--text-2);font-size:13px;">@${escapeHtml(g.username || '')}</div></div>${joinBtn}</div>`;
     }
 }
-
 async function joinGroupFromSearch(username) {
     const res = await apiFetch(`/api/groups/join/${username}`, { method: 'POST' });
-    if (res && res.success) {
-        toast('Guruhga qo\'shildingiz ✅');
-        closeSearch();
-        await loadChats();
-    } else {
-        toast(res?.xato || 'Xato');
-    }
+    if (res && res.success) { toast('Guruhga qo\'shildingiz ✅'); closeSearch(); await loadChats(); }
+    else toast(res?.xato || 'Xato');
 }
-
 function startChatFromJson(el) {
     try {
         const u = JSON.parse(el.dataset.user.replace(/&quot;/g, '"').replace(/&apos;/g, "'"));
         startChat(u);
     } catch (e) { toast('Xato'); }
 }
-
 function startChat(u) {
     closeSearch();
-    openChat({
-        chat_id: u.chat_id, ism: u.ism, familya: u.familya, username: u.username,
-        profil_rasm: u.profil_rasm, online: u.online, oxirgi_faollik: u.oxirgi_faollik
-    });
+    openChat({ chat_id: u.chat_id, ism: u.ism, familya: u.familya, username: u.username,
+        profil_rasm: u.profil_rasm, online: u.online, oxirgi_faollik: u.oxirgi_faollik });
 }
-
 function closeSearch() {
     document.getElementById('search-modal').classList.remove('active');
-    const input = document.getElementById('search-input');
-    if (input) input.value = '';
-    const res = document.getElementById('search-result');
-    if (res) res.innerHTML = '';
+    const input = document.getElementById('search-input'); if (input) input.value = '';
+    const res = document.getElementById('search-result'); if (res) res.innerHTML = '';
 }
 
 // ==================== WEBSOCKET ====================
@@ -3824,45 +2289,34 @@ function connectWS() {
     if (WS) { try { WS.onclose = null; WS.close(); } catch (e) {} WS = null; }
     const wsUrl = API_URL.replace('https://', 'wss://').replace('http://', 'ws://');
     try { WS = new WebSocket(`${wsUrl}/ws/${TOKEN}`); } catch (e) { return; }
-
     WS.onmessage = (e) => {
         try {
             const data = JSON.parse(e.data);
-
             if (data.type === 'new_message') {
                 if (CURRENT_CHAT && !IS_GROUP && data.message.from_chat === CURRENT_CHAT.chat_id) {
-                    addMessageToDOM(data.message);
-                    markAsRead();
+                    addMessageToDOM(data.message); markAsRead();
                 }
                 loadChats();
             }
-
             if (data.type === 'new_group_message') {
-                if (IS_GROUP && CURRENT_GROUP && data.group_id === CURRENT_GROUP.id) {
-                    addMessageToDOM(data.message);
-                }
+                if (IS_GROUP && CURRENT_GROUP && data.group_id === CURRENT_GROUP.id) addMessageToDOM(data.message);
                 loadChats();
             }
-
             if (data.type === 'typing' && CURRENT_CHAT && !IS_GROUP) {
                 if (data.from_chat === CURRENT_CHAT.chat_id) {
                     const ind = document.getElementById('chat-status');
-                    ind.textContent = 'yozmoqda...';
-                    ind.className = 'status typing';
+                    ind.textContent = 'yozmoqda...'; ind.className = 'status typing';
                     clearTimeout(window._typingTO);
                     window._typingTO = setTimeout(() => updateChatStatus(CURRENT_CHAT), 2500);
                 }
             }
-
             if (data.type === 'stop_typing' && CURRENT_CHAT && !IS_GROUP) {
                 if (data.from_chat === CURRENT_CHAT.chat_id) updateChatStatus(CURRENT_CHAT);
             }
-
             if (data.type === 'group_typing' && IS_GROUP && CURRENT_GROUP) {
                 if (data.group_id === CURRENT_GROUP.id) {
                     const ind = document.getElementById('chat-status');
-                    ind.textContent = 'yozmoqda...';
-                    ind.className = 'status typing';
+                    ind.textContent = 'yozmoqda...'; ind.className = 'status typing';
                     clearTimeout(window._typingTO);
                     window._typingTO = setTimeout(() => {
                         ind.textContent = `${CURRENT_GROUP.members?.length || 0} a'zo`;
@@ -3870,24 +2324,19 @@ function connectWS() {
                     }, 2500);
                 }
             }
-
             if (data.type === 'user_status' && CURRENT_CHAT && !IS_GROUP) {
                 if (data.chat_id === CURRENT_CHAT.chat_id) {
                     CURRENT_CHAT.online = data.online;
                     CURRENT_CHAT.oxirgi_faollik = data.oxirgi_faollik;
-                    updateOnlineDot(data.online);
-                    updateChatStatus(CURRENT_CHAT);
+                    updateOnlineDot(data.online); updateChatStatus(CURRENT_CHAT);
                 }
                 loadChats();
             }
-
             if (data.type === 'message_deleted') {
                 const el = document.querySelector(`.msg-wrap[data-id="${data.msg_id}"]`);
                 if (el) el.remove();
             }
-
             if (data.type === 'message_edited') loadMessages(IS_GROUP);
-
             if (data.type === 'read') {
                 document.querySelectorAll('.msg-wrap.out .check').forEach(el => {
                     el.classList.add('read');
@@ -3895,31 +2344,13 @@ function connectWS() {
                     if (use) use.setAttribute('href', '#icon-check-double');
                 });
             }
-
-            if (data.type === 'reaction_added' || data.type === 'reaction_removed') {
-                updateMessageReactions(data.msg_id, data.reactions);
-            }
-
-            if (data.type === 'message_pinned') {
-                showPinnedBanner({ id: data.msg_id, matn: data.matn });
-                loadMessages(IS_GROUP);
-            }
-
-            if (data.type === 'message_unpinned') {
-                hidePinnedBanner();
-            }
-
-            if (data.type === 'added_to_group') {
-                toast('Guruhga qo\'shildingiz');
-                loadChats();
-            }
-
-            if (data.type === 'group_member_added') {
-                toast(`${data.user?.ism || 'Kimdir'} guruhga qo'shildi`);
-            }
+            if (data.type === 'reaction_added' || data.type === 'reaction_removed') updateMessageReactions(data.msg_id, data.reactions);
+            if (data.type === 'message_pinned') { showPinnedBanner({ id: data.msg_id, matn: data.matn }); loadMessages(IS_GROUP); }
+            if (data.type === 'message_unpinned') hidePinnedBanner();
+            if (data.type === 'added_to_group') { toast('Guruhga qo\'shildingiz'); loadChats(); }
+            if (data.type === 'group_member_added') toast(`${data.user?.ism || 'Kimdir'} guruhga qo'shildi`);
         } catch (err) {}
     };
-
     WS.onclose = () => { WS = null; if (TOKEN) setTimeout(connectWS, 3000); };
     WS.onerror = () => {};
 }
@@ -3927,56 +2358,37 @@ function connectWS() {
 // ==================== CHAT MENU ====================
 function showChatMenu() {
     if (!CURRENT_CHAT && !CURRENT_GROUP) return;
-
-    let title = "Chat sozlamalari";
-    let text = "";
-    let btnText = "OK";
-    let action = null;
-
+    let title = "Chat sozlamalari"; let text = ""; let btnText = "OK"; let action = null;
     if (IS_GROUP) {
         const isAdmin = CURRENT_GROUP.yaratuvchi === USER.chat_id;
         if (isAdmin) {
-            title = "Guruhni o'chirish";
-            text = `"${CURRENT_GROUP.nom}" ni o'chirishni xohlaysizmi?`;
-            btnText = "O'chirish";
+            title = "Guruhni o'chirish"; text = `"${CURRENT_GROUP.nom}" ni o'chirishni xohlaysizmi?`; btnText = "O'chirish";
             action = async () => {
                 const res = await apiFetch(`/api/groups/${CURRENT_GROUP.id}`, { method: 'DELETE' });
                 if (res && res.success) { toast('Guruh o\'chirildi'); closeChat(); loadChats(); }
             };
         } else {
-            title = "Guruhdan chiqish";
-            text = `"${CURRENT_GROUP.nom}" dan chiqishni xohlaysizmi?`;
-            btnText = "Chiqish";
+            title = "Guruhdan chiqish"; text = `"${CURRENT_GROUP.nom}" dan chiqishni xohlaysizmi?`; btnText = "Chiqish";
             action = async () => {
                 const res = await apiFetch(`/api/groups/${CURRENT_GROUP.id}/leave`, { method: 'POST' });
                 if (res && res.success) { toast('Chiqdingiz'); closeChat(); loadChats(); }
             };
         }
-    } else if (CURRENT_CHAT.is_saved) {
-        toast("Bu sizning saqlangan xabarlaringiz");
-        return;
-    } else {
-        title = "Bloklash";
-        text = `${CURRENT_CHAT.ism} ${CURRENT_CHAT.familya || ''} ni bloklashni xohlaysizmi?`;
-        btnText = "Bloklash";
+    } else if (CURRENT_CHAT.is_saved) { toast("Bu sizning saqlangan xabarlaringiz"); return; }
+    else {
+        title = "Bloklash"; text = `${CURRENT_CHAT.ism} ${CURRENT_CHAT.familya || ''} ni bloklashni xohlaysizmi?`; btnText = "Bloklash";
         action = async () => {
             await apiFetch(`/api/block/${CURRENT_CHAT.chat_id}`, { method: 'POST' });
-            toast('Bloklandi');
-            closeChat();
+            toast('Bloklandi'); closeChat();
         };
     }
-
     showConfirmModal(title, text, btnText, action);
 }
-
 function closeChat() {
     document.getElementById('chat-window').classList.remove('active');
-    closeEmojiPicker();
-    cancelReply();
+    closeEmojiPicker(); cancelReply();
     document.getElementById('attach-menu').classList.remove('active');
-    CURRENT_CHAT = null;
-    CURRENT_GROUP = null;
-    IS_GROUP = false;
+    CURRENT_CHAT = null; CURRENT_GROUP = null; IS_GROUP = false;
     loadChats();
 }
 
@@ -4012,19 +2424,16 @@ document.addEventListener('touchend', (e) => {
     if (e.target.closest('button')) return;
     if (e.target.closest('input')) return;
     if (e.target.closest('textarea')) return;
-
     const now = Date.now();
     tapTimes.push(now);
     tapTimes = tapTimes.filter(t => now - t < 300);
     if (tapTimes.length >= 2) { tapTimes = []; hideToCalculator(); }
 }, { passive: true });
-
 document.addEventListener('dblclick', (e) => {
     if (document.getElementById('chat-window').classList.contains('active')) {
         if (!window.getSelection().toString()) hideToCalculator();
     }
 });
-
 function hideToCalculator() {
     document.getElementById('chat-window').classList.remove('active');
     document.getElementById('verify-modal').classList.remove('active');
@@ -4034,18 +2443,20 @@ function hideToCalculator() {
     document.getElementById('user-profile-modal').classList.remove('active');
     document.getElementById('create-group-modal').classList.remove('active');
     document.getElementById('join-group-modal').classList.remove('active');
+    document.getElementById('admin-panel-modal').classList.remove('active');
+    document.getElementById('admin-user-modal').classList.remove('active');
+    document.getElementById('broadcast-modal').classList.remove('active');
+    document.getElementById('settings-modal').classList.remove('active');
+    document.getElementById('voice-confirm-modal').classList.remove('active');
     document.getElementById('search-modal')?.classList.remove('active');
     document.getElementById('app-view').classList.remove('active');
     document.getElementById('scientific-view').classList.remove('active');
     closeEmojiPicker();
-
     document.getElementById('messages').innerHTML = '';
     document.getElementById('chat-list').innerHTML = '';
     document.getElementById('photos-grid').innerHTML = '';
-
     document.getElementById('calc-view').style.display = 'flex';
-    calcIfoda = ''; calcNatija = '0'; oxirgiTeng = false;
-    sciIfoda = '';
+    calcIfoda = ''; calcNatija = '0'; oxirgiTeng = false; sciIfoda = '';
     updateCalcDisplay();
     toast('🔒 Kalkulyator rejimi');
 }
@@ -4063,7 +2474,6 @@ window.addEventListener('load', () => {
     updateCalcDisplay();
     updateSendButton();
 });
-
 document.addEventListener('keydown', (e) => {
     if (document.getElementById('calc-view').style.display === 'none') return;
     if (document.getElementById('scientific-view').classList.contains('active')) return;
@@ -4083,7 +2493,6 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
 String.prototype.lstrip = function(chars) {
     let s = this.toString();
     while (chars && s.startsWith(chars)) s = s.substring(chars.length);
